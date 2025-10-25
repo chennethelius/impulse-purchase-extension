@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Impulse Blocker",
+  "version": "1.0",
+  "description": "Blocks purchase pages until you convince the chatbot to let you buy.",
+  "permissions": ["storage", "tabs", "scripting"],
+  "host_permissions": [
+    "*://*.amazon.com/*",
+    "*://*.ebay.com/*",
+    "*://*.etsy.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.amazon.com/*", "*://*.ebay.com/*", "*://*.etsy.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["overlay.html", "styles.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
