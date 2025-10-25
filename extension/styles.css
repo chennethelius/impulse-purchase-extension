@@ -6,6 +6,13 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+@font-face {
+  font-family: 'PKMN RBYGSC';
+  src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  font-weight: normal;
+  font-style: normal;
+}
+
 body {
   font-family: 'Press Start 2P', cursive;
   -webkit-font-smoothing: antialiased;
@@ -43,14 +50,22 @@ body {
   font-weight: 700;
   color: #1a1a1a;
   letter-spacing: 2px;
+  background: white;
+  padding: 8px 12px;
+  border: 2px solid #1a1a1a;
+  display: inline-block;
 }
 
 #header p {
   font-size: 8px;
-  color: #666;
-  margin-top: 4px;
-  font-weight: 400;
+  color: #1a1a1a;
+  margin-top: 8px;
+  font-weight: 700;
   letter-spacing: 1px;
+  background: white;
+  padding: 4px 8px;
+  border: 2px solid #1a1a1a;
+  display: inline-block;
 }
 
 /* Chat Response Box */
@@ -108,13 +123,16 @@ body {
 .message {
   margin-bottom: 10px;
   padding: 10px 12px;
-  border-radius: 4px;
+  border-radius: 2px;
   font-size: 8px;
   line-height: 1.4;
   animation: fadeIn 0.3s ease;
-  border: 2px solid #1a1a1a;
+  border: 3px solid #1a1a1a;
   word-wrap: break-word;
   letter-spacing: 1px;
+  background: white;
+  color: #1a1a1a;
+  font-weight: 700;
 }
 
 @keyframes fadeIn {
@@ -129,24 +147,24 @@ body {
 }
 
 .message.user {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: white;
+  color: #1a1a1a;
   margin-left: auto;
   margin-right: 0;
   max-width: 80%;
   border-bottom-right-radius: 2px;
   font-weight: 700;
-  border: 2px solid #1a1a1a;
+  border: 3px solid #1a1a1a;
 }
 
 .message.ai {
-  background: rgba(255, 255, 255, 0.9);
+  background: white;
   color: #1a1a1a;
   margin-right: auto;
   max-width: 80%;
   border-bottom-left-radius: 2px;
   font-weight: 700;
-  border: 2px solid #1a1a1a;
+  border: 3px solid #1a1a1a;
 }
 
 #input-section {
@@ -159,28 +177,29 @@ textarea {
   width: 100%;
   height: 80px;
   border: 3px solid #1a1a1a;
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 10px 12px;
   font-size: 8px;
   font-family: 'Press Start 2P', cursive;
   resize: none;
   transition: all 0.3s ease;
   color: #1a1a1a;
-  background: rgba(255, 255, 255, 0.9);
+  background: white;
   letter-spacing: 1px;
   line-height: 1.4;
+  font-weight: 700;
 }
 
 textarea:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #1a1a1a;
   background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.2);
 }
 
 textarea::placeholder {
   color: #999;
-  font-size: 7px;
+  font-weight: 700;
 }
 
 #button-section {
@@ -191,7 +210,7 @@ textarea::placeholder {
 button {
   flex: 1;
   padding: 10px 12px;
-  border-radius: 4px;
+  border-radius: 2px;
   border: 3px solid #1a1a1a;
   font-size: 8px;
   font-weight: 700;
@@ -200,17 +219,19 @@ button {
   transition: all 0.2s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
+  background: white;
+  color: #1a1a1a;
 }
 
 #send {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  background: white;
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(26, 26, 26, 0.3);
 }
 
 #send:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 6px 20px rgba(26, 26, 26, 0.4);
 }
 
 #send:active:not(:disabled) {
@@ -223,9 +244,9 @@ button {
 }
 
 #unlock {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: white;
-  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+  background: white;
+  color: #1a1a1a;
+  box-shadow: 0 4px 15px rgba(26, 26, 26, 0.3);
   border: 3px solid #1a1a1a;
 }
 
@@ -235,7 +256,7 @@ button {
 
 #unlock:not(:disabled):hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.4);
+  box-shadow: 0 6px 20px rgba(26, 26, 26, 0.4);
 }
 
 #unlock:not(:disabled):active {
