@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Generate Extension Icons</title>
+</head>
+<body>
+    <h2>Extension Icon Generator</h2>
+    <p>Right-click each canvas and save as PNG with the specified filename:</p>
+    
+    <div>
+        <h3>icon16.png</h3>
+        <canvas id="icon16" width="16" height="16"></canvas>
+    </div>
+    
+    <div>
+        <h3>icon48.png</h3>
+        <canvas id="icon48" width="48" height="48"></canvas>
+    </div>
+    
+    <div>
+        <h3>icon128.png</h3>
+        <canvas id="icon128" width="128" height="128"></canvas>
+    </div>
+    
+    <script>
+        function drawIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            // Draw rounded rectangle background
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Draw shield icon
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = Math.max(1, size / 32);
+            
+            // Shield shape
+            ctx.beginPath();
+            const centerX = size / 2;
+            const centerY = size / 2;
+            const shieldWidth = size * 0.6;
+            const shieldHeight = size * 0.7;
+            
+            ctx.moveTo(centerX, centerY - shieldHeight/2);
+            ctx.lineTo(centerX + shieldWidth/2, centerY - shieldHeight/4);
+            ctx.lineTo(centerX + shieldWidth/2, centerY + shieldHeight/4);
+            ctx.lineTo(centerX, centerY + shieldHeight/2);
+            ctx.lineTo(centerX - shieldWidth/2, centerY + shieldHeight/4);
+            ctx.lineTo(centerX - shieldWidth/2, centerY - shieldHeight/4);
+            ctx.closePath();
+            
+            ctx.fill();
+            ctx.stroke();
+            
+            // Draw dollar sign
+            ctx.fillStyle = '#667eea';
+            ctx.font = `bold ${size * 0.4}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', centerX, centerY);
+        }
+        
+        // Draw all icons
+        drawIcon('icon16', 16);
+        drawIcon('icon48', 48);
+        drawIcon('icon128', 128);
+    </script>
+</body>
+</html>

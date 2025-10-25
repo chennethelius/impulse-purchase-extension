@@ -1,0 +1,122 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    width: 400px;
+    min-height: 500px;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px;
+    color: #fff;
+}
+
+.stats-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.stats-title {
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.stat-box {
+    background: rgba(255, 255, 255, 0.15);
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 15px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-box:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+}
+
+.stat-box.highlight {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.5);
+    animation: glow 2s infinite;
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(255, 215, 0, 0.5);
+    }
+}
+
+.stat-label {
+    font-size: 9px;
+    margin-bottom: 8px;
+    opacity: 0.9;
+    letter-spacing: 1px;
+}
+
+.stat-value {
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    letter-spacing: 2px;
+}
+
+.stat-value.victory {
+    color: #4ade80;
+}
+
+.stat-value.defeat {
+    color: #f87171;
+}
+
+.stat-value.money {
+    color: #fbbf24;
+    font-size: 28px;
+}
+
+.reset-button {
+    margin-top: 10px;
+    padding: 12px 20px;
+    background: linear-gradient(to bottom, #ef4444, #dc2626);
+    border: 3px solid #000;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 9px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+}
+
+.reset-button:hover {
+    background: linear-gradient(to bottom, #dc2626, #b91c1c);
+    transform: translateY(-2px);
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.reset-button:active {
+    transform: translateY(1px);
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+}

@@ -7,24 +7,7 @@
     <link rel="stylesheet" href="popup.css">
 </head>
 <body>
-    <!-- Encounter transition overlay -->
-    <div class="encounter-overlay" id="encounterOverlay">
-        <div class="encounter-bar" style="top: 0%;"></div>
-        <div class="encounter-bar" style="top: 10%;"></div>
-        <div class="encounter-bar" style="top: 20%;"></div>
-        <div class="encounter-bar" style="top: 30%;"></div>
-        <div class="encounter-bar" style="top: 40%;"></div>
-        <div class="encounter-bar" style="top: 50%;"></div>
-        <div class="encounter-bar" style="top: 60%;"></div>
-        <div class="encounter-bar" style="top: 70%;"></div>
-        <div class="encounter-bar" style="top: 80%;"></div>
-        <div class="encounter-bar" style="top: 90%;"></div>
-    </div>
-    
     <div class="battle-scene">
-        <!-- Give Up Button - Top Left Corner -->
-        <button id="giveUpButton" class="give-up-button">GIVE UP</button>
-        
         <!-- Health Bar - Pokemon style in top right -->
         <div class="health-bar-container">
             <div class="pokemon-name">IMPULSE GUARDIAN</div>
@@ -33,12 +16,6 @@
                 <div class="health-bar" id="healthBar"></div>
             </div>
             <div class="health-text" id="healthText">100/100</div>
-        </div>
-        
-        <!-- Robot GIF under health bar -->
-        <div class="robot-container">
-            <img src="file:///C:/Users/thisi/Downloads/robot-idle.gif" alt="Robot Guardian" class="robot-gif">
-            <img src="file:///C:/Users/thisi/Downloads/01-49-38-604_512.webp" alt="Damage Effect" class="damage-effect" id="damageEffect">
         </div>
         
         <!-- Pokemon dialogue box at bottom -->
@@ -59,10 +36,14 @@
                 ></textarea>
                 <button id="sendButton" class="send-button">SEND</button>
             </div>
+            
+            <div class="action-buttons">
+                <button id="giveUpButton" class="give-up-button">GIVE UP</button>
+            </div>
         </div>
     </div>
     
-    <script src="config.js?v=4"></script>
-    <script src="popup.js?v=4"></script>
+    <script src="config.js"></script>
+    <script src="popup.js"></script>
 </body>
 </html>

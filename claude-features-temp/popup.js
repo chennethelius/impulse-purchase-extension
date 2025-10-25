@@ -15,14 +15,6 @@ const giveUpButton = document.getElementById('giveUpButton');
 updateHealthDisplay();
 setupEventListeners();
 
-// Remove encounter overlay after animation
-setTimeout(() => {
-    const overlay = document.getElementById('encounterOverlay');
-    if (overlay) {
-        overlay.remove();
-    }
-}, 1500);
-
 function setupEventListeners() {
     // Enter key submits message (Shift+Enter for new line)
     userInput.addEventListener('keydown', (e) => {
@@ -127,7 +119,7 @@ For weak argument:
 [DAMAGE: 6]"
 
 For good argument:
-"• Oof! That actually makes sense... �
+"• Oof! That actually makes sense... 💥
 • But have you checked if it's on sale?
 • You're starting to wear me down!
 [DAMAGE: 18]"
@@ -143,13 +135,13 @@ For repetitive:
             {
                 parts: [
                     {
-                        text: systemPrompt + "\n\n" + userMessage
+                        text: systemPrompt
                     }
                 ]
             }
         ],
         generationConfig: {
-            temperature: 0.8,
+            temperature: 0.85,
             maxOutputTokens: 256,
             topP: 0.95
         }
@@ -166,16 +158,12 @@ For repetitive:
         });
         
         if (!response.ok) {
-            console.error('API Response not OK:', response.status);
-            const errorText = await response.text();
-            console.error('Error details:', errorText);
             throw new Error(`API Error: ${response.status}`);
         }
         
         const data = await response.json();
         
-        if (!data.candidates || !data.candidates[0] || !data.candidates[0].content || !data.candidates[0].content.parts) {
-            console.error('Invalid API response structure:', data);
+        if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
             throw new Error('Invalid response structure');
         }
         
@@ -183,7 +171,7 @@ For repetitive:
         
         // Extract damage from response
         const damageMatch = botResponse.match(/\[DAMAGE:\s*(\d+)\]/i);
-        const damage = damageMatch ? parseInt(damageMatch[1]) : 0;
+        const damage = damageMatch ? Math.min(parseInt(damageMatch[1]), 35) : 0;
         const cleanResponse = botResponse.replace(/\[DAMAGE:\s*\d+\]/i, '').trim();
         
         // Add to conversation history
@@ -194,13 +182,13 @@ For repetitive:
             damage: damage
         };
     } catch (apiError) {
-        console.error('Cerebras API Error:', apiError);
+        console.error('Gemini API Error:', apiError);
         
-        // Provide a fallback response instead of error message
+        // Provide a fallback response
         const fallbackResponses = [
-            "• Hmm, interesting point you're making there... 🤔\n• But have you considered your budget?\n• Try harder to convince me!\n[DAMAGE: 8]",
-            "• That's one way to justify it... 💭\n• What about saving for emergencies?\n• You'll need better reasoning than that!\n[DAMAGE: 10]",
-            "• I see what you're trying to do... 😏\n• But is it REALLY necessary?\n• Keep trying, you're not there yet!\n[DAMAGE: 7]"
+            "• Hmm, interesting point! 🤔\n• But can you really afford it?\n• Try harder!\n[DAMAGE: 8]",
+            "• That's one way to justify it... 💭\n• What about your savings goals?\n• Not convinced yet!\n[DAMAGE: 10]",
+            "• I see what you're doing... 😏\n• But is it REALLY necessary?\n• Keep going!\n[DAMAGE: 7]"
         ];
         
         const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
@@ -258,18 +246,6 @@ function takeDamage(damage) {
     // Show damage number floating up
     showDamageNumber(damage);
     
-    // Show damage effect animation on robot
-    const damageEffect = document.getElementById('damageEffect');
-    if (damageEffect) {
-        damageEffect.classList.remove('show');
-        void damageEffect.offsetWidth; // Force reflow
-        damageEffect.classList.add('show');
-        
-        setTimeout(() => {
-            damageEffect.classList.remove('show');
-        }, 800);
-    }
-    
     // Add visual feedback based on damage amount
     const container = document.querySelector('.health-bar-container');
     if (damage >= 23) {
@@ -277,6 +253,7 @@ function takeDamage(damage) {
         container.style.animation = 'criticalHit 0.8s';
         document.body.style.animation = 'screenFlash 0.3s';
         
+        // Play sound effect (optional - could add audio element)
         console.log('💥 CRITICAL HIT!');
     } else if (damage >= 16) {
         container.style.animation = 'bigShake 0.6s';
@@ -330,43 +307,38 @@ function updateHealthDisplay() {
 }
 
 function handleVictory() {
-    // Update statistics - user won the battle (defeated the bot)
-    updateStats('victory');
+    // Disable input
+    userInput.disabled = true;
+    sendButton.disabled = true;
+    giveUpButton.disabled = true;
     
-    // Add victory message with random celebration
+    // Add victory message
     const victoryMessages = [
-        "GG WP! You've defeated me! Your wallet is now unlocked! 💸",
-        "FATALITY! You win! Fine, buy your thing. 💀",
-        "Achievement Unlocked: WALLET WARRIOR! 🏆",
-        "Critical hit to my defenses! Victory is yours! 💥"
+        "🏆 VICTORY! You've defeated the IMPULSE GUARDIAN!\n\nYour arguments were too strong! Purchase unlocked! 💳",
+        "💥 K.O.! The GUARDIAN has fainted!\n\nYou've proven this purchase is necessary! Proceed! ✨",
+        "⭐ BOSS DEFEATED! Achievement Unlocked!\n\nYour wallet is now accessible! Shop wisely! 🛒",
+        "🎯 CRITICAL SUCCESS! The GUARDIAN surrenders!\n\nYou've earned this purchase! Go forth and buy! 🎉"
     ];
     
     setTimeout(() => {
         const randomMessage = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
         addMessage(randomMessage, 'bot');
         
-        // Show victory banner in dialogue
-        const victoryBanner = document.createElement('div');
-        victoryBanner.className = 'dialogue-text';
-        victoryBanner.style.color = '#00a800';
-        victoryBanner.style.fontWeight = 'bold';
-        victoryBanner.style.textAlign = 'center';
-        victoryBanner.textContent = '★ BOSS DEFEATED! PURCHASE UNLOCKED! ★';
-        dialogueContent.appendChild(victoryBanner);
+        // Victory animation
+        document.querySelector('.health-bar-container').style.animation = 'victoryPulse 2s infinite';
         
-        // Allow purchase to proceed
-        window.parent.postMessage({
-            type: 'CLOSE_POPUP',
-            success: true,
-            allowPurchase: true
-        }, '*');
+        // Auto-close after 3 seconds
+        setTimeout(() => {
+            window.parent.postMessage({
+                type: 'CLOSE_POPUP',
+                success: true,
+                allowPurchase: true
+            }, '*');
+        }, 3000);
     }, 500);
 }
 
 function handleDefeat() {
-    // Update statistics - user gave up (bot won)
-    updateStats('defeat');
-    
     // User gave up
     const defeatMessages = [
         "🎉 Wise choice! The GUARDIAN is proud!\n\nYou've saved your money for something better! 💰",
@@ -392,53 +364,3 @@ function handleDefeat() {
         }, '*');
     }, 2000);
 }
-
-// Update statistics
-async function updateStats(result) {
-    try {
-        const data = await chrome.storage.local.get(['stats', 'currentPrice']);
-        const stats = data.stats || {
-            totalBattles: 0,
-            victories: 0,
-            defeats: 0,
-            moneySaved: 0
-        };
-        
-        stats.totalBattles += 1;
-        
-        if (result === 'victory') {
-            stats.victories += 1;
-        } else if (result === 'defeat') {
-            stats.defeats += 1;
-            // Use the actual detected price from content script
-            const detectedPrice = data.currentPrice || 50; // Fallback to $50 if no price found
-            stats.moneySaved += detectedPrice;
-            console.log('Added to money saved:', detectedPrice);
-        }
-        
-        await chrome.storage.local.set({ stats });
-    } catch (error) {
-        console.error('Error updating stats:', error);
-    }
-}
-
-// Add shake animation for health bar
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        25% { transform: translateX(-5px); }
-        75% { transform: translateX(5px); }
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3); }
-        50% { transform: scale(1.05); box-shadow: 0 6px 20px rgba(76, 175, 80, 0.5); }
-    }
-    
-    @keyframes victoryPulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-    }
-`;
-document.head.appendChild(style);
