@@ -4,7 +4,7 @@ const send = document.getElementById("send");
 const unlockBtn = document.getElementById("unlock");
 const battleMusic = document.getElementById('battle-music');
 
-send.addEventListener("click", () => {
+send.addEventListener("click", () => { 
   const userText = input.value.trim();
   if (!userText) return;
 
@@ -31,7 +31,7 @@ unlockBtn.addEventListener("click", () => {
   try{ window.top.document.querySelector("iframe").remove(); }catch(e){ /* ignore */ }
 });
 
-function addMessage(sender, text) {
+function addMessage(sender, text) { 
   const msg = document.createElement("div");
   msg.textContent = `${sender}: ${text}`;
   chat.appendChild(msg);
@@ -58,4 +58,58 @@ function tryPlayMusic(){
 
 document.addEventListener('DOMContentLoaded', ()=>{
   tryPlayMusic();
+});
+
+function makeSenderLabel(name){
+  const sp = document.createElement('span');
+  sp.className = 'sender';
+  sp.textContent = name;
+  return sp;
+}
+
+function makeTextNode(text){
+  const t = document.createElement('div');
+  t.className = 'text';
+  // preserve newlines
+  t.textContent = text;
+  return t;
+}
+
+function addFormattedMessage(sender, text, role='user'){
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + (role === 'ai' ? 'ai' : role === 'system' ? 'system' : 'user');
+  const label = makeSenderLabel(sender + ': ');
+  const body = makeTextNode(text);
+  msg.appendChild(label);
+  msg.appendChild(body);
+  chat.appendChild(msg);
+  // auto-scroll
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function submitUserMessage(){
+  const raw = input.value;
+  const userText = raw.trim();
+  if(!userText) return;
+  addFormattedMessage('You', userText, 'user');
+  input.value = '';
+
+  // simple persuasion score
+  const score = userText.length + (userText.match(/\b(need|must|because|important|value)\b/gi)||[]).length * 8 + (/[0-9]+/.test(userText)?8:0);
+
+  if(score > 40){
+    addFormattedMessage('Debate Bot', "Alright, that sounds reasonable. Go ahead!", 'ai');
+    unlockBtn.disabled = false;
+    try{ if(battleMusic){ battleMusic.pause(); battleMusic.currentTime = 0; } }catch(e){}
+  } else {
+    addFormattedMessage('Debate Bot', "Hmm... that doesn't sound convincing. Try again.", 'ai');
+  }
+}
+
+// Enter key submits (Enter) while Shift+Enter inserts newline
+input.addEventListener('keydown', (e)=>{
+  if(e.key === 'Enter' && !e.shiftKey){
+    e.preventDefault();
+    submitUserMessage();
+  }
 });
