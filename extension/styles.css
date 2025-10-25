@@ -517,3 +517,138 @@ button {
 .animate-pixelSpiral {
   animation: pixelSpiral 1.2s cubic-bezier(0.42, 0, 0.58, 1) forwards;
 }
+
+/* Health Bar Styles */
+#health-container {
+  grid-column: 1;
+  grid-row: 1;
+  background: white;
+  border: 3px solid #1a1a1a;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  align-items: center;
+  justify-content: center;
+}
+
+#health-label {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a1a1a;
+  text-align: center;
+  letter-spacing: 2px;
+}
+
+#health-bar-bg {
+  width: 100%;
+  height: 40px;
+  background: #e0e0e0;
+  border: 3px solid #1a1a1a;
+  position: relative;
+  overflow: hidden;
+}
+
+#health-bar {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #4CAF50, #8BC34A);
+  transition: width 0.5s ease, background 0.5s ease;
+  position: relative;
+}
+
+#health-bar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, 
+    rgba(255,255,255,0) 0%, 
+    rgba(255,255,255,0.3) 50%, 
+    rgba(255,255,255,0) 100%);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+#health-text {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1a1a1a;
+  text-align: center;
+}
+
+/* Damage Numbers */
+.damage-number {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  font-size: 32px;
+  font-weight: bold;
+  color: #ff6b6b;
+  animation: floatUp 1.5s ease-out forwards;
+  pointer-events: none;
+  z-index: 100;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.damage-number.high {
+  color: #ff9800;
+  font-size: 36px;
+}
+
+.damage-number.critical {
+  color: #f44336;
+  font-size: 42px;
+  text-shadow: 0 0 10px rgba(244, 67, 54, 0.8);
+  animation: criticalFloat 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-80px) scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes criticalFloat {
+  0% {
+    transform: translateY(0) scale(1.5) rotate(-10deg);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-40px) scale(1.2) rotate(10deg);
+  }
+  100% {
+    transform: translateY(-80px) scale(0.8) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+/* Critical Hit Animation */
+.animate-criticalHit {
+  animation: criticalHit 0.8s ease-in-out;
+}
+
+@keyframes criticalHit {
+  0%, 100% { transform: translateX(0) scaleX(1); }
+  10% { transform: translateX(-15px) scaleX(0.95); }
+  20% { transform: translateX(15px) scaleX(0.95); }
+  30% { transform: translateX(-15px) scaleX(0.95); }
+  40% { transform: translateX(15px) scaleX(0.95); }
+  50% { transform: translateX(-10px) scaleX(0.98); }
+  60% { transform: translateX(10px) scaleX(0.98); }
+  70% { transform: translateX(-10px) scaleX(0.98); }
+  80% { transform: translateX(10px) scaleX(0.98); }
+  90% { transform: translateX(-5px) scaleX(1); }
+}

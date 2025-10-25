@@ -3,6 +3,8 @@ const input = document.getElementById("user-input");
 const send = document.getElementById("send");
 const unlockBtn = document.getElementById("unlock");
 const container = document.getElementById("chat-container");
+const healthBar = document.getElementById("health-bar");
+const healthText = document.getElementById("health-text");
 
 // Initialize Animation Service
 const animationService = new AnimationService();
@@ -10,6 +12,10 @@ registerPokemonAnimations(animationService);
 
 // Initialize Text Animation
 const textAnimation = TextAnimation;
+
+// Health tracking
+let currentHealth = CONFIG.INITIAL_HEALTH;
+let maxHealth = CONFIG.INITIAL_HEALTH;
 
 // Hide chat container initially
 container.style.opacity = "0";
@@ -42,10 +48,87 @@ async function initialize() {
 
   // 5. Add initial AI message after entrance with typewriter effect
   await addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
+  
+  // 6. Initialize health bar
+  updateHealthDisplay();
 }
 
 // Delay initialization slightly for better effect
 setTimeout(initialize, 200);
+
+// Health management functions
+function updateHealthDisplay() {
+  const healthPercentage = (currentHealth / maxHealth) * 100;
+  healthBar.style.width = `${healthPercentage}%`;
+  healthText.textContent = `${currentHealth}/${maxHealth}`;
+  
+  // Update health bar color based on percentage
+  if (healthPercentage <= 30) {
+    healthBar.style.background = 'linear-gradient(90deg, #f44336, #ff6b6b)';
+  } else if (healthPercentage <= 60) {
+    healthBar.style.background = 'linear-gradient(90deg, #FF9800, #FFB74D)';
+  } else {
+    healthBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
+  }
+}
+
+async function takeDamage(damage) {
+  if (damage <= 0) return;
+  
+  currentHealth = Math.max(0, currentHealth - damage);
+  
+  // Show damage number
+  showDamageNumber(damage);
+  
+  // Play damage animation
+  if (damage >= 25) {
+    await animationService.playAnimation(container, "criticalHit");
+  } else if (damage >= 15) {
+    await animationService.playAnimation(container, "shake");
+  }
+  
+  // Update health display
+  updateHealthDisplay();
+  
+  // Check if defeated
+  if (currentHealth <= 0) {
+    await handleDefeat();
+  }
+}
+
+function showDamageNumber(damage) {
+  const damageDiv = document.createElement('div');
+  damageDiv.className = 'damage-number';
+  damageDiv.textContent = `-${damage}`;
+  
+  if (damage >= 25) {
+    damageDiv.classList.add('critical');
+    damageDiv.textContent = `CRITICAL! -${damage}`;
+  } else if (damage >= 20) {
+    damageDiv.classList.add('high');
+  }
+  
+  const healthContainer = document.getElementById('health-container');
+  healthContainer.appendChild(damageDiv);
+  
+  setTimeout(() => damageDiv.remove(), 1500);
+}
+
+async function handleDefeat() {
+  unlockBtn.disabled = false;
+  
+  const victoryMessages = [
+    "You've defeated me! Your argument was too strong... 💀",
+    "GG! You win this round. Go make your purchase! 🎮",
+    "Alright, you convinced me. This purchase seems justified! ✨",
+    "CRITICAL HIT! I'm defeated... Proceed with your purchase! 💥"
+  ];
+  
+  const randomMessage = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
+  await addMessage("AI", randomMessage, false);
+  
+  await animationService.playSequence(container, ["spin", "pulse"]);
+}
 
 send.addEventListener("click", handleSendMessage);
 input.addEventListener("keypress", (e) => {
@@ -96,9 +179,9 @@ async function handleSendMessage() {
       const response = await callCerebrasAPI(userText);
       await addMessage("AI", response.text, false);
       
-      // Check if user won based on damage dealt to AI
-      if (response.damage <= 0) {
-        unlockBtn.disabled = false;
+      // Apply damage to AI health
+      if (response.damage > 0) {
+        await takeDamage(response.damage);
       }
     } catch (error) {
       console.error('Error calling Cerebras:', error);
@@ -123,7 +206,8 @@ async function callCerebrasAPI(userMessage) {
   );
   
   // Prepare the prompt with better instructions
-  const systemPrompt = `You are a sassy AI guardian blocking impulse purchases.
+  const systemPrompt = `You are a sassy AI guardian blocking impulse purchases. Current HP: ${currentHealth}/${maxHealth}
+
 USER'S ARGUMENT: "${userMessage}"
 
 PREVIOUS ARGUMENTS: ${conversationHistory.filter(m => m.role === 'user').slice(-2).map(m => m.content).join(', ') || 'none'}
@@ -133,20 +217,28 @@ RESPOND WITH EXACTLY 3 SHORT BULLET POINTS (max 10 words each):
 • Point 2: Challenge or question them  
 • Point 3: Taunt or encourage
 
-DAMAGE RULES (how convincing their argument is):
-${isRepetitive ? '- REPETITIVE ARGUMENT = 0 damage (call them out!)' : ''}
-- Irrelevant/joke = 0-5 damage
-- Mentions need but weak = 15-18 damage (minimum for relevant points!)
-- Good reasoning + budget = 19-23 damage
-- Excellent + urgent need = 24-30 damage
+DAMAGE RULES - How much HP I lose based on their argument:
+${isRepetitive ? '- REPETITIVE ARGUMENT = 0 damage (call them out for repeating!)' : ''}
+- Completely irrelevant/joke/nonsense = 0-5 damage
+- Somewhat reasonable but weak = 15-18 damage (MINIMUM for any relevant point!)
+- Good reasoning with budget/need mentioned = 19-24 damage
+- Excellent compelling argument = 25-30 damage (MAX DAMAGE!)
+
+IMPORTANT: If their argument is AT ALL reasonable or mentions a real need, give AT LEAST 15 damage!
+If they repeat the same point, give 0 damage and call them out!
 
 End with: [DAMAGE: X]
 
-Example response:
+Example responses:
 • Nice try with the "I need it" excuse 🙄
 • But WHY do you need it RIGHT NOW?
 • Come on, give me something better than that!
-[DAMAGE: 5]`;
+[DAMAGE: 5]
+
+• Okay, that's actually a decent point... 😤
+• You mentioned your budget, I'll give you that
+• But I'm still not fully convinced!
+[DAMAGE: 18]`;
   
   const requestBody = {
     model: "llama3.1-8b",

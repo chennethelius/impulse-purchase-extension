@@ -78,6 +78,11 @@ function registerPokemonAnimations(animService) {
     duration: 300,
     description: "Fun jiggle animation"
   });
+
+  animService.registerAnimation("criticalHit", {
+    duration: 800,
+    description: "Critical hit shake effect"
+  });
 }
 
 // Export for use in both browser and Node.js
