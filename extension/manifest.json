@@ -26,6 +26,10 @@
         "fonts.css",
         "styles.css",
         "overlay.js",
+        "overlay-auth.js",
+        "firebase-config.js",
+        "firebase-auth.js",
+        "firebase-service.js",
         "animations/AnimationService.js",
         "animations/pokemon-animations.js",
         "animations/TextAnimation.js"

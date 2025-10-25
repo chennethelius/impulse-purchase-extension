@@ -1,3 +1,10 @@
+import { getCurrentUser } from './firebase-auth.js';
+import { 
+  logChat, 
+  addMessageToChat, 
+  completChat 
+} from './firebase-service.js';
+
 const chat = document.getElementById("chat");
 const input = document.getElementById("user-input");
 const send = document.getElementById("send");
@@ -11,12 +18,45 @@ registerPokemonAnimations(animationService);
 // Initialize Text Animation
 const textAnimation = TextAnimation;
 
+// Firebase tracking variables
+let currentChatId = null;
+let currentItemPrice = 0;
+let currentItemName = "";
+let currentDomain = "";
+let aiHealth = 100;
+let chatStartTime = null;
+
 // Hide chat container initially
 container.style.opacity = "0";
 container.style.pointerEvents = "none";
 
 // Initialize: Play entrance animation and greeting
 async function initialize() {
+  // Check if user is logged in
+  const user = getCurrentUser();
+  if (!user) {
+    console.log("User not logged in, skipping Firebase logging");
+    return;
+  }
+
+  // Extract item info from page
+  currentDomain = window.location.hostname;
+  
+  try {
+    // Start a new chat session in Firebase
+    currentChatId = await logChat(user.uid, {
+      domain: currentDomain,
+      itemName: currentItemName || "Unknown Item",
+      itemPrice: currentItemPrice,
+      itemURL: window.location.href
+    });
+    console.log("Chat session started:", currentChatId);
+  } catch (error) {
+    console.error("Error starting chat session:", error);
+  }
+
+  chatStartTime = Date.now();
+
   // === POKEMON ENCOUNTER SEQUENCE ===
   // 1. Flash body white
   await animationService.playAnimation(document.body, "whiteFlash");
@@ -41,7 +81,22 @@ async function initialize() {
   ]);
 
   // 5. Add initial AI message after entrance with typewriter effect
-  await addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
+  const initialMessage = "Before you buy, ask yourself: Is this a genuine need or an impulse?";
+  await addMessage("AI", initialMessage, false);
+
+  // Log initial AI message to Firebase
+  const user2 = getCurrentUser();
+  if (user2 && currentChatId) {
+    try {
+      await addMessageToChat(user2.uid, currentChatId, {
+        role: "ai",
+        content: initialMessage,
+        damage: 0
+      });
+    } catch (error) {
+      console.error("Error logging initial message:", error);
+    }
+  }
 }
 
 // Delay initialization slightly for better effect
@@ -56,6 +111,20 @@ input.addEventListener("keypress", (e) => {
 });
 
 unlockBtn.addEventListener("click", async () => {
+  // Log chat completion - user chose to purchase
+  const user = getCurrentUser();
+  if (user && currentChatId) {
+    try {
+      await completChat(user.uid, currentChatId, {
+        type: "purchased",
+        userConvinced: true
+      });
+      console.log("Purchase recorded in Firebase");
+    } catch (error) {
+      console.error("Error recording purchase:", error);
+    }
+  }
+
   // Victory sequence
   await animationService.playSequence(container, [
     "spin",
@@ -84,6 +153,20 @@ async function handleSendMessage() {
   input.value = "";
   send.disabled = true;
 
+  // Log user message to Firebase
+  const user = getCurrentUser();
+  if (user && currentChatId) {
+    try {
+      await addMessageToChat(user.uid, currentChatId, {
+        role: "user",
+        content: userText,
+        damage: 0
+      });
+    } catch (error) {
+      console.error("Error logging user message:", error);
+    }
+  }
+
   // Play attack animation while "thinking"
   await animationService.playAnimation(container, "shake");
 
@@ -95,6 +178,21 @@ async function handleSendMessage() {
     try {
       const response = await callCerebrasAPI(userText);
       await addMessage("AI", response.text, false);
+      
+      // Log AI response to Firebase
+      const user2 = getCurrentUser();
+      if (user2 && currentChatId) {
+        try {
+          await addMessageToChat(user2.uid, currentChatId, {
+            role: "ai",
+            content: response.text,
+            damage: response.damage
+          });
+          aiHealth -= response.damage;
+        } catch (error) {
+          console.error("Error logging AI message:", error);
+        }
+      }
       
       // Check if user won based on damage dealt to AI
       if (response.damage <= 0) {
@@ -253,3 +351,43 @@ async function addMessage(sender, text, isUser) {
   // Auto-scroll to bottom again after animation
   chat.scrollTop = chat.scrollHeight;
 }
+
+/**
+ * Show a screen by hiding others
+ */
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(screen => {
+    screen.classList.remove('active');
+  });
+  const screen = document.getElementById(screenId);
+  if (screen) {
+    screen.classList.add('active');
+  }
+}
+
+/**
+ * Listen to auth state changes and show appropriate screen
+ */
+onAuthChange((user) => {
+  if (user) {
+    console.log('User authenticated in overlay:', user.email);
+    // Show dashboard screen first
+    showScreen('dashboard-screen');
+  } else {
+    console.log('User not authenticated in overlay');
+    // Show auth screen
+    showScreen('auth-screen');
+  }
+});
+
+// Show chat screen when the blocker is triggered from a purchase page
+window.addEventListener('load', () => {
+  const user = getCurrentUser();
+  if (user && window.location.hostname.includes('amazon') || 
+      window.location.hostname.includes('ebay') || 
+      window.location.hostname.includes('etsy')) {
+    // We're on a shopping site, show the chat blocker
+    showScreen('chat-container');
+    setTimeout(initialize, 200);
+  }
+});
