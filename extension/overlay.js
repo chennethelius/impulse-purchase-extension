@@ -10,6 +10,9 @@ registerPokemonAnimations(animationService);
 
 // Initialize: Play entrance animation and greeting
 async function initialize() {
+  // Remove hidden class to make element visible, then play animation
+  container.classList.remove("hidden");
+  
   // Play entrance with Pokemon showdown effect
   await animationService.playSequence(container, [
     "pokemonEnter",
