@@ -1,16 +1,34 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
-    <div id="chat-container">
-      <h2>Impulse Check 🤔</h2>
-      <div id="chat"></div>
-      <textarea id="user-input" placeholder="Convince me..."></textarea>
-      <button id="send">Send</button>
-      <button id="unlock" disabled>Proceed to Purchase</button>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impulse Check</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="chat-container">
+    <div id="header">
+      <h2>⏸️ Hold up!</h2>
+      <p>Let's make sure this is a good idea</p>
     </div>
-    <script src="overlay.js"></script>
-  </body>
+    
+    <div id="chat"></div>
+    
+    <div id="input-section">
+      <textarea 
+        id="user-input" 
+        placeholder="Why do you really need this? Be honest..."
+        autofocus
+      ></textarea>
+      
+      <div id="button-section">
+        <button id="send">Send</button>
+        <button id="unlock" disabled>Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="overlay.js"></script>
+</body>
 </html>
