@@ -1,26 +1,28 @@
 {
   "manifest_version": 3,
-  "name": "Impulse Blocker",
+  "name": "Impulse Purchase Blocker",
   "version": "1.0",
-  "description": "Blocks purchase pages until you convince the chatbot to let you buy.",
-  "permissions": ["storage", "tabs", "scripting"],
+  "description": "Stop impulse buying by convincing an AI chatbot that your purchase is necessary.",
+  "permissions": ["storage", "tabs", "scripting", "activeTab", "notifications"],
   "host_permissions": [
-    "*://*.amazon.com/*",
-    "*://*.ebay.com/*",
-    "*://*.etsy.com/*"
+    "<all_urls>"
   ],
+  "action": {
+    "default_title": "Impulse Purchase Blocker"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.amazon.com/*", "*://*.ebay.com/*", "*://*.etsy.com/*"],
-      "js": ["content.js"]
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["overlay.html", "styles.css"],
+      "resources": ["popup.html", "popup.css", "popup.js", "config.js"],
       "matches": ["<all_urls>"]
     }
   ]

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Purchase Blocker</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛑 Hold Up!</h1>
+            <p class="subtitle">Convince me this purchase is necessary</p>
+        </div>
+        
+        <div class="health-container">
+            <div class="health-label">Bot Resistance</div>
+            <div class="health-bar-bg">
+                <div class="health-bar" id="healthBar"></div>
+            </div>
+            <div class="health-text" id="healthText">100/100</div>
+        </div>
+        
+        <div class="chat-container" id="chatContainer">
+            <div class="message bot-message">
+                <div class="message-avatar">🛡️</div>
+                <div class="message-content">
+                    <strong>BOSS BATTLE: IMPULSE GUARDIAN</strong><br>
+                    💰 "Another impulse buy? Not on my watch! Convince me or walk away, challenger!" 🎮
+                </div>
+            </div>
+        </div>
+        
+        <div class="input-container">
+            <textarea 
+                id="userInput" 
+                placeholder="Type your argument here..."
+                rows="3"
+            ></textarea>
+            <button id="sendButton" class="send-button">Send</button>
+        </div>
+        
+        <div class="action-buttons">
+            <button id="giveUpButton" class="give-up-button">Give Up</button>
+            <button id="proceedButton" class="proceed-button" disabled>
+                Proceed to Purchase
+            </button>
+        </div>
+        
+        <div class="warning-text" id="warningText">
+            You cannot close this window until you convince the bot!
+        </div>
+    </div>
+    
+    <script src="config.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>
