@@ -1,149 +1,51 @@
-const chat = document.getElementById("chat");
-const input = document.getElementById("user-input");
-const send = document.getElementById("send");
-const unlockBtn = document.getElementById("unlock");
-const container = document.getElementById("chat-container");
+const chat = document.getElementById('chat');
+const input = document.getElementById('user-input');
+const send = document.getElementById('send');
+const unlockBtn = document.getElementById('unlock');
+const battleMusic = document.getElementById('battle-music');
 
-// Initialize Animation Service
-const animationService = new AnimationService();
-registerPokemonAnimations(animationService);
-
-// Initialize Text Animation
-const textAnimation = TextAnimation;
-
-// Hide chat container initially
-container.style.opacity = "0";
-container.style.pointerEvents = "none";
-
-// Initialize: Play entrance animation and greeting
-async function initialize() {
-  // === POKEMON ENCOUNTER SEQUENCE ===
-  // 1. Flash body white
-  await animationService.playAnimation(document.body, "whiteFlash");
-  
-  // 2. Create and animate pixelated spiral overlay
-  const spiral = document.createElement("div");
-  spiral.id = "pokemon-spiral";
-  document.body.appendChild(spiral);
-  
-  await animationService.playAnimation(spiral, "pixelSpiral");
-  
-  // 3. Remove spiral overlay
-  spiral.remove();
-  
-  // 4. Show chat container and play entrance animations
-  container.style.opacity = "1";
-  container.style.pointerEvents = "auto";
-  
-  await animationService.playSequence(container, [
-    "pokemonEnter",
-    "bounce"
-  ]);
-
-  // 5. Add initial AI message after entrance with typewriter effect
-  await addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
-}
-
-// Delay initialization slightly for better effect
-setTimeout(initialize, 200);
-
-send.addEventListener("click", handleSendMessage);
-input.addEventListener("keypress", (e) => {
-  if (e.key === "Enter" && !e.shiftKey) {
-    e.preventDefault();
-    handleSendMessage();
-  }
-});
-
-unlockBtn.addEventListener("click", async () => {
-  // Victory sequence
-  await animationService.playSequence(container, [
-    "spin",
-    "pulse"
-  ]);
-
-  // Send unlock message to background script
-  chrome.runtime.sendMessage(
-    { type: "requestUnlock", domain: window.location.hostname },
-    () => {
-      // Remove the iframe overlay with fade effect
-      animationService.playAnimation(container, "fadeOut").then(() => {
-        window.top.document.querySelector("iframe").remove();
-      });
-    }
-  );
-});
-
-async function handleSendMessage() {
+send.addEventListener('click', () => {
   const userText = input.value.trim();
   if (!userText || animationService.isAnimating()) return;
 
-  await addMessage("You", userText, true);
-  input.value = "";
-  send.disabled = true;
+  addMessage('You', userText);
+  input.value = '';
 
-  // Play attack animation while "thinking"
-  await animationService.playAnimation(container, "shake");
+  const score = userText.length + (userText.includes('need') ? 10 : 0);
 
-  // Simulate AI thinking with glow effect
-  container.classList.add("animate-glow");
-  
-  setTimeout(async () => {
-    container.classList.remove("animate-glow");
-    const response = evaluateResponse(userText);
-    await addMessage("AI", response, false);
-    send.disabled = false;
-    input.focus();
-  }, 800);
-}
-
-function evaluateResponse(text) {
-  const lowerText = text.toLowerCase();
-  
-  // Check for genuine need indicators
-  const needIndicators = [
-    "need", "essential", "necessary", "broke", "damaged", "replaced",
-    "emergency", "urgent", "running low", "life", "work", "school"
-  ];
-  
-  const impulseIndicators = [
-    "want", "like", "cool", "pretty", "nice", "looks", "trendy", "awesome",
-    "everyone has", "on sale", "limited time", "fomo", "fear of missing"
-  ];
-
-  const hasNeed = needIndicators.some(word => lowerText.includes(word));
-  const hasImpulse = impulseIndicators.some(word => lowerText.includes(word));
-  
-  let score = 0;
-  
-  // Scoring logic
-  score += text.length > 20 ? 10 : 0;
-  score += hasNeed ? 30 : 0;
-  score -= hasImpulse ? 20 : 0;
-  
-  // Multiple sentences suggest thoughtfulness
-  score += (text.match(/[.!?]/g) || []).length * 5;
-  
-  if (score > 35 && !hasImpulse) {
+  if (score > 40) {
+    addMessage('AI', 'Alright, that sounds reasonable. Go ahead!');
     unlockBtn.disabled = false;
-    return "✨ That sounds like a genuine need. You can proceed, but maybe sleep on it first! 😊";
-  } else if (score > 20) {
-    return "🤔 I'm getting closer... Can you give me a more specific reason? Why *right now*?";
+    // stop music when unlocking
+    try {
+      if (battleMusic) {
+        battleMusic.pause();
+        battleMusic.currentTime = 0;
+      }
+    } catch (e) {}
   } else {
-    return "😅 Not quite there yet. Be honest with me—is this something you really need?";
+    addMessage('AI', 'Hmm... that doesn’t sound convincing. Try again.');
   }
-}
+});
 
-/**
- * Add message to chat with proper styling and animation
- * @param {string} sender - "You" or "AI"
- * @param {string} text - Message text
- * @param {boolean} isUser - True if user message
- * @returns {Promise} Resolves when message animation completes
- */
-async function addMessage(sender, text, isUser) {
-  const msg = document.createElement("div");
-  msg.className = `message ${isUser ? "user" : "ai"}`;
+unlockBtn.addEventListener('click', () => {
+  try {
+    // stop music on unlock
+    if (battleMusic) {
+      battleMusic.pause();
+      battleMusic.currentTime = 0;
+    }
+  } catch (e) {}
+  try {
+    window.top.document.querySelector('iframe').remove();
+  } catch (e) {
+    /* ignore */
+  }
+});
+
+function addMessage(sender, text) {
+  const msg = document.createElement('div');
+  msg.textContent = `${sender}: ${text}`;
   chat.appendChild(msg);
   
   // Auto-scroll to bottom
@@ -160,3 +62,88 @@ async function addMessage(sender, text, isUser) {
   // Auto-scroll to bottom again after animation
   chat.scrollTop = chat.scrollHeight;
 }
+
+// Try to play the battle music when the overlay loads; if autoplay is blocked, start on first user gesture.
+function tryPlayMusic() {
+  if (!battleMusic) return;
+  battleMusic.loop = true;
+  battleMusic.volume = 0.7;
+  const p = battleMusic.play();
+  if (p && typeof p.then === 'function') {
+    p.catch(() => {
+      const startOnInteraction = () => {
+        battleMusic.play().catch(() => {});
+        window.removeEventListener('click', startOnInteraction);
+        window.removeEventListener('keydown', startOnInteraction);
+      };
+      window.addEventListener('click', startOnInteraction, { once: true });
+      window.addEventListener('keydown', startOnInteraction, { once: true });
+    });
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  tryPlayMusic();
+});
+
+function makeSenderLabel(name) {
+  const sp = document.createElement('span');
+  sp.className = 'sender';
+  sp.textContent = name;
+  return sp;
+}
+
+function makeTextNode(text) {
+  const t = document.createElement('div');
+  t.className = 'text';
+  // preserve newlines
+  t.textContent = text;
+  return t;
+}
+
+function addFormattedMessage(sender, text, role = 'user') {
+  const msg = document.createElement('div');
+  msg.className = 'msg ' + (role === 'ai' ? 'ai' : role === 'system' ? 'system' : 'user');
+  const label = makeSenderLabel(sender + ': ');
+  const body = makeTextNode(text);
+  msg.appendChild(label);
+  msg.appendChild(body);
+  chat.appendChild(msg);
+  // auto-scroll
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function submitUserMessage() {
+  const raw = input.value;
+  const userText = raw.trim();
+  if (!userText) return;
+  addFormattedMessage('You', userText, 'user');
+  input.value = '';
+
+  // simple persuasion score
+  const score =
+    userText.length +
+    (userText.match(/\b(need|must|because|important|value)\b/gi) || []).length * 8 +
+    (/[0-9]+/.test(userText) ? 8 : 0);
+
+  if (score > 40) {
+    addFormattedMessage('Debate Bot', 'Alright, that sounds reasonable. Go ahead!', 'ai');
+    unlockBtn.disabled = false;
+    try {
+      if (battleMusic) {
+        battleMusic.pause();
+        battleMusic.currentTime = 0;
+      }
+    } catch (e) {}
+  } else {
+    addFormattedMessage('Debate Bot', "Hmm... that doesn't sound convincing. Try again.", 'ai');
+  }
+}
+
+// Enter key submits (Enter) while Shift+Enter inserts newline
+input.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    submitUserMessage();
+  }
+});

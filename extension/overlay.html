@@ -1,40 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Impulse Check</title>
-  <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-  <div id="chat-container">
-    <div id="layout-wrapper">
-      <!-- Top Right: Chat Output -->
-      <div id="chat-section">
-        <div id="chat"></div>
-      </div>
-      
-      <!-- Bottom Left: Input -->
-      <div id="input-section">
-        <textarea 
-          id="user-input" 
-          placeholder="Why do you really need this? Be honest..."
-          autofocus
-        ></textarea>
-        
-        <div id="button-section">
-          <button id="send">Send</button>
-          <button id="unlock" disabled>Proceed</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <head>
+    <link rel="stylesheet" href="styles.css" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+  </head>
+  <body>
+    <!-- Fullscreen UI container (transparent panel over pixel-art background) -->
+    <div id="chat-container">
+      <header class="oc-header">
+        <h2>Impulse Check 🤔</h2>
+        <button id="unlock" class="unlock" disabled>Proceed to Purchase</button>
+      </header>
 
-  <!-- Animation System Scripts -->
-  <script src="animations/AnimationService.js"></script>
-  <script src="animations/pokemon-animations.js"></script>
-  <script src="animations/TextAnimation.js"></script>
-  <script src="overlay.js"></script>
-</body>
+      <main class="oc-main">
+        <div id="chat" class="chat"></div>
+      </main>
+
+      <footer class="oc-footer">
+        <textarea id="user-input" placeholder="Convince me..."></textarea>
+        <div class="controls">
+          <button id="send">Send</button>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Battle music: place your mp3 at extension/assets/battle-loop.mp3 -->
+    <audio id="battle-music" src="assets/battle-loop.mp3" preload="auto"></audio>
+    <script src="overlay.js"></script>
+  </body>
 </html>
