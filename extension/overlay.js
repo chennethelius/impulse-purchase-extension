@@ -2,11 +2,26 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("user-input");
 const send = document.getElementById("send");
 const unlockBtn = document.getElementById("unlock");
+const container = document.getElementById("chat-container");
 
-// Add initial AI message
-setTimeout(() => {
+// Initialize Animation Service
+const animationService = new AnimationService();
+registerPokemonAnimations(animationService);
+
+// Initialize: Play entrance animation and greeting
+async function initialize() {
+  // Play entrance with Pokemon showdown effect
+  await animationService.playSequence(container, [
+    "pokemonEnter",
+    "bounce"
+  ]);
+
+  // Add initial AI message after entrance
   addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
-}, 300);
+}
+
+// Delay initialization slightly for better effect
+setTimeout(initialize, 200);
 
 send.addEventListener("click", handleSendMessage);
 input.addEventListener("keypress", (e) => {
@@ -16,32 +31,46 @@ input.addEventListener("keypress", (e) => {
   }
 });
 
-unlockBtn.addEventListener("click", () => {
+unlockBtn.addEventListener("click", async () => {
+  // Victory sequence
+  await animationService.playSequence(container, [
+    "spin",
+    "pulse"
+  ]);
+
   // Send unlock message to background script
   chrome.runtime.sendMessage(
     { type: "requestUnlock", domain: window.location.hostname },
     () => {
-      // Remove the iframe overlay
-      window.top.document.querySelector("iframe").remove();
+      // Remove the iframe overlay with fade effect
+      animationService.playAnimation(container, "fadeOut").then(() => {
+        window.top.document.querySelector("iframe").remove();
+      });
     }
   );
 });
 
-function handleSendMessage() {
+async function handleSendMessage() {
   const userText = input.value.trim();
-  if (!userText) return;
+  if (!userText || animationService.isAnimating()) return;
 
   addMessage("You", userText, true);
   input.value = "";
   send.disabled = true;
 
-  // Simulate AI thinking
+  // Play attack animation while "thinking"
+  await animationService.playAnimation(container, "shake");
+
+  // Simulate AI thinking with glow effect
+  container.classList.add("animate-glow");
+  
   setTimeout(() => {
+    container.classList.remove("animate-glow");
     const response = evaluateResponse(userText);
     addMessage("AI", response, false);
     send.disabled = false;
     input.focus();
-  }, 600);
+  }, 800);
 }
 
 function evaluateResponse(text) {
