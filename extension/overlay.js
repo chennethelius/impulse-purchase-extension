@@ -2,6 +2,7 @@ const chat = document.getElementById("chat");
 const input = document.getElementById("user-input");
 const send = document.getElementById("send");
 const unlockBtn = document.getElementById("unlock");
+const testDefeatBtn = document.getElementById("test-defeat");
 const container = document.getElementById("chat-container");
 const healthBar = document.getElementById("health-bar");
 const healthText = document.getElementById("health-text");
@@ -47,7 +48,7 @@ async function initialize() {
   ]);
 
   // 5. Add initial AI message after entrance with typewriter effect
-  await addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
+  await addMessage("AI", "🛡️ Before you buy, convince me this isn't an impulse purchase! Defeat me for 5 minutes of shopping freedom!", false);
   
   // 6. Initialize health bar
   updateHealthDisplay();
@@ -118,10 +119,10 @@ async function handleDefeat() {
   unlockBtn.disabled = false;
   
   const victoryMessages = [
-    "You've defeated me! Your argument was too strong... 💀",
-    "GG! You win this round. Go make your purchase! 🎮",
-    "Alright, you convinced me. This purchase seems justified! ✨",
-    "CRITICAL HIT! I'm defeated... Proceed with your purchase! 💥"
+    "You've defeated me! 💀 You have 5 minutes to complete your purchase!",
+    "GG! You win! 🎮 Shopping unlocked for 5 minutes!",
+    "Alright, you convinced me! ✨ 5-minute shopping pass granted!",
+    "CRITICAL HIT! I'm defeated... 💥 Quick, you have 5 minutes!"
   ];
   
   const randomMessage = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
@@ -145,18 +146,32 @@ unlockBtn.addEventListener("click", async () => {
     "pulse"
   ]);
 
+  // Send unlock message to parent window
+  window.parent.postMessage({ type: 'UNLOCK_PURCHASE' }, '*');
+  
   // Send unlock message to background script
   chrome.runtime.sendMessage(
     { type: "requestUnlock", domain: window.location.hostname },
     () => {
       // Remove the iframe overlay with fade effect
       animationService.playAnimation(container, "fadeOut").then(() => {
-        window.top.document.querySelector("iframe").remove();
+        const iframe = window.parent.document.getElementById('impulse-blocker-iframe');
+        if (iframe) {
+          iframe.remove();
+        }
       });
     }
   );
 });
 
+// Test button - instantly defeat the bot
+testDefeatBtn.addEventListener("click", async () => {
+  currentHealth = 0;
+  updateHealthDisplay();
+  await handleDefeat();
+});
+
+// Conversation history - resets on each new popup (no data shared between sessions)
 let conversationHistory = [];
 
 async function handleSendMessage() {
@@ -206,46 +221,60 @@ async function callCerebrasAPI(userMessage) {
   );
   
   // Prepare the prompt with better instructions
-  const systemPrompt = `You are a sassy AI guardian blocking impulse purchases. Current HP: ${currentHealth}/${maxHealth}
+  const systemPrompt = `You are a skeptical but fair AI guardian blocking impulse purchases. Current HP: ${currentHealth}/${maxHealth}
 
 USER'S ARGUMENT: "${userMessage}"
 
 PREVIOUS ARGUMENTS: ${conversationHistory.filter(m => m.role === 'user').slice(-2).map(m => m.content).join(', ') || 'none'}
 
-RESPOND WITH EXACTLY 3 SHORT BULLET POINTS (max 10 words each):
-• Point 1: React to their argument
-• Point 2: Challenge or question them  
-• Point 3: Taunt or encourage
+RESPOND WITH EXACTLY 2 SHORT BULLET POINTS (max 8 words each):
+• Point 1: React to their argument (be POSITIVE if it's valid!)
+• Point 2: Challenge them OR admit they're winning
+
+TONE RULES:
+- If argument is WEAK (0-10 damage): Be skeptical but not mean
+- If argument is DECENT (15-25 damage): Be impressed and acknowledge it! 👍
+- If argument is STRONG (26-45 damage): Be very impressed, compliment them! 🎯
 
 DAMAGE RULES - How much HP I lose based on their argument:
 ${isRepetitive ? '- REPETITIVE ARGUMENT = 0 damage (call them out for repeating!)' : ''}
-- Completely irrelevant/joke/nonsense = 0-5 damage
-- Somewhat reasonable but weak = 15-18 damage (MINIMUM for any relevant point!)
-- Good reasoning with budget/need mentioned = 19-24 damage
-- Excellent compelling argument = 25-30 damage (MAX DAMAGE!)
+- Completely irrelevant/joke/nonsense = 0-8 damage
+- Vague or weak reasoning = 12-18 damage
+- Decent point with some logic = 22-30 damage
+- Strong reasoning with need/budget = 35-42 damage
+- Excellent compelling argument = 45-55 damage (MAX DAMAGE!)
 
-IMPORTANT: If their argument is AT ALL reasonable or mentions a real need, give AT LEAST 15 damage!
-If they repeat the same point, give 0 damage and call them out!
+IMPORTANT: 
+- Be STRICT! Only give high damage (30+) if they mention SPECIFIC needs, budget, or urgency!
+- Generic "I want it" or "I need it" = 12-18 damage MAX
+- If they make a SPECIFIC, DETAILED point, PRAISE them and give 30+ damage!
+- If they repeat the same point, give 0 damage and call them out!
 
 End with: [DAMAGE: X]
 
 Example responses:
-• Nice try with the "I need it" excuse 🙄
-• But WHY do you need it RIGHT NOW?
-• Come on, give me something better than that!
-[DAMAGE: 5]
 
-• Okay, that's actually a decent point... 😤
-• You mentioned your budget, I'll give you that
-• But I'm still not fully convinced!
-[DAMAGE: 18]`;
+WEAK argument:
+• That's pretty vague... 🤔
+• Be more specific!
+[DAMAGE: 8]
+
+DECENT argument (BE POSITIVE!):
+• Okay, that's a solid point! 👍
+• You're making progress here!
+[DAMAGE: 25]
+
+STRONG argument (BE VERY POSITIVE!):
+• Wow, that's really compelling! 😮
+• Critical hit! Almost there!
+[DAMAGE: 40]`;
   
   const requestBody = {
     model: "llama3.1-8b",
     messages: [
       {
         role: "system",
-        content: "You are a sassy AI guardian that blocks impulse purchases. Respond with exactly 3 short bullet points and end with [DAMAGE: X] where X is 0-30."
+        content: "You are a skeptical but fair AI guardian that blocks impulse purchases. Be POSITIVE when users make valid points! Respond with exactly 2 short bullet points (max 8 words each) and end with [DAMAGE: X] where X is 0-55."
       },
       {
         role: "user",
@@ -300,9 +329,9 @@ Example responses:
     
     // Provide a fallback response instead of error message
     const fallbackResponses = [
-      "• Hmm, interesting point you're making there... 🤔\n• But have you considered your budget?\n• Try harder to convince me!\n[DAMAGE: 8]",
-      "• That's one way to justify it... �\n• What about saving for emergencies?\n• You'll need better reasoning than that!\n[DAMAGE: 10]",
-      "• I see what you're trying to do... 😏\n• But is it REALLY necessary?\n• Keep trying, you're not there yet!\n[DAMAGE: 7]"
+      "• That's a fair point! 👍\n• Keep going!\n[DAMAGE: 25]",
+      "• I respect that reasoning! 💭\n• You're making progress!\n[DAMAGE: 28]",
+      "• Solid argument! 😊\n• You're wearing me down!\n[DAMAGE: 30]"
     ];
     
     const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
