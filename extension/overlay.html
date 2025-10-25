@@ -9,23 +9,24 @@
 </head>
 <body>
   <div id="chat-container">
-    <div id="header">
-      <h2>⏸️ Hold up!</h2>
-      <p>Let's make sure this is a good idea</p>
-    </div>
-    
-    <div id="chat"></div>
-    
-    <div id="input-section">
-      <textarea 
-        id="user-input" 
-        placeholder="Why do you really need this? Be honest..."
-        autofocus
-      ></textarea>
+    <div id="layout-wrapper">
+      <!-- Top Right: Chat Output -->
+      <div id="chat-section">
+        <div id="chat"></div>
+      </div>
       
-      <div id="button-section">
-        <button id="send">Send</button>
-        <button id="unlock" disabled>Proceed</button>
+      <!-- Bottom Left: Input -->
+      <div id="input-section">
+        <textarea 
+          id="user-input" 
+          placeholder="Why do you really need this? Be honest..."
+          autofocus
+        ></textarea>
+        
+        <div id="button-section">
+          <button id="send">Send</button>
+          <button id="unlock" disabled>Proceed</button>
+        </div>
       </div>
     </div>
   </div>
