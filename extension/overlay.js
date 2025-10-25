@@ -235,21 +235,24 @@ Example response:
  * @returns {Promise} Resolves when message animation completes
  */
 async function addMessage(sender, text, isUser) {
-  const msg = document.createElement("div");
-  msg.className = `message ${isUser ? "user" : "ai"}`;
-  chat.appendChild(msg);
-  
-  // Auto-scroll to bottom
-  chat.scrollTop = chat.scrollHeight;
-  
-  // Animate text for AI messages with typewriter effect
+  // For AI messages: add to history log without animation
   if (!isUser) {
-    await textAnimation.typewriter(msg, text, 50);
-  } else {
-    // User messages appear instantly
+    // Add to chat history (bottom-right) without animation as a log entry
+    const msg = document.createElement("div");
+    msg.className = `message ${isUser ? "user" : "ai"}`;
     msg.textContent = text;
+    chat.appendChild(msg);
+    
+    // Auto-scroll to bottom
+    chat.scrollTop = chat.scrollHeight;
+  } else {
+    // User messages appear instantly in history without animation
+    const msg = document.createElement("div");
+    msg.className = `message ${isUser ? "user" : "ai"}`;
+    msg.textContent = text;
+    chat.appendChild(msg);
+    
+    // Auto-scroll to bottom
+    chat.scrollTop = chat.scrollHeight;
   }
-  
-  // Auto-scroll to bottom again after animation
-  chat.scrollTop = chat.scrollHeight;
 }
