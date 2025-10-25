@@ -4,17 +4,15 @@
   box-sizing: border-box;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
-
 @font-face {
   font-family: 'PKMN RBYGSC';
-  src: url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  src: url('https://fonts.dafont.com/PKMN-RBYGSC.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
 }
 
 body {
-  font-family: 'Press Start 2P', cursive;
+  font-family: 'PKMN RBYGSC', 'Press Start 2P', monospace;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   
