@@ -8,18 +8,36 @@ const container = document.getElementById("chat-container");
 const animationService = new AnimationService();
 registerPokemonAnimations(animationService);
 
+// Hide chat container initially
+container.style.opacity = "0";
+container.style.pointerEvents = "none";
+
 // Initialize: Play entrance animation and greeting
 async function initialize() {
-  // Wait for the default slideIn animation to complete first
-  await new Promise(resolve => setTimeout(resolve, 400));
+  // === POKEMON ENCOUNTER SEQUENCE ===
+  // 1. Flash body white
+  await animationService.playAnimation(document.body, "whiteFlash");
   
-  // Then play entrance with Pokemon showdown effect
+  // 2. Create and animate pixelated spiral overlay
+  const spiral = document.createElement("div");
+  spiral.id = "pokemon-spiral";
+  document.body.appendChild(spiral);
+  
+  await animationService.playAnimation(spiral, "pixelSpiral");
+  
+  // 3. Remove spiral overlay
+  spiral.remove();
+  
+  // 4. Show chat container and play entrance animations
+  container.style.opacity = "1";
+  container.style.pointerEvents = "auto";
+  
   await animationService.playSequence(container, [
     "pokemonEnter",
     "bounce"
   ]);
 
-  // Add initial AI message after entrance
+  // 5. Add initial AI message after entrance
   addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
 }
 
