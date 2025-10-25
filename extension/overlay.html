@@ -2,15 +2,28 @@
 <html>
   <head>
     <link rel="stylesheet" href="styles.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
   </head>
   <body>
+    <!-- Fullscreen UI container (transparent panel over pixel-art background) -->
     <div id="chat-container">
-      <h2>Impulse Check 🤔</h2>
-      <div id="chat"></div>
-      <textarea id="user-input" placeholder="Convince me..."></textarea>
-      <button id="send">Send</button>
-      <button id="unlock" disabled>Proceed to Purchase</button>
+      <header class="oc-header">
+        <h2>Impulse Check 🤔</h2>
+        <button id="unlock" class="unlock" disabled>Proceed to Purchase</button>
+      </header>
+
+      <main class="oc-main">
+        <div id="chat" class="chat"></div>
+      </main>
+
+      <footer class="oc-footer">
+        <textarea id="user-input" placeholder="Convince me..."></textarea>
+        <div class="controls">
+          <button id="send">Send</button>
+        </div>
+      </footer>
     </div>
+
     <!-- Battle music: place your mp3 at extension/assets/battle-loop.mp3 -->
     <audio id="battle-music" src="assets/battle-loop.mp3" preload="auto"></audio>
     <script src="overlay.js"></script>
