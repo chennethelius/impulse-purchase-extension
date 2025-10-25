@@ -28,8 +28,7 @@
         "overlay.js",
         "animations/AnimationService.js",
         "animations/pokemon-animations.js",
-        "animations/TextAnimation.js",
-        "fonts/PKMN-RBYGSC.ttf"
+        "animations/TextAnimation.js"
       ],
       "matches": ["<all_urls>"]
     }
