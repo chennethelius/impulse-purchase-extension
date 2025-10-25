@@ -6,7 +6,7 @@ const battleMusic = document.getElementById('battle-music');
 
 send.addEventListener('click', () => {
   const userText = input.value.trim();
-  if (!userText) return;
+  if (!userText || animationService.isAnimating()) return;
 
   addMessage('You', userText);
   input.value = '';
@@ -47,6 +47,20 @@ function addMessage(sender, text) {
   const msg = document.createElement('div');
   msg.textContent = `${sender}: ${text}`;
   chat.appendChild(msg);
+  
+  // Auto-scroll to bottom
+  chat.scrollTop = chat.scrollHeight;
+  
+  // Animate text for AI messages with typewriter effect
+  if (!isUser) {
+    await textAnimation.typewriter(msg, text, 50);
+  } else {
+    // User messages appear instantly
+    msg.textContent = text;
+  }
+  
+  // Auto-scroll to bottom again after animation
+  chat.scrollTop = chat.scrollHeight;
 }
 
 // Try to play the battle music when the overlay loads; if autoplay is blocked, start on first user gesture.
