@@ -7,6 +7,7 @@ const forcePoint = document.getElementById("force-point");
 const aiIcon = document.getElementById("ai-icon");
 const aiHealthFill = document.getElementById("ai-health-fill");
 const intro = document.getElementById("intro-overlay");
+const battleMusic = document.getElementById('battle-music');
 
 let aiHealth = 100;
 const POINT_DAMAGE = 25; // how much health is lost per convincing argument
@@ -16,6 +17,8 @@ function showIntroThenStart(){
   // show intro animation then hide
   intro.classList.remove('hidden');
   setTimeout(()=>{intro.classList.add('hidden')}, 2200);
+  // attempt to start music when overlay appears; browsers may block autoplay, so handle promise
+  tryPlayMusic();
 }
 
 function clamp(v,min,max){return Math.max(min,Math.min(max,v))}
@@ -51,6 +54,31 @@ function aiRespond(text){
   aiIcon.src = resp;
   addMessage('Debate Bot', text, 'ai');
   setTimeout(()=>{ aiIcon.src = idle; }, 1200);
+}
+
+function tryPlayMusic(){
+  if(!battleMusic) return;
+  battleMusic.loop = true;
+  battleMusic.volume = 0.65;
+  // Attempt to play; if blocked, we'll start on first user gesture
+  const p = battleMusic.play();
+  if(p && typeof p.then === 'function'){
+    p.catch(()=>{
+      // autoplay blocked; attach to first user interaction
+      const startOnUser = ()=>{
+        battleMusic.play().catch(()=>{});
+        window.removeEventListener('click', startOnUser);
+        window.removeEventListener('keydown', startOnUser);
+      };
+      window.addEventListener('click', startOnUser, {once:true});
+      window.addEventListener('keydown', startOnUser, {once:true});
+    });
+  }
+}
+
+function stopMusic(){
+  if(!battleMusic) return;
+  try{battleMusic.pause(); battleMusic.currentTime = 0;}catch(e){}
 }
 
 send.addEventListener('click', ()=>{
