@@ -4,13 +4,54 @@
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
-    <div id="chat-container">
-      <h2>Impulse Check 🤔</h2>
-      <div id="chat"></div>
-      <textarea id="user-input" placeholder="Convince me..."></textarea>
-      <button id="send">Send</button>
-      <button id="unlock" disabled>Proceed to Purchase</button>
+    <!-- Intro lockdown animation (like Pokemon entry). Hidden after play -->
+    <div id="intro-overlay" class="intro-overlay hidden">
+      <img id="intro-gif" src="assets/pokemon-mewtwo.gif" alt="intro" />
     </div>
+
+    <div id="battle-bg" class="battle-bg">
+      <!-- pixel-art background -- use provided attachment as assets/background.png -->
+      <img src="assets/background-pixel-forest.png" alt="battle background" />
+    </div>
+
+    <div id="overlay-root">
+      <div id="left-panel" class="panel">
+        <div id="player-area">
+          <div class="player-name">You</div>
+          <div class="player-sprite">🎮</div>
+        </div>
+      </div>
+
+      <div id="center-panel" class="panel">
+        <h2 class="title">Impulse Check — Battle</h2>
+
+        <div id="chat-box" class="message-preset">
+          <div id="chat" class="chat-messages" aria-live="polite"></div>
+        </div>
+
+        <div id="controls">
+          <textarea id="user-input" placeholder="Make your argument..." aria-label="Your argument"></textarea>
+          <div class="control-row">
+            <button id="send">Argue</button>
+            <button id="force-point">Force +Point</button>
+            <button id="unlock" disabled>Proceed to Purchase</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="right-panel" class="panel">
+        <div id="ai-area">
+          <div id="ai-health" class="health">
+            <div id="ai-health-fill" class="health-fill"></div>
+          </div>
+          <div id="ai-icon-wrap">
+            <img id="ai-icon" class="ai-icon" src="assets/ryu3.gif" alt="AI" />
+          </div>
+          <div class="ai-name">Debate Bot</div>
+        </div>
+      </div>
+    </div>
+
     <script src="overlay.js"></script>
   </body>
 </html>

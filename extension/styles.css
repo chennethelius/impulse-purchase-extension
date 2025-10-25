@@ -1,41 +1,63 @@
-body {
-  font-family: sans-serif;
-  color: white;
-  background-color: rgba(0, 0, 0, 0.9);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 100vh;
+:root{
+  --bg: #0f1720;
+  --panel: #111827cc;
+  --accent: #ffd166;
+  --text: #eef2ff;
+  --message-bg: linear-gradient(180deg,#f7f7f9,#efe8f6);
 }
 
-#chat-container {
-  background-color: #222;
-  padding: 20px;
-  border-radius: 10px;
-  width: 400px;
-  max-height: 80vh;
-  overflow: auto;
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  color:var(--text);
+  background:rgba(0,0,0,0.85);
+  display:flex;align-items:center;justify-content:center;
 }
 
-#chat {
-  height: 200px;
-  overflow-y: auto;
-  margin-bottom: 10px;
-}
+#overlay-root{display:flex;gap:18px;align-items:flex-end;max-width:1000px;width:95%;}
+.panel{background:transparent;padding:8px}
 
-textarea {
-  width: 100%;
-  height: 60px;
-  margin-bottom: 10px;
-  border-radius: 5px;
-  border: none;
-  padding: 8px;
-}
+/* background artwork */
+.battle-bg{position:fixed;inset:0;z-index:1;opacity:0.18;display:flex;align-items:center;justify-content:center}
+.battle-bg img{width:100%;height:100%;object-fit:cover}
 
-button {
-  margin-right: 8px;
-  padding: 6px 12px;
-  border-radius: 5px;
-  border: none;
-  cursor: pointer;
-}
+#center-panel{z-index:5;flex:1;max-width:520px}
+.title{margin:6px 0 10px 0;text-align:center;color:var(--accent)}
+
+/* MessageColour-style preset box */
+.message-preset{background:var(--message-bg);border-radius:8px;padding:10px;box-shadow:0 6px 18px rgba(2,6,23,0.6);border:3px solid rgba(0,0,0,0.25)}
+.chat-messages{height:220px;overflow-y:auto;padding:6px;background:transparent;color:#0b1220;border-radius:6px}
+.chat-messages .msg{margin-bottom:8px;padding:6px;border-radius:6px}
+.msg.user{background:rgba(0,120,255,0.08);color:#08306b}
+.msg.ai{background:rgba(255,80,80,0.06);color:#420000}
+
+/* Controls */
+#controls{margin-top:10px}
+textarea#user-input{width:100%;min-height:72px;border-radius:6px;padding:8px;border:1px solid rgba(0,0,0,0.12);resize:vertical}
+.control-row{display:flex;gap:8px;margin-top:8px}
+button{background:#2b3640;color:var(--text);border:none;padding:8px 12px;border-radius:6px;cursor:pointer}
+button:disabled{opacity:0.5;cursor:default}
+
+/* AI area */
+#right-panel{z-index:5;width:180px;text-align:center}
+#ai-area{display:flex;flex-direction:column;align-items:center;gap:8px}
+.ai-name{font-weight:700;color:var(--accent)}
+.ai-icon{width:120px;height:120px;object-fit:contain;border-radius:6px;background:transparent}
+
+/* Health bar */
+.health{width:140px;height:14px;background:#2b2b2b;border-radius:8px;overflow:hidden;border:2px solid rgba(0,0,0,0.4)}
+.health-fill{height:100%;background:linear-gradient(90deg,#ff5f5f,#ffb86b);width:100%;transition:width 400ms ease}
+
+/* Intro overlay */
+.intro-overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.95);z-index:20}
+.intro-overlay.hidden{display:none}
+.intro-overlay img{width:520px;max-width:90%;height:auto;animation:popIn 700ms ease}
+@keyframes popIn{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* small left-side */
+#left-panel{width:120px;z-index:5}
+.player-sprite{font-size:44px}
+
+/* responsive tweaks */
+@media(max-width:760px){#overlay-root{flex-direction:column;align-items:center}#right-panel,#left-panel{width:100%;order:3}}
