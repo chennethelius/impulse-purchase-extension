@@ -16,6 +16,18 @@ function registerPokemonAnimations(animService) {
     description: "User enters from right"
   });
 
+  // === POKEMON ENCOUNTER ANIMATIONS ===
+
+  animService.registerAnimation("whiteFlash", {
+    duration: 1000,
+    description: "White flash effect for Pokemon encounter"
+  });
+
+  animService.registerAnimation("pixelSpiral", {
+    duration: 1200,
+    description: "Pixelated spiral fills screen"
+  });
+
   // === ATTACK ANIMATIONS ===
   
   animService.registerAnimation("shake", {

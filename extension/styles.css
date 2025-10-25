@@ -1,21 +1,14 @@
+/* Import centralized font definitions */
+@import url('./fonts.css');
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-@font-face {
-  font-family: 'PKMN RBYGSC';
-  src: url('https://fonts.dafont.com/PKMN-RBYGSC.ttf') format('truetype');
-  font-weight: normal;
-  font-style: normal;
-}
-
 body {
-  font-family: 'PKMN RBYGSC', 'Press Start 2P', monospace;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  
+  font-family: var(--font-primary);
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.5) 100%);
   backdrop-filter: blur(4px);
   
@@ -44,10 +37,10 @@ body {
 }
 
 #header h2 {
-  font-size: 12px;
-  font-weight: 700;
+  font-size: var(--font-size-header);
+  font-weight: var(--font-weight-bold);
   color: #1a1a1a;
-  letter-spacing: 2px;
+  letter-spacing: var(--letter-spacing-loose);
   background: white;
   padding: 8px 12px;
   border: 2px solid #1a1a1a;
@@ -55,11 +48,11 @@ body {
 }
 
 #header p {
-  font-size: 8px;
+  font-size: var(--font-size-text);
   color: #1a1a1a;
   margin-top: 8px;
-  font-weight: 700;
-  letter-spacing: 1px;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-normal);
   background: white;
   padding: 4px 8px;
   border: 2px solid #1a1a1a;
@@ -122,15 +115,15 @@ body {
   margin-bottom: 10px;
   padding: 10px 12px;
   border-radius: 2px;
-  font-size: 8px;
+  font-size: var(--font-size-text);
   line-height: 1.4;
   animation: fadeIn 0.3s ease;
   border: 3px solid #1a1a1a;
   word-wrap: break-word;
-  letter-spacing: 1px;
+  letter-spacing: var(--letter-spacing-normal);
   background: white;
   color: #1a1a1a;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 @keyframes fadeIn {
@@ -151,7 +144,7 @@ body {
   margin-right: 0;
   max-width: 80%;
   border-bottom-right-radius: 2px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   border: 3px solid #1a1a1a;
 }
 
@@ -161,7 +154,7 @@ body {
   margin-right: auto;
   max-width: 80%;
   border-bottom-left-radius: 2px;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
   border: 3px solid #1a1a1a;
 }
 
@@ -177,15 +170,15 @@ textarea {
   border: 3px solid #1a1a1a;
   border-radius: 2px;
   padding: 10px 12px;
-  font-size: 8px;
-  font-family: 'Press Start 2P', cursive;
+  font-size: var(--font-size-text);
+  font-family: var(--font-primary);
   resize: none;
   transition: all 0.3s ease;
   color: #1a1a1a;
   background: white;
-  letter-spacing: 1px;
+  letter-spacing: var(--letter-spacing-normal);
   line-height: 1.4;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 textarea:focus {
@@ -197,7 +190,7 @@ textarea:focus {
 
 textarea::placeholder {
   color: #999;
-  font-weight: 700;
+  font-weight: var(--font-weight-bold);
 }
 
 #button-section {
@@ -210,13 +203,13 @@ button {
   padding: 10px 12px;
   border-radius: 2px;
   border: 3px solid #1a1a1a;
-  font-size: 8px;
-  font-weight: 700;
-  font-family: 'Press Start 2P', cursive;
+  font-size: var(--font-size-text);
+  font-weight: var(--font-weight-bold);
+  font-family: var(--font-primary);
   cursor: pointer;
   transition: all 0.2s ease;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: var(--letter-spacing-normal);
   background: white;
   color: #1a1a1a;
 }
