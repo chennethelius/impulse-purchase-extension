@@ -22,10 +22,13 @@
     {
       "resources": [
         "overlay.html",
+        "fonts.css",
         "styles.css",
         "overlay.js",
         "animations/AnimationService.js",
-        "animations/pokemon-animations.js"
+        "animations/pokemon-animations.js",
+        "animations/TextAnimation.js",
+        "fonts/PKMN-RBYGSC.ttf"
       ],
       "matches": ["<all_urls>"]
     }
