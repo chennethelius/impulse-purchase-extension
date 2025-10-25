@@ -365,29 +365,5 @@ function showScreen(screenId) {
   }
 }
 
-/**
- * Listen to auth state changes and show appropriate screen
- */
-onAuthChange((user) => {
-  if (user) {
-    console.log('User authenticated in overlay:', user.email);
-    // Show dashboard screen first
-    showScreen('dashboard-screen');
-  } else {
-    console.log('User not authenticated in overlay');
-    // Show auth screen
-    showScreen('auth-screen');
-  }
-});
-
-// Show chat screen when the blocker is triggered from a purchase page
-window.addEventListener('load', () => {
-  const user = getCurrentUser();
-  if (user && window.location.hostname.includes('amazon') || 
-      window.location.hostname.includes('ebay') || 
-      window.location.hostname.includes('etsy')) {
-    // We're on a shopping site, show the chat blocker
-    showScreen('chat-container');
-    setTimeout(initialize, 200);
-  }
-});
+// Delay initialization slightly for better effect
+setTimeout(initialize, 200);

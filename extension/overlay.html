@@ -8,66 +8,8 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Login/Auth Screen -->
-  <div id="auth-screen" class="screen active">
-    <div id="auth-container">
-      <div id="auth-box">
-        <h1>Impulse Blocker</h1>
-        <p>Sign in to start tracking your purchases</p>
-        <button id="google-signin-btn" class="auth-btn">
-          <span>Sign in with Google</span>
-        </button>
-        <p class="auth-note">We use your Google account to save your chat history and purchase data securely.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Profile Dashboard Screen -->
-  <div id="dashboard-screen" class="screen">
-    <div id="dashboard-container">
-      <!-- Header with Profile and Logout -->
-      <div id="dashboard-header">
-        <div id="profile-info">
-          <img id="profile-photo" src="" alt="Profile" class="profile-photo">
-          <div id="profile-details">
-            <h2 id="profile-name">User</h2>
-            <p id="profile-email">email@example.com</p>
-          </div>
-        </div>
-        <button id="logout-btn">Logout</button>
-      </div>
-
-      <!-- Stats Grid -->
-      <div id="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Purchases Prevented</div>
-          <div class="stat-value" id="stat-prevented">0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Money Saved</div>
-          <div class="stat-value" id="stat-saved">$0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Total Spent</div>
-          <div class="stat-value" id="stat-spent">$0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">AI Chats</div>
-          <div class="stat-value" id="stat-chats">0</div>
-        </div>
-      </div>
-
-      <!-- Quick Actions -->
-      <div id="quick-actions">
-        <button id="view-history-btn" class="action-btn">View Purchase History</button>
-        <button id="view-chats-btn" class="action-btn">View Chat History</button>
-        <button id="open-dashboard-btn" class="action-btn primary">Open Full Dashboard</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Chat Screen (Blocker) -->
-  <div id="chat-container" class="screen">
+  <div id="chat-container" class="screen active">
     <div id="layout-wrapper">
       <!-- Chat Output -->
       <div id="chat-section">
@@ -95,7 +37,6 @@
   <script src="animations/AnimationService.js"></script>
   <script src="animations/pokemon-animations.js"></script>
   <script src="animations/TextAnimation.js"></script>
-  <script type="module" src="overlay-auth.js"></script>
   <script type="module" src="overlay.js"></script>
 </body>
 </html>

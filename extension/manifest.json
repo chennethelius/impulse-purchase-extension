@@ -9,6 +9,10 @@
     "*://*.ebay.com/*",
     "*://*.etsy.com/*"
   ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Impulse Blocker"
+  },
   "background": {
     "service_worker": "background.js"
   },
@@ -21,6 +25,9 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "popup.html",
+        "popup-auth.js",
+        "popup-styles.css",
         "overlay.html",
         "config.js",
         "fonts.css",
