@@ -8,6 +8,9 @@ const container = document.getElementById("chat-container");
 const animationService = new AnimationService();
 registerPokemonAnimations(animationService);
 
+// Initialize Text Animation
+const textAnimation = TextAnimation;
+
 // Hide chat container initially
 container.style.opacity = "0";
 container.style.pointerEvents = "none";
@@ -37,8 +40,8 @@ async function initialize() {
     "bounce"
   ]);
 
-  // 5. Add initial AI message after entrance
-  addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
+  // 5. Add initial AI message after entrance with typewriter effect
+  await addMessage("AI", "Before you buy, ask yourself: Is this a genuine need or an impulse?", false);
 }
 
 // Delay initialization slightly for better effect
@@ -75,7 +78,7 @@ async function handleSendMessage() {
   const userText = input.value.trim();
   if (!userText || animationService.isAnimating()) return;
 
-  addMessage("You", userText, true);
+  await addMessage("You", userText, true);
   input.value = "";
   send.disabled = true;
 
@@ -85,10 +88,10 @@ async function handleSendMessage() {
   // Simulate AI thinking with glow effect
   container.classList.add("animate-glow");
   
-  setTimeout(() => {
+  setTimeout(async () => {
     container.classList.remove("animate-glow");
     const response = evaluateResponse(userText);
-    addMessage("AI", response, false);
+    await addMessage("AI", response, false);
     send.disabled = false;
     input.focus();
   }, 800);
@@ -132,17 +135,28 @@ function evaluateResponse(text) {
 }
 
 /**
- * Add message to chat with proper styling
+ * Add message to chat with proper styling and animation
  * @param {string} sender - "You" or "AI"
  * @param {string} text - Message text
  * @param {boolean} isUser - True if user message
+ * @returns {Promise} Resolves when message animation completes
  */
-function addMessage(sender, text, isUser) {
+async function addMessage(sender, text, isUser) {
   const msg = document.createElement("div");
   msg.className = `message ${isUser ? "user" : "ai"}`;
-  msg.textContent = text;
   chat.appendChild(msg);
   
   // Auto-scroll to bottom
+  chat.scrollTop = chat.scrollHeight;
+  
+  // Animate text for AI messages with typewriter effect
+  if (!isUser) {
+    await textAnimation.typewriter(msg, text, 50);
+  } else {
+    // User messages appear instantly
+    msg.textContent = text;
+  }
+  
+  // Auto-scroll to bottom again after animation
   chat.scrollTop = chat.scrollHeight;
 }
