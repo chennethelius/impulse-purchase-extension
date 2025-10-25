@@ -3,7 +3,7 @@ const input = document.getElementById("user-input");
 const send = document.getElementById("send");
 const unlockBtn = document.getElementById("unlock");
 
-send.addEventListener("click", () => {
+function submitPrompt() {
   const userText = input.value.trim();
   if (!userText) return;
 
@@ -16,7 +16,17 @@ send.addEventListener("click", () => {
     addMessage("AI", "Alright, that sounds reasonable. Go ahead!");
     unlockBtn.disabled = false;
   } else {
-    addMessage("AI", "Hmm... that doesn’t sound convincing. Try again.");
+    addMessage("AI", "Hmm... that doesn't sound convincing. Try again.");
+  }
+}
+
+send.addEventListener("click", submitPrompt);
+
+// Prevent Enter from creating new line and submit instead
+input.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    submitPrompt();
   }
 });
 
