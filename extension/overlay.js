@@ -93,7 +93,7 @@ async function handleSendMessage() {
   setTimeout(async () => {
     container.classList.remove("animate-glow");
     try {
-      const response = await callGeminiAPI(userText);
+      const response = await callCerebrasAPI(userText);
       await addMessage("AI", response.text, false);
       
       // Check if user won based on damage dealt to AI
@@ -101,7 +101,7 @@ async function handleSendMessage() {
         unlockBtn.disabled = false;
       }
     } catch (error) {
-      console.error('Error calling Gemini:', error);
+      console.error('Error calling Cerebras:', error);
       await addMessage("AI", "Sorry, I had trouble processing that. Try again!", false);
     }
     send.disabled = false;
@@ -109,7 +109,7 @@ async function handleSendMessage() {
   }, 800);
 }
 
-async function callGeminiAPI(userMessage) {
+async function callCerebrasAPI(userMessage) {
   // Add to conversation history
   conversationHistory.push({ role: 'user', content: userMessage });
   
@@ -149,41 +149,47 @@ Example response:
 [DAMAGE: 5]`;
   
   const requestBody = {
-    contents: [{
-      parts: [{
-        text: systemPrompt
-      }]
-    }],
-    generationConfig: {
-      temperature: 0.8,
-      topK: 40,
-      topP: 0.95,
-      maxOutputTokens: 256,
-    }
+    model: "llama3.1-8b",
+    messages: [
+      {
+        role: "system",
+        content: "You are a sassy AI guardian that blocks impulse purchases. Respond with exactly 3 short bullet points and end with [DAMAGE: X] where X is 0-30."
+      },
+      {
+        role: "user",
+        content: systemPrompt
+      }
+    ],
+    temperature: 0.8,
+    max_tokens: 256,
+    top_p: 0.95
   };
   
   try {
-    const response = await fetch(`${CONFIG.GEMINI_API_URL}?key=${CONFIG.GEMINI_API_KEY}`, {
+    const response = await fetch(CONFIG.CEREBRAS_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.CEREBRAS_API_KEY}`
       },
       body: JSON.stringify(requestBody)
     });
     
     if (!response.ok) {
       console.error('API Response not OK:', response.status);
+      const errorData = await response.json();
+      console.error('Error details:', errorData);
       throw new Error(`API Error: ${response.status}`);
     }
     
     const data = await response.json();
     
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
       console.error('Invalid API response structure:', data);
       throw new Error('Invalid response structure');
     }
     
-    const botResponse = data.candidates[0].content.parts[0].text;
+    const botResponse = data.choices[0].message.content;
     
     // Extract damage from response
     const damageMatch = botResponse.match(/\[DAMAGE:\s*(\d+)\]/i);
@@ -198,7 +204,7 @@ Example response:
       damage: damage
     };
   } catch (apiError) {
-    console.error('Gemini API Error:', apiError);
+    console.error('Cerebras API Error:', apiError);
     
     // Provide a fallback response instead of error message
     const fallbackResponses = [
