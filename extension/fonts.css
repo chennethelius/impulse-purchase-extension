@@ -6,11 +6,13 @@
  */
 
 /* Pokemon RBYGSC - Authentic Pokemon Gen 1-3 font */
+/* Download from https://www.dafont.com/pkmn-rbygsc.font and place in extension/fonts/ folder */
 @font-face {
   font-family: 'PKMN RBYGSC';
-  src: url('https://fonts.dafont.com/PKMN-RBYGSC.ttf') format('truetype');
+  src: url('fonts/PKMN-RBYGSC.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
+  font-display: swap;
 }
 
 /* Fallback: Press Start 2P - Retro pixelated font */
