@@ -74,6 +74,8 @@ unlockBtn.addEventListener("click", async () => {
   );
 });
 
+let conversationHistory = [];
+
 async function handleSendMessage() {
   const userText = input.value.trim();
   if (!userText || animationService.isAnimating()) return;
@@ -90,47 +92,132 @@ async function handleSendMessage() {
   
   setTimeout(async () => {
     container.classList.remove("animate-glow");
-    const response = evaluateResponse(userText);
-    await addMessage("AI", response, false);
+    try {
+      const response = await callGeminiAPI(userText);
+      await addMessage("AI", response.text, false);
+      
+      // Check if user won based on damage dealt to AI
+      if (response.damage <= 0) {
+        unlockBtn.disabled = false;
+      }
+    } catch (error) {
+      console.error('Error calling Gemini:', error);
+      await addMessage("AI", "Sorry, I had trouble processing that. Try again!", false);
+    }
     send.disabled = false;
     input.focus();
   }, 800);
 }
 
-function evaluateResponse(text) {
-  const lowerText = text.toLowerCase();
+async function callGeminiAPI(userMessage) {
+  // Add to conversation history
+  conversationHistory.push({ role: 'user', content: userMessage });
   
-  // Check for genuine need indicators
-  const needIndicators = [
-    "need", "essential", "necessary", "broke", "damaged", "replaced",
-    "emergency", "urgent", "running low", "life", "work", "school"
-  ];
+  // Check for repetitive arguments
+  const recentArgs = conversationHistory
+    .filter(m => m.role === 'user')
+    .slice(-3)
+    .map(m => m.content.toLowerCase());
+  const isRepetitive = recentArgs.length > 1 && recentArgs.some((arg, i) => 
+    i > 0 && (arg.includes(recentArgs[0]) || recentArgs[0].includes(arg))
+  );
   
-  const impulseIndicators = [
-    "want", "like", "cool", "pretty", "nice", "looks", "trendy", "awesome",
-    "everyone has", "on sale", "limited time", "fomo", "fear of missing"
-  ];
+  // Prepare the prompt with better instructions
+  const systemPrompt = `You are a sassy AI guardian blocking impulse purchases.
+USER'S ARGUMENT: "${userMessage}"
 
-  const hasNeed = needIndicators.some(word => lowerText.includes(word));
-  const hasImpulse = impulseIndicators.some(word => lowerText.includes(word));
+PREVIOUS ARGUMENTS: ${conversationHistory.filter(m => m.role === 'user').slice(-2).map(m => m.content).join(', ') || 'none'}
+
+RESPOND WITH EXACTLY 3 SHORT BULLET POINTS (max 10 words each):
+• Point 1: React to their argument
+• Point 2: Challenge or question them  
+• Point 3: Taunt or encourage
+
+DAMAGE RULES (how convincing their argument is):
+${isRepetitive ? '- REPETITIVE ARGUMENT = 0 damage (call them out!)' : ''}
+- Irrelevant/joke = 0-5 damage
+- Mentions need but weak = 15-18 damage (minimum for relevant points!)
+- Good reasoning + budget = 19-23 damage
+- Excellent + urgent need = 24-30 damage
+
+End with: [DAMAGE: X]
+
+Example response:
+• Nice try with the "I need it" excuse 🙄
+• But WHY do you need it RIGHT NOW?
+• Come on, give me something better than that!
+[DAMAGE: 5]`;
   
-  let score = 0;
+  const requestBody = {
+    contents: [{
+      parts: [{
+        text: systemPrompt
+      }]
+    }],
+    generationConfig: {
+      temperature: 0.8,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 256,
+    }
+  };
   
-  // Scoring logic
-  score += text.length > 20 ? 10 : 0;
-  score += hasNeed ? 30 : 0;
-  score -= hasImpulse ? 20 : 0;
-  
-  // Multiple sentences suggest thoughtfulness
-  score += (text.match(/[.!?]/g) || []).length * 5;
-  
-  if (score > 35 && !hasImpulse) {
-    unlockBtn.disabled = false;
-    return "✨ That sounds like a genuine need. You can proceed, but maybe sleep on it first! 😊";
-  } else if (score > 20) {
-    return "🤔 I'm getting closer... Can you give me a more specific reason? Why *right now*?";
-  } else {
-    return "😅 Not quite there yet. Be honest with me—is this something you really need?";
+  try {
+    const response = await fetch(`${CONFIG.GEMINI_API_URL}?key=${CONFIG.GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody)
+    });
+    
+    if (!response.ok) {
+      console.error('API Response not OK:', response.status);
+      throw new Error(`API Error: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      console.error('Invalid API response structure:', data);
+      throw new Error('Invalid response structure');
+    }
+    
+    const botResponse = data.candidates[0].content.parts[0].text;
+    
+    // Extract damage from response
+    const damageMatch = botResponse.match(/\[DAMAGE:\s*(\d+)\]/i);
+    const damage = damageMatch ? parseInt(damageMatch[1]) : 0;
+    const cleanResponse = botResponse.replace(/\[DAMAGE:\s*\d+\]/i, '').trim();
+    
+    // Add to conversation history
+    conversationHistory.push({ role: 'assistant', content: cleanResponse });
+    
+    return {
+      text: cleanResponse,
+      damage: damage
+    };
+  } catch (apiError) {
+    console.error('Gemini API Error:', apiError);
+    
+    // Provide a fallback response instead of error message
+    const fallbackResponses = [
+      "• Hmm, interesting point you're making there... 🤔\n• But have you considered your budget?\n• Try harder to convince me!\n[DAMAGE: 8]",
+      "• That's one way to justify it... �\n• What about saving for emergencies?\n• You'll need better reasoning than that!\n[DAMAGE: 10]",
+      "• I see what you're trying to do... 😏\n• But is it REALLY necessary?\n• Keep trying, you're not there yet!\n[DAMAGE: 7]"
+    ];
+    
+    const fallback = fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)];
+    const damageMatch = fallback.match(/\[DAMAGE:\s*(\d+)\]/i);
+    const damage = damageMatch ? parseInt(damageMatch[1]) : 8;
+    const cleanResponse = fallback.replace(/\[DAMAGE:\s*\d+\]/i, '').trim();
+    
+    conversationHistory.push({ role: 'assistant', content: cleanResponse });
+    
+    return {
+      text: cleanResponse,
+      damage: damage
+    };
   }
 }
 
