@@ -5,8 +5,8 @@ const GEMINI_API_KEY = typeof process !== 'undefined' && process.env
   : 'AIzaSyBklQ3zstHZcNcvsRZPgrfopCs98JOkxoY'; // Fallback for development
 
 const CONFIG = {
-  GEMINI_API_KEY: GEMINI_API_KEY,
-  GEMINI_API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+  CEREBRAS_API_KEY: 'csk-jm9pjwe6rtj5khf38xdeext22mv8wtmy4kckmdrpem4fj9j2',
+  CEREBRAS_API_URL: 'https://api.cerebras.ai/v1/chat/completions',
   INITIAL_HEALTH: 100,
   MIN_HEALTH_TO_PASS: 0
 };
