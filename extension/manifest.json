@@ -20,7 +20,13 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["overlay.html", "styles.css"],
+      "resources": [
+        "overlay.html",
+        "styles.css",
+        "overlay.js",
+        "animations/AnimationService.js",
+        "animations/pokemon-animations.js"
+      ],
       "matches": ["<all_urls>"]
     }
   ]
