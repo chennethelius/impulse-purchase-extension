@@ -1,0 +1,11 @@
+{
+  "name": "impulse-purchase-extension",
+  "version": "1.0.0",
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.0.0"
+  },
+  "scripts": {
+    "format": "prettier --write \"**/*.{js,css,html,json,md}\""
+  }
+}
