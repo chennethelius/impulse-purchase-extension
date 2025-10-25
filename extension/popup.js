@@ -10,10 +10,31 @@ const dialogueContent = document.getElementById('chatContainer');
 const userInput = document.getElementById('userInput');
 const sendButton = document.getElementById('sendButton');
 const giveUpButton = document.getElementById('giveUpButton');
+const battleMusic = document.getElementById('battleMusic');
+const muteButton = document.getElementById('muteButton');
+const robotGif = document.querySelector('.robot-gif');
 
 // Initialize
 updateHealthDisplay();
 setupEventListeners();
+
+// Start battle music early (right when popup loads, before black bars)
+setTimeout(() => {
+    if (battleMusic) {
+        battleMusic.volume = 0.2; // Set volume to 20% (softer)
+        battleMusic.play().catch(err => {
+            console.log('Audio autoplay blocked:', err);
+            // Try to play on first user interaction
+            const playOnInteraction = () => {
+                battleMusic.play().catch(e => console.log('Could not play audio:', e));
+                document.removeEventListener('click', playOnInteraction);
+                document.removeEventListener('keydown', playOnInteraction);
+            };
+            document.addEventListener('click', playOnInteraction);
+            document.addEventListener('keydown', playOnInteraction);
+        });
+    }
+}, 100); // Start music very early (100ms after popup loads)
 
 // Remove encounter overlay after animation
 setTimeout(() => {
@@ -40,6 +61,15 @@ function setupEventListeners() {
     // Give up button
     giveUpButton.addEventListener('click', () => {
         handleDefeat();
+    });
+    
+    // Mute button
+    let isMuted = false;
+    muteButton.addEventListener('click', () => {
+        isMuted = !isMuted;
+        battleMusic.muted = isMuted;
+        muteButton.textContent = isMuted ? '🔇 UNMUTE' : '🔊 MUTE';
+        muteButton.classList.toggle('muted', isMuted);
     });
 }
 
@@ -258,6 +288,17 @@ function takeDamage(damage) {
     // Show damage number floating up
     showDamageNumber(damage);
     
+    // Flash robot red when damaged
+    if (robotGif) {
+        robotGif.classList.remove('damaged');
+        void robotGif.offsetWidth; // Force reflow
+        robotGif.classList.add('damaged');
+        
+        setTimeout(() => {
+            robotGif.classList.remove('damaged');
+        }, 600);
+    }
+    
     // Show damage effect animation on robot
     const damageEffect = document.getElementById('damageEffect');
     if (damageEffect) {
@@ -401,18 +442,23 @@ async function updateStats(result) {
             totalBattles: 0,
             victories: 0,
             defeats: 0,
-            moneySaved: 0
+            moneySaved: 0,
+            savingsHistory: []
         };
         
         stats.totalBattles += 1;
         
         if (result === 'victory') {
             stats.victories += 1;
+            // Add current cumulative savings to history (no change)
+            stats.savingsHistory.push(stats.moneySaved);
         } else if (result === 'defeat') {
             stats.defeats += 1;
             // Use the actual detected price from content script
             const detectedPrice = data.currentPrice || 50; // Fallback to $50 if no price found
             stats.moneySaved += detectedPrice;
+            // Add new cumulative savings to history
+            stats.savingsHistory.push(stats.moneySaved);
             console.log('Added to money saved:', detectedPrice);
         }
         

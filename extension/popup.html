@@ -21,9 +21,17 @@
         <div class="encounter-bar" style="top: 90%;"></div>
     </div>
     
+    <!-- Battle music -->
+    <audio id="battleMusic" loop>
+        <source src="assets/audio/battle-music.mp3" type="audio/mpeg">
+    </audio>
+    
     <div class="battle-scene">
         <!-- Give Up Button - Top Left Corner -->
         <button id="giveUpButton" class="give-up-button">GIVE UP</button>
+        
+        <!-- Mute Button - Next to Give Up Button -->
+        <button id="muteButton" class="mute-button">🔊 MUTE</button>
         
         <!-- Health Bar - Pokemon style in top right -->
         <div class="health-bar-container">
