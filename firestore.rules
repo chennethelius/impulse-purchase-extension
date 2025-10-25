@@ -1,86 +1,18 @@
-// Firestore Security Rules for Impulse Purchase Tracker
-// Copy and paste this into your Firebase Console > Firestore > Rules tab
-
-rules_version = '2';
+rules_version='2'
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // ============ HELPER FUNCTIONS ============
-    
-    // Check if user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Check if user is accessing their own data
-    function isOwnUser(uid) {
-      return request.auth.uid == uid;
-    }
-    
-    // Get user document
-    function getUserData(uid) {
-      return get(/databases/$(database)/documents/users/$(uid)).data;
-    }
-    
-    // ============ USERS COLLECTION ============
-    
-    // Users root - allow reading own profile, creating on first login
-    match /users/{uid} {
-      allow read: if isOwnUser(uid);
-      allow create: if isOwnUser(uid) && request.resource.data.keys().hasAll(['profile', 'stats', 'preferences']);
-      allow update: if isOwnUser(uid);
-      allow delete: if false;
-      
-      // User profile subcollection
-      match /profile/{document=**} {
-        allow read: if isOwnUser(uid);
-        allow write: if isOwnUser(uid);
-      }
-      
-      // User stats subcollection
-      match /stats/{document=**} {
-        allow read: if isOwnUser(uid);
-        allow write: if isOwnUser(uid);
-      }
-      
-      // User preferences subcollection
-      match /preferences/{document=**} {
-        allow read: if isOwnUser(uid);
-        allow write: if isOwnUser(uid);
-      }
-      
-      // Chats subcollection - full collection read, doc write
-      match /chats/{chatId} {
-        allow read: if isOwnUser(uid);
-        allow create: if isOwnUser(uid) && 
-          request.resource.data.keys().hasAll(['timestamp', 'domain', 'outcome', 'aiHealth']);
-        allow update: if isOwnUser(uid);
-        allow delete: if false;
-        
-        // Messages within each chat
-        match /messages/{messageId} {
-          allow read: if isOwnUser(uid);
-          allow create: if isOwnUser(uid) && 
-            request.resource.data.keys().hasAll(['role', 'content', 'timestamp']);
-          allow update: if false;
-          allow delete: if false;
-        }
-      }
-      
-      // Purchases subcollection
-      match /purchases/{purchaseId} {
-        allow read: if isOwnUser(uid);
-        allow create: if isOwnUser(uid) && 
-          request.resource.data.keys().hasAll(['timestamp', 'domain', 'itemName', 'itemPrice', 'outcome']);
-        allow update: if false;
-        allow delete: if false;
-      }
-    }
-    
-    // Deny all other access
     match /{document=**} {
-      allow read, write: if false;
+      // This rule allows anyone with your database reference to view, edit,
+      // and delete all data in your database. It is useful for getting
+      // started, but it is configured to expire after 30 days because it
+      // leaves your app open to attackers. At that time, all client
+      // requests to your database will be denied.
+      //
+      // Make sure to write security rules for your app before that time, or
+      // else all client requests to your database will be denied until you
+      // update your rules.
+      allow read, write: if request.time < timestamp.date(2025, 11, 24);
     }
   }
 }
