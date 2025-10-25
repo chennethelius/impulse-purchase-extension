@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Statistics</title>
+    <link rel="stylesheet" href="stats.css">
+</head>
+<body>
+    <div class="stats-container">
+        <h1 class="stats-title">⚔️ BATTLE STATS ⚔️</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-box">
+                <div class="stat-label">Battles</div>
+                <div class="stat-value" id="totalBattles">0</div>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat-label">Wins</div>
+                <div class="stat-value victory" id="victories">0</div>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat-label">Losses</div>
+                <div class="stat-value defeat" id="defeats">0</div>
+            </div>
+            
+            <div class="stat-box">
+                <div class="stat-label">Win Rate</div>
+                <div class="stat-value" id="winRate">0%</div>
+            </div>
+        </div>
+        
+        <div class="stat-box highlight">
+            <div class="stat-label">💰 MONEY SAVED 💰</div>
+            <div class="stat-value money" id="moneySaved">$0.00</div>
+        </div>
+        
+        <div class="graph-container">
+            <div class="graph-title">SAVINGS OVER TIME</div>
+            <canvas id="savingsGraph" width="400" height="150"></canvas>
+        </div>
+        
+        <button id="resetButton" class="reset-button">RESET</button>
+    </div>
+    
+    <script src="stats.js"></script>
+</body>
+</html>

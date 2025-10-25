@@ -1,13 +1,13 @@
-// Content script to detect purchase buttons and inject the chatbot popup
+// Content script to detect purchase buttons and inject the Pokemon battle popup
 let popupInjected = false;
 let defeatedItems = new Set(); // Track items where bot was defeated
-let currentPrice = 0; // Store detected price
 
 // Patterns to detect purchase-related buttons and pages
 const purchasePatterns = [
   'buy now', 'add to cart', 'checkout', 'place order', 'complete purchase',
   'proceed to checkout', 'confirm order', 'submit order', 'purchase', 'buy',
-  'add to bag', 'add to basket', 'complete order', 'pay now', 'place your order'
+  'add to bag', 'add to basket', 'complete order', 'pay now', 'place your order',
+  'continue to payment', 'review order', 'confirm and pay'
 ];
 
 // URL patterns that indicate checkout pages
@@ -17,78 +17,38 @@ const checkoutUrlPatterns = [
 
 // Function to extract price from the page
 function extractPrice() {
-  let detectedPrice = 0;
-  
-  // Priority 1: Look for keywords like "total", "cost", "bill" followed by prices
-  const priorityKeywords = ['total', 'subtotal', 'cost', 'price', 'bill', 'amount', 'pay'];
-  const bodyText = document.body.innerText;
-  
-  // Search for keyword + price patterns (e.g., "Total: $99.99" or "Cost $50.00")
-  for (const keyword of priorityKeywords) {
-    const regex = new RegExp(`${keyword}[:\\s]*\\$?\\s*(\\d{1,6}(?:,\\d{3})*(?:\\.\\d{2})?)`, 'gi');
-    const matches = [...bodyText.matchAll(regex)];
-    
-    for (const match of matches) {
-      let price = parseFloat(match[1].replace(/,/g, ''));
-      if (!isNaN(price) && price > 0 && price < 100000) {
-        // Prioritize "total" and "subtotal" matches
-        if (keyword === 'total' || keyword === 'subtotal') {
-          return price; // Return immediately for total/subtotal
-        }
-        if (price > detectedPrice) {
-          detectedPrice = price;
-        }
-      }
-    }
-  }
-  
-  // If we found a price with keywords, return it
-  if (detectedPrice > 0) {
-    return detectedPrice;
-  }
-  
-  // Priority 2: Try common price selectors
+  // Common price selectors
   const priceSelectors = [
-    '[class*="total"]',
-    '[id*="total"]',
-    '[class*="subtotal"]',
     '[class*="price"]',
     '[id*="price"]',
-    '[data-price]',
-    '.a-price-whole', // Amazon
+    '[class*="total"]',
+    '[id*="total"]',
+    '[class*="amount"]',
+    '[data-test*="price"]',
     '.product-price',
-    '.price-current'
+    '#product-price',
+    '.checkout-total',
+    '.order-total'
   ];
+  
+  let maxPrice = 0;
   
   for (const selector of priceSelectors) {
     const elements = document.querySelectorAll(selector);
-    
-    for (const element of elements) {
-      const text = element.textContent || element.getAttribute('data-price') || '';
-      const priceMatch = text.match(/\$?\s*(\d{1,6}(?:[,\.]\d{1,3})?(?:\.\d{2})?)/);
-      
+    elements.forEach(el => {
+      const text = el.textContent;
+      // Match prices like $123.45, €123,45, £123.45, 123.45, etc.
+      const priceMatch = text.match(/[\$€£¥]?\s*(\d{1,3}(?:[,\s]\d{3})*(?:\.\d{2})?)/);
       if (priceMatch) {
-        let price = parseFloat(priceMatch[1].replace(/,/g, ''));
-        if (!isNaN(price) && price > detectedPrice && price < 100000) {
-          detectedPrice = price;
+        const price = parseFloat(priceMatch[1].replace(/[,\s]/g, ''));
+        if (price > maxPrice) {
+          maxPrice = price;
         }
       }
-    }
+    });
   }
   
-  // Priority 3: If still no price, scan for any dollar amounts
-  if (detectedPrice === 0) {
-    const matches = bodyText.matchAll(/\$\s*(\d{1,5}(?:,\d{3})*(?:\.\d{2})?)/g);
-    
-    for (const match of matches) {
-      let price = parseFloat(match[1].replace(/,/g, ''));
-      if (!isNaN(price) && price > detectedPrice && price < 100000) {
-        detectedPrice = price;
-      }
-    }
-  }
-  
-  return detectedPrice > 0 ? detectedPrice : 50; // Default to $50 if no price found
+  return maxPrice;
 }
 
 // Function to check if element is a purchase button
@@ -104,8 +64,8 @@ function isPurchaseButton(element) {
   );
 }
 
-// Function to inject the popup
-function injectPopup(itemIdentifier = null) {
+// Function to inject the Pokemon battle popup
+async function injectPopup(itemIdentifier = null) {
   if (popupInjected) return;
   
   // Don't show popup if we already defeated the bot for this item
@@ -113,14 +73,22 @@ function injectPopup(itemIdentifier = null) {
     return;
   }
   
-  // Extract price before showing popup
-  currentPrice = extractPrice();
-  console.log('Detected price:', currentPrice);
+  // Check price threshold
+  const result = await chrome.storage.local.get(['priceThreshold', 'enabled']);
+  const priceThreshold = result.priceThreshold || 0;
+  const enabled = result.enabled !== false;
   
-  // Store the price for the popup to access
-  chrome.storage.local.set({ currentPrice: currentPrice });
+  if (!enabled) {
+    return;
+  }
   
-  // Create overlay container
+  const currentPrice = extractPrice();
+  if (currentPrice < priceThreshold) {
+    console.log(`Price $${currentPrice} is below threshold $${priceThreshold}, allowing purchase`);
+    return;
+  }
+  
+  // Create overlay container with Pokemon encounter animation
   const overlay = document.createElement('div');
   overlay.id = 'impulse-blocker-overlay';
   overlay.style.cssText = `
@@ -129,29 +97,50 @@ function injectPopup(itemIdentifier = null) {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: transparent;
+    background: #000;
     z-index: 2147483647;
     display: flex;
     justify-content: center;
     align-items: center;
-    margin: 0;
-    padding: 0;
+    animation: pokemonFlash 0.8s;
   `;
   
-  // Create iframe for the popup
-  const iframe = document.createElement('iframe');
-  iframe.src = chrome.runtime.getURL('popup.html');
-  iframe.style.cssText = `
-    width: 100vw;
-    height: 100vh;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    margin: 0;
-    padding: 0;
+  // Add flash animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes pokemonFlash {
+      0%, 100% { opacity: 1; }
+      10%, 30%, 50%, 70% { opacity: 0; }
+      20%, 40%, 60%, 80% { opacity: 1; }
+    }
+    
+    @keyframes slideIn {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
   `;
+  document.head.appendChild(style);
   
-  overlay.appendChild(iframe);
+  // Create iframe for the popup (will load after flash animation)
+  setTimeout(() => {
+    const iframe = document.createElement('iframe');
+    iframe.src = chrome.runtime.getURL('popup.html');
+    iframe.style.cssText = `
+      width: 100vw;
+      height: 100vh;
+      border: none;
+      animation: slideIn 0.5s ease-out;
+    `;
+    
+    overlay.appendChild(iframe);
+  }, 800); // Wait for flash animation to complete
+  
   document.body.appendChild(overlay);
   popupInjected = true;
   
@@ -175,10 +164,16 @@ function injectPopup(itemIdentifier = null) {
           defeatedItems.add(window.currentItemIdentifier);
         }
         
+        // Notify background script
+        chrome.runtime.sendMessage({ type: 'PURCHASE_ALLOWED' });
+        
         if (window.pendingClickTarget) {
           window.pendingClickTarget.click();
           window.pendingClickTarget = null;
         }
+      } else {
+        // User gave up
+        chrome.runtime.sendMessage({ type: 'PURCHASE_BLOCKED' });
       }
     }
   });
@@ -222,6 +217,6 @@ document.addEventListener('click', function(event) {
 if (checkoutUrlPatterns.some(pattern => window.location.href.toLowerCase().includes(pattern))) {
   // Give the page a moment to load, then inject popup
   setTimeout(() => {
-    injectPopup();
-  }, 1000);
+    injectPopup('checkout-page');
+  }, 1500);
 }
