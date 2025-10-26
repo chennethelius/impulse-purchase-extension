@@ -57,6 +57,9 @@ function initialize() {
   
   addMessage('system', `${productText}\n\n⏱️ Wait time: 2 minutes\n💡 Good reasoning reduces your wait time!`);
   
+  // Start searching for alternatives immediately
+  displayAlternatives().catch(err => console.error('Error displaying alternatives:', err));
+  
   // Start timer immediately
   startTimer();
   
@@ -892,8 +895,8 @@ async function endWaitingPeriod() {
   const finalAssessment = await getFinalAssessment(grade, totalTimeSaved);
   resultMessage.textContent = finalAssessment;
   
-  // Display alternatives
-  displayAlternatives();
+  // Alternatives are already being displayed from initialization
+  // No need to call displayAlternatives() again here
   
   // Proceed button is always enabled
   proceedBtn.disabled = false;
@@ -995,7 +998,85 @@ Be conversational, direct, and natural. No bullet points.`;
   }
 }
 
-function generateAlternatives() {
+async function findCheaperAlternatives() {
+  console.log('🔍 Finding cheaper alternatives with Cerebras...');
+  
+  if (!window.CEREBRAS_API_KEY) {
+    console.log('⚠️ No Cerebras API key found');
+    return getFallbackAlternatives();
+  }
+  
+  const productName = productInfo.name !== 'Unknown Product' && productInfo.name !== 'this item' 
+    ? productInfo.name 
+    : 'this product';
+  const currentPrice = extractNumericPrice(productInfo.price);
+  
+  const prompt = `Find 3 cheaper alternatives for: ${productName} ($${currentPrice})
+
+Return ONLY this JSON (no other text):
+[
+  {"title":"product name","price":50,"source":"Amazon","url":"https://amazon.com/s?k=..."},
+  {"title":"product name","price":45,"source":"eBay","url":"https://ebay.com/sch/i.html?_nkw=..."},
+  {"title":"product name","price":40,"source":"Walmart","url":"https://walmart.com/search?q=..."}
+]`;
+  
+  try {
+    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${window.CEREBRAS_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: 'llama3.1-8b',
+        messages: [
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 300,
+        temperature: 0.7
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Cerebras API error:', response.status, errorText);
+      return getFallbackAlternatives();
+    }
+    
+    const data = await response.json();
+    console.log('📥 Cerebras response:', data);
+    
+    // Extract content from Cerebras response
+    const content = data.choices[0].message.content;
+    console.log('📝 Content:', content);
+    
+    // Extract JSON from the response
+    const jsonMatch = content.match(/\[.*\]/s);
+    if (jsonMatch) {
+      const alternatives = JSON.parse(jsonMatch[0]);
+      console.log('✅ Found alternatives:', alternatives);
+      
+      // Ensure all alternatives have required fields
+      return alternatives.map(alt => ({
+        title: alt.title || 'Alternative Product',
+        price: alt.price || Math.floor(currentPrice * 0.7),
+        source: alt.source || 'Online',
+        url: alt.url || `https://www.google.com/search?q=${encodeURIComponent(alt.title || productName + ' cheaper')}`
+      })).slice(0, 3).sort((a, b) => a.price - b.price);
+    } else {
+      console.error('No JSON found in response');
+    }
+  } catch (error) {
+    console.error('Error fetching alternatives:', error);
+  }
+  
+  return getFallbackAlternatives();
+}
+
+function getFallbackAlternatives() {
   const productName = productInfo.name !== 'Unknown Product' ? productInfo.name : 'Similar Item';
   const basePrice = extractNumericPrice(productInfo.price);
   
@@ -1003,17 +1084,20 @@ function generateAlternatives() {
     {
       price: basePrice > 0 ? Math.floor(basePrice * 0.6) : Math.floor(Math.random() * 50) + 20,
       title: `Refurbished ${productName}`,
-      source: "eBay"
+      source: "eBay",
+      url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(productName + ' refurbished')}`
     },
     {
       price: basePrice > 0 ? Math.floor(basePrice * 0.7) : Math.floor(Math.random() * 40) + 15,
       title: `Generic Alternative`,
-      source: "Amazon"
+      source: "Amazon",
+      url: `https://www.amazon.com/s?k=${encodeURIComponent(productName + ' alternative cheaper')}`
     },
     {
       price: basePrice > 0 ? Math.floor(basePrice * 0.5) : Math.floor(Math.random() * 30) + 10,
-      title: `Previous Year Model`,
-      source: "BestBuy"
+      title: `Used/Open Box`,
+      source: "BestBuy",
+      url: `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(productName + ' open box')}`
     }
   ];
   
@@ -1028,19 +1112,36 @@ function extractNumericPrice(priceString) {
   return 0;
 }
 
-function displayAlternatives() {
-  const alternatives = generateAlternatives();
+async function displayAlternatives() {
   const boxes = document.querySelectorAll('.alternative-box');
   
+  // Show loading state
+  boxes.forEach(box => {
+    box.querySelector('.alt-price').textContent = '$--';
+    box.querySelector('.alt-title').textContent = 'Searching...';
+    box.querySelector('.alt-source').textContent = 'Finding deals';
+    box.style.cursor = 'wait';
+  });
+  
+  // Fetch real alternatives
+  const alternatives = await findCheaperAlternatives();
+  
+  // Display the alternatives
   alternatives.forEach((alt, index) => {
     if (boxes[index]) {
-      boxes[index].querySelector('.alt-price').textContent = `$${alt.price}`;
-      boxes[index].querySelector('.alt-title').textContent = alt.title;
-      boxes[index].querySelector('.alt-source').textContent = alt.source;
+      const box = boxes[index];
+      box.querySelector('.alt-price').textContent = `$${alt.price}`;
+      box.querySelector('.alt-title').textContent = alt.title;
+      box.querySelector('.alt-source').textContent = alt.source;
+      box.style.cursor = 'pointer';
       
-      boxes[index].onclick = () => {
-        window.open(`https://www.google.com/search?q=${encodeURIComponent(alt.title)}`, '_blank');
+      // Make the entire box clickable and open the product URL
+      box.onclick = () => {
+        window.open(alt.url, '_blank');
       };
+      
+      // Add hover effect hint
+      box.title = `Click to view on ${alt.source}`;
     }
   });
 }
