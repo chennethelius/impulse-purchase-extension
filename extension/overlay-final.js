@@ -78,7 +78,10 @@ function initialize() {
   });
 
   // Handle cancel purchase button - close the entire tab
-  reconsiderBtn.addEventListener('click', () => {
+  reconsiderBtn.addEventListener('click', async () => {
+    // Update stats - purchase was blocked
+    await updateStats(false);
+    
     // Send message to background script to close the tab
     try {
       window.parent.postMessage({ action: 'close-tab' }, '*');
@@ -98,7 +101,10 @@ function initialize() {
   });
   
   // Handle proceed button
-  proceedBtn.addEventListener('click', () => {
+  proceedBtn.addEventListener('click', async () => {
+    // Update stats - purchase was allowed
+    await updateStats(true);
+    
     // Try to remove the iframe from parent window
     try {
       // Send message to parent window to remove iframe
@@ -1162,4 +1168,58 @@ async function displayAlternatives() {
       box.title = `Click to view on ${alt.source}`;
     }
   });
+}
+
+// Stats tracking functions
+async function updateStats(purchaseAllowed) {
+  try {
+    // Get current stats
+    const result = await chrome.storage.local.get('stats');
+    const stats = result.stats || {
+      totalBattles: 0,
+      victories: 0,
+      defeats: 0,
+      moneySaved: 0,
+      savingsHistory: [],
+      purchaseHistory: [],
+      categoryStats: {}
+    };
+    
+    // Extract price as number
+    const priceNum = extractNumericPrice(productInfo.price);
+    
+    // Update totals
+    stats.totalBattles++;
+    
+    if (purchaseAllowed) {
+      // User proceeded with purchase
+      stats.defeats++;
+    } else {
+      // User cancelled purchase (saved money)
+      stats.victories++;
+      stats.moneySaved += priceNum;
+      stats.savingsHistory.push(stats.moneySaved);
+    }
+    
+    // Update category stats
+    const category = productInfo.category || 'General';
+    if (!purchaseAllowed) {
+      stats.categoryStats[category] = (stats.categoryStats[category] || 0) + 1;
+    }
+    
+    // Add to purchase history
+    stats.purchaseHistory.push({
+      timestamp: new Date().toISOString(),
+      product: productInfo.name,
+      amount: priceNum,
+      category: category,
+      saved: !purchaseAllowed
+    });
+    
+    // Save back to storage
+    await chrome.storage.local.set({ stats });
+    console.log('Stats updated:', stats);
+  } catch (error) {
+    console.error('Failed to update stats:', error);
+  }
 }
