@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Purchase Blocker</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="battle-scene">
+        <!-- Health Bar - Pokemon style in top right -->
+        <div class="health-bar-container">
+            <div class="pokemon-name">IMPULSE GUARDIAN</div>
+            <div class="health-label">HP</div>
+            <div class="health-bar-bg">
+                <div class="health-bar" id="healthBar"></div>
+            </div>
+            <div class="health-text" id="healthText">100/100</div>
+        </div>
+        
+        <!-- Pokemon dialogue box at bottom -->
+        <div class="dialogue-box">
+            <div class="dialogue-content" id="chatContainer">
+                <div class="dialogue-text">
+                    🛡️ A wild IMPULSE GUARDIAN appeared!<br><br>
+                    💰 You must convince me this purchase is necessary!<br><br>
+                    Type your argument below...
+                </div>
+            </div>
+            
+            <div class="dialogue-input">
+                <textarea 
+                    id="userInput" 
+                    placeholder="▶ What will you say?"
+                    rows="3"
+                ></textarea>
+                <button id="sendButton" class="send-button">SEND</button>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="giveUpButton" class="give-up-button">GIVE UP</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="config.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html>

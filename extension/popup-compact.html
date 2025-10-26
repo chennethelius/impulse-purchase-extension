@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Purchase Guardian</title>
+    <link rel="stylesheet" href="popup-compact.css">
+</head>
+<body>
+    <div class="popup-container">
+        <!-- Header -->
+        <div class="popup-header">
+            <h1>💰 Impulse Guardian</h1>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="quick-stats">
+            <div class="stat-box highlight">
+                <div class="stat-value" id="totalSaved">$0</div>
+                <div class="stat-label">Total Saved</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="winRate">0%</div>
+                <div class="stat-label">Win Rate</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="totalBattles">0</div>
+                <div class="stat-label">Battles</div>
+            </div>
+        </div>
+
+        <!-- Mini Chart -->
+        <div class="mini-chart-container">
+            <div class="chart-header">
+                <span class="chart-title">Recent Savings Trend</span>
+            </div>
+            <canvas id="miniChart" width="300" height="80"></canvas>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn-dashboard" id="openDashboardBtn">
+                📊 View Full Dashboard
+            </button>
+            <button class="btn-secondary" id="quickStatsBtn">
+                📈 Quick Stats
+            </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="popup-footer">
+            <span class="footer-text">Last battle: <span id="lastBattle">Never</span></span>
+        </div>
+    </div>
+
+    <script src="popup-compact.js"></script>
+</body>
+</html>

@@ -1,0 +1,382 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    background-image: url('assets/pokemon-pokemon-encounter.gif');
+    background-size: cover;
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #333;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.battle-scene {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* Pokemon-style Health Bar - Top Right Corner */
+.health-bar-container {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #f8f8f8;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 4px solid #000;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    min-width: 280px;
+    z-index: 10;
+}
+
+.pokemon-name {
+    font-size: 12px;
+    color: #000;
+    margin-bottom: 10px;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+.health-label {
+    font-size: 10px;
+    color: #000;
+    margin-bottom: 8px;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    letter-spacing: 1px;
+}
+
+.health-bar-bg {
+    width: 100%;
+    height: 24px;
+    background: #000;
+    border: 3px solid #000;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+    padding: 2px;
+}
+
+.health-bar {
+    height: 100%;
+    background: linear-gradient(to bottom, #58d854, #00a800);
+    transition: width 0.5s ease, background 0.5s ease;
+    border-radius: 2px;
+}
+
+.health-bar.low {
+    background: linear-gradient(to bottom, #ff7878, #ff0000);
+}
+
+.health-bar.medium {
+    background: linear-gradient(to bottom, #ffd446, #ff8c00);
+}
+
+.health-text {
+    text-align: right;
+    margin-top: 8px;
+    font-weight: bold;
+    color: #000;
+    font-size: 10px;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+}
+
+/* Pokemon Dialogue Box - Bottom of Screen */
+.dialogue-box {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    background: #f8f8f8;
+    padding: 25px 40px 25px 40px;
+    min-height: 280px;
+    margin: 0;
+    box-sizing: border-box;
+    border-top: 6px solid #000;
+    box-shadow: 0 -8px 0 rgba(0, 0, 0, 0.3);
+    z-index: 10;
+}
+
+.dialogue-content {
+    max-height: 120px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 10px;
+    background: #f8f8f8;
+}
+
+.dialogue-text {
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 2;
+    color: #000;
+    text-shadow: none;
+    margin-bottom: 10px;
+}
+
+.dialogue-input {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+#userInput {
+    flex: 1;
+    padding: 12px;
+    border: 4px solid #000;
+    border-radius: 0;
+    resize: none;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 10px;
+    line-height: 1.8;
+    background: #fff;
+    color: #000;
+    box-shadow: inset 4px 4px 0 rgba(0, 0, 0, 0.1);
+}
+
+#userInput:focus {
+    outline: none;
+    border-color: #0066cc;
+}
+
+#userInput::placeholder {
+    color: #888;
+}
+
+.send-button {
+    padding: 12px 24px;
+    background: #0066cc;
+    color: #fff;
+    border: 4px solid #000;
+    border-radius: 0;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.1s;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 10px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+    min-width: 120px;
+}
+
+.send-button:hover {
+    background: #0052a3;
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.send-button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.3);
+}
+
+.send-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.action-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 12px;
+}
+
+.give-up-button {
+    flex: 1;
+    padding: 14px;
+    background: #cc0000;
+    color: #fff;
+    border: 4px solid #000;
+    border-radius: 0;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.1s;
+    font-size: 11px;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.3);
+}
+
+.give-up-button:hover {
+    background: #a30000;
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+}
+
+.give-up-button:active {
+    transform: translate(4px, 4px);
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Scrollbar for dialogue */
+.dialogue-content::-webkit-scrollbar {
+    width: 12px;
+}
+
+.dialogue-content::-webkit-scrollbar-track {
+    background: #ddd;
+    border: 2px solid #000;
+}
+
+.dialogue-content::-webkit-scrollbar-thumb {
+    background: #666;
+    border: 2px solid #000;
+}
+
+.dialogue-content::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
+/* Damage number animations */
+.damage-number {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    font-size: 24px;
+    font-weight: bold;
+    color: #ff6b6b;
+    animation: floatUp 1.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 100;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    text-shadow: 3px 3px 0 #000;
+}
+
+.damage-number.high {
+    color: #ff9800;
+    font-size: 28px;
+}
+
+.damage-number.critical {
+    color: #f44336;
+    font-size: 36px;
+    animation: criticalFloat 1.5s ease-out forwards;
+}
+
+@keyframes floatUp {
+    0% {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-80px) scale(0.8);
+        opacity: 0;
+    }
+}
+
+@keyframes criticalFloat {
+    0% {
+        transform: translateY(0) scale(1.5) rotate(-10deg);
+        opacity: 1;
+    }
+    50% {
+        transform: translateY(-40px) scale(1.2) rotate(10deg);
+    }
+    100% {
+        transform: translateY(-80px) scale(0.8) rotate(0deg);
+        opacity: 0;
+    }
+}
+
+/* Shake animations for damage */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+    20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+@keyframes bigShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+    20%, 40%, 60%, 80% { transform: translateX(8px); }
+}
+
+@keyframes criticalHit {
+    0% { transform: translateX(0) scaleX(1); }
+    10% { transform: translateX(-12px) scaleX(0.95); }
+    20% { transform: translateX(12px) scaleX(0.95); }
+    30% { transform: translateX(-12px) scaleX(0.95); }
+    40% { transform: translateX(12px) scaleX(0.95); }
+    50% { transform: translateX(-6px) scaleX(0.98); }
+    60% { transform: translateX(6px) scaleX(0.98); }
+    70% { transform: translateX(-6px) scaleX(0.98); }
+    80% { transform: translateX(6px) scaleX(0.98); }
+    90% { transform: translateX(-3px) scaleX(1); }
+    100% { transform: translateX(0) scaleX(1); }
+}
+
+@keyframes screenFlash {
+    0%, 100% { filter: brightness(1); }
+    50% { filter: brightness(1.5) contrast(1.2); }
+}
+
+/* Victory animations */
+@keyframes victoryPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Typing indicator */
+.typing-indicator {
+    display: inline-block;
+    margin-left: 5px;
+}
+
+.typing-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #000;
+    border-radius: 50%;
+    margin: 0 2px;
+    animation: typing 1.4s infinite;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.typing-dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes typing {
+    0%, 60%, 100% {
+        transform: translateY(0);
+    }
+    30% {
+        transform: translateY(-8px);
+    }
+}
