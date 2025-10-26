@@ -15,11 +15,11 @@ When you visit a checkout or product page, the extension:
 1. **Intercepts** the purchase page and opens a chatbot overlay.
 ![image](screenshots/exampleblock.png)  
 2. **Engages** the user in a short conversation about their motivation for buying.
-  
+![image](screenshots/examplechat.png) 
 3. **Finds alternatives** for the product using free, public APIs or web searches.
-
+![image](screenshots/exampleproceed.png) 
 4. **Tracks savings and progress** over time, showing how much money the user has avoided spending impulsively.
-
+![image](screenshots/examplestats.png) 
 ---
 
 ## Features
