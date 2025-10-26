@@ -1,12 +1,40 @@
 // content.js
-const suspiciousPatterns = ["checkout", "cart", "purchase", "buy"];
+const suspiciousPatterns = [
+  "checkout",
+  "cart",
+  "purchase",
+  "buy",
+  "basket",
+  "order",
+  "payment",
+  "billing",
+  "gp/buy",           // Amazon buy now
+  "gp/cart",          // Amazon cart
+  "/buy/",            // Generic buy
+  "/order/",          // Generic order
+  "add-to-cart",      // Add to cart
+  "addtocart",
+  "shopping-cart",
+  "shoppingcart",
+  "bag",              // Shopping bag
+  "proceed"           // Proceed to checkout
+];
 
 // Debounce configuration
 const DEBOUNCE_TIME_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
+// Log that content script is loaded
+console.log('🛡️ Impulse Blocker loaded on:', window.location.href);
+
 // Check if we should block the page
-if (suspiciousPatterns.some(p => window.location.href.includes(p))) {
+const shouldBlock = suspiciousPatterns.some(p => window.location.href.toLowerCase().includes(p));
+console.log('🔍 Checking patterns... Should block?', shouldBlock);
+
+if (shouldBlock) {
+  console.log('✅ Suspicious pattern detected! Initiating block...');
   checkAndBlockPage();
+} else {
+  console.log('⏭️ No suspicious patterns found. Skipping block.');
 }
 
 // Function to check debounce before blocking
@@ -339,79 +367,182 @@ function extractFromJsonLd(data) {
 }
 
 function aggressivePriceExtraction() {
-  console.log('💰 Scanning for prices...');
+  console.log('💰 Starting AGGRESSIVE price extraction...');
+  console.log('📄 Page URL:', window.location.href);
   
   const prices = [];
   
-  // Price patterns - more flexible to catch various formats
-  const pricePattern = /\$\s*([\d,]+(?:\.\d{2})?)|€\s*([\d,]+(?:\.\d{2})?)|£\s*([\d,]+(?:\.\d{2})?)|USD\s*([\d,]+(?:\.\d{2})?)/gi;
+  // Simple and flexible price pattern
+  const pricePattern = /[\$€£]?\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[\$€£]?/g;
   
-  // 1. Check elements with price-related attributes
-  const priceSelectors = [
-    '[itemprop="price"]',
-    '[data-price]',
-    '[class*="price"]:not([class*="shipping"])',
-    '[class*="cost"]',
-    '[class*="amount"]'
+  // Keywords in priority order
+  const keywords = [
+    'order total:',
+    'order total',
+    'grand total:',
+    'grand total',
+    'total:',
+    'total cost:',
+    'total amount:',
+    'amount due:',
+    'subtotal:',
+    'subtotal',
+    'total'
   ];
   
-  priceSelectors.forEach(selector => {
-    document.querySelectorAll(selector).forEach(el => {
-      const text = el.textContent.trim();
-      const match = text.match(pricePattern);
-      if (match) {
-        prices.push({ text: match[0], score: 30, element: el });
-        console.log(`  💵 Price candidate: ${match[0]} (score: 30)`);
-      }
-    });
-  });
+  console.log('🔍 Searching page text for keywords...');
   
-  // 2. Scan all text for price patterns
-  document.querySelectorAll('span, div, p, strong, b').forEach(el => {
-    if (el.children.length === 0) {
-      const text = el.textContent.trim();
-      const matches = text.match(pricePattern);
-      if (matches) {
-        matches.forEach(match => {
-          const fontSize = parseFloat(window.getComputedStyle(el).fontSize);
-          const score = fontSize > 16 ? 20 : 10;
-          prices.push({ text: match, score, element: el });
-          console.log(`  💵 Price candidate: ${match} (score: ${score})`);
-        });
+  // Get ALL text content from the page
+  const allText = document.body.innerText || document.body.textContent;
+  const lines = allText.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+  
+  console.log(`📝 Found ${lines.length} lines of text on page`);
+  
+  // Search each line for keywords
+  lines.forEach((line, index) => {
+    const lineLower = line.toLowerCase();
+    
+    for (let i = 0; i < keywords.length; i++) {
+      const keyword = keywords[i];
+      
+      if (lineLower.includes(keyword)) {
+        console.log(`✅ FOUND KEYWORD "${keyword}" in line ${index}:`, line);
+        
+        // Extract ALL numbers that look like prices from this line
+        const matches = line.matchAll(/[\$€£]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)|(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[\$€£]|(\d{1,3}(?:,\d{3})*\.\d{2})/g);
+        
+        for (const match of matches) {
+          const priceText = match[0];
+          const numericValue = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+          
+          if (numericValue > 0) {
+            const score = 300 - (i * 10); // Higher score for better keywords
+            console.log(`   💰 Extracted price: ${priceText} (${numericValue}) - Score: ${score}`);
+            
+            prices.push({
+              text: priceText,
+              value: numericValue,
+              score: score,
+              keyword: keyword,
+              line: line,
+              lineIndex: index
+            });
+          }
+        }
+        
+        // Also check the NEXT line (price might be on separate line)
+        if (index + 1 < lines.length) {
+          const nextLine = lines[index + 1];
+          console.log(`   📋 Checking next line:`, nextLine);
+          
+          const nextMatches = nextLine.matchAll(/[\$€£]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)|(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[\$€£]|(\d{1,3}(?:,\d{3})*\.\d{2})/g);
+          
+          for (const match of nextMatches) {
+            const priceText = match[0];
+            const numericValue = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+            
+            if (numericValue > 0) {
+              const score = 290 - (i * 10); // Slightly lower for next line
+              console.log(`   💰 Price on next line: ${priceText} (${numericValue}) - Score: ${score}`);
+              
+              prices.push({
+                text: priceText,
+                value: numericValue,
+                score: score,
+                keyword: keyword + ' (next line)',
+                line: nextLine,
+                lineIndex: index + 1
+              });
+            }
+          }
+        }
+        
+        break; // Found keyword, stop checking other keywords for this line
       }
     }
   });
   
-  // 3. Check JSON-LD for price
-  document.querySelectorAll('script[type="application/ld+json"]').forEach(script => {
+  // Fallback: Check for elements with specific classes/IDs
+  console.log('� Checking DOM elements with total/order classes...');
+  
+  const selectors = [
+    '[class*="total"][class*="price"]',
+    '[class*="order-total"]',
+    '[class*="ordertotal"]',
+    '[class*="grand-total"]',
+    '[class*="grandtotal"]',
+    '[id*="total"]',
+    '[id*="order-total"]',
+    '[data-total]',
+    '.total',
+    '#total',
+    '.order-total',
+    '#order-total'
+  ];
+  
+  selectors.forEach(selector => {
     try {
-      const data = JSON.parse(script.textContent);
-      const price = extractPriceFromJsonLd(data);
-      if (price) {
-        prices.push({ text: price, score: 50, element: null });
-        console.log(`  💵 JSON-LD price: ${price} (score: 50)`);
-      }
+      document.querySelectorAll(selector).forEach(el => {
+        const text = el.textContent.trim();
+        const matches = text.matchAll(/[\$€£]\s*(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)|(\d{1,3}(?:,\d{3})*(?:\.\d{2})?)\s*[\$€£]|(\d{1,3}(?:,\d{3})*\.\d{2})/g);
+        
+        for (const match of matches) {
+          const priceText = match[0];
+          const numericValue = parseFloat(priceText.replace(/[^0-9.]/g, ''));
+          
+          if (numericValue > 0) {
+            console.log(`   � DOM element (${selector}): ${priceText} (${numericValue})`);
+            
+            prices.push({
+              text: priceText,
+              value: numericValue,
+              score: 100,
+              keyword: `DOM:${selector}`,
+              line: text,
+              element: el
+            });
+          }
+        }
+      });
     } catch (e) {
-      // Invalid JSON, skip
+      // Skip invalid selectors
     }
   });
   
-  // Filter out $0.00 and $0 prices
-  const validPrices = prices.filter(p => {
-    const amount = p.text.replace(/[^0-9.]/g, '');
-    return parseFloat(amount) > 0;
-  });
+  // Filter and sort
+  console.log(`\n📊 Total prices found: ${prices.length}`);
   
-  // Sort by score and return best
-  validPrices.sort((a, b) => b.score - a.score);
-  
-  if (validPrices.length > 0) {
-    console.log(`  ✨ Best price: ${validPrices[0].text}`);
-    return validPrices[0].text;
+  if (prices.length === 0) {
+    console.log('❌ NO PRICES FOUND - Dumping all page text:');
+    console.log(allText.substring(0, 1000)); // First 1000 chars
+    return '';
   }
   
-  console.log('  ❌ No price found');
-  return '';
+  // Remove duplicates, keep highest score
+  const uniquePrices = new Map();
+  prices.forEach(p => {
+    const key = p.value.toFixed(2);
+    if (!uniquePrices.has(key) || uniquePrices.get(key).score < p.score) {
+      uniquePrices.set(key, p);
+    }
+  });
+  
+  const finalPrices = Array.from(uniquePrices.values());
+  finalPrices.sort((a, b) => b.score - a.score);
+  
+  console.log('\n🏆 TOP 5 PRICE CANDIDATES:');
+  finalPrices.slice(0, 5).forEach((p, i) => {
+    console.log(`${i + 1}. ${p.text} - Score: ${p.score} - Keyword: "${p.keyword}"`);
+    console.log(`   Line: "${p.line}"`);
+  });
+  
+  const bestPrice = finalPrices[0];
+  console.log(`\n✨ SELECTED BEST PRICE: ${bestPrice.text} (Score: ${bestPrice.score})`);
+  console.log(`   Found with keyword: "${bestPrice.keyword}"`);
+  console.log(`   Full line: "${bestPrice.line}"`);
+  
+  // Format the price nicely
+  return `$${bestPrice.value.toFixed(2)}`;
 }
 
 function extractPriceFromJsonLd(data) {
@@ -504,3 +635,48 @@ async function clearDebounceForProduct(productInfo) {
     console.error('Error clearing debounce:', error);
   }
 }
+
+// Watch for URL changes (for single-page apps like modern e-commerce sites)
+let lastUrl = window.location.href;
+
+function checkUrlChange() {
+  const currentUrl = window.location.href;
+  if (currentUrl !== lastUrl) {
+    console.log('🔄 URL changed to:', currentUrl);
+    lastUrl = currentUrl;
+    
+    // Check if new URL matches suspicious patterns
+    const shouldBlock = suspiciousPatterns.some(p => currentUrl.toLowerCase().includes(p));
+    if (shouldBlock) {
+      console.log('✅ New URL matches pattern! Checking block...');
+      checkAndBlockPage();
+    }
+  }
+}
+
+// Monitor URL changes (for SPAs)
+setInterval(checkUrlChange, 1000);
+
+// Also watch for history changes
+window.addEventListener('popstate', () => {
+  console.log('📍 History state changed');
+  checkUrlChange();
+});
+
+// Watch for pushState/replaceState (used by SPAs)
+const originalPushState = history.pushState;
+const originalReplaceState = history.replaceState;
+
+history.pushState = function() {
+  originalPushState.apply(this, arguments);
+  console.log('📍 pushState detected');
+  checkUrlChange();
+};
+
+history.replaceState = function() {
+  originalReplaceState.apply(this, arguments);
+  console.log('📍 replaceState detected');
+  checkUrlChange();
+};
+
+console.log('🛡️ Impulse Blocker: All watchers active');

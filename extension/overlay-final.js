@@ -75,7 +75,10 @@ function initialize() {
   });
 
   // Handle cancel purchase button - close the entire tab
-  reconsiderBtn.addEventListener('click', () => {
+  reconsiderBtn.addEventListener('click', async () => {
+    // Save stats for blocked purchase
+    await saveBlockedPurchaseStats();
+    
     // Send message to background script to close the tab
     try {
       window.parent.postMessage({ action: 'close-tab' }, '*');
@@ -95,7 +98,10 @@ function initialize() {
   });
   
   // Handle proceed button
-  proceedBtn.addEventListener('click', () => {
+  proceedBtn.addEventListener('click', async () => {
+    // Save stats for allowed purchase
+    await saveAllowedPurchaseStats();
+    
     // Try to remove the iframe from parent window
     try {
       // Send message to parent window to remove iframe
@@ -1043,4 +1049,469 @@ function displayAlternatives() {
       };
     }
   });
+}
+
+// ===== STATS TRACKING FUNCTIONS =====
+
+/**
+ * Parse price from string like "$49.99", "€120", "49.99", etc.
+ * Returns numeric value or 0 if can't parse
+ */
+function parsePriceValue(priceString) {
+  if (!priceString || priceString === 'Price not found') {
+    return 0;
+  }
+  
+  // Remove currency symbols and commas, extract numbers
+  const numericMatch = priceString.match(/[\d,]+\.?\d*/);
+  if (numericMatch) {
+    const value = parseFloat(numericMatch[0].replace(/,/g, ''));
+    return isNaN(value) ? 0 : value;
+  }
+  
+  return 0;
+}
+
+/**
+ * Save stats when user blocks/cancels a purchase
+ * This counts as money saved!
+ */
+async function saveBlockedPurchaseStats() {
+  try {
+    const priceValue = parsePriceValue(productInfo.price);
+    
+    // Detect product category from product name and URL
+    const category = detectProductCategory(productInfo.name, productInfo.url, productInfo.domain);
+    
+    // Get current stats
+    const result = await chrome.storage.local.get('stats');
+    const stats = result.stats || {
+      totalBattles: 0,
+      victories: 0,
+      defeats: 0,
+      moneySaved: 0,
+      savingsHistory: [],
+      recentBattles: [],
+      purchaseHistory: [],
+      categoryStats: {
+        Fitness: 0,
+        Electronics: 0,
+        Clothing: 0,
+        Home: 0,
+        Health: 0
+      }
+    };
+    
+    // Initialize categoryStats if it doesn't exist
+    if (!stats.categoryStats) {
+      stats.categoryStats = {
+        Fitness: 0,
+        Electronics: 0,
+        Clothing: 0,
+        Home: 0,
+        Health: 0
+      };
+    }
+    
+    // Initialize purchaseHistory if it doesn't exist
+    if (!stats.purchaseHistory) {
+      stats.purchaseHistory = [];
+    }
+    
+    // Update stats - victories = blocked purchases = money saved
+    stats.totalBattles += 1;
+    stats.victories += 1;  // Blocked = victory for user
+    stats.moneySaved += priceValue;
+    
+    // Increment category count (only for blocked purchases)
+    if (category && stats.categoryStats[category] !== undefined) {
+      stats.categoryStats[category] += 1;
+      console.log(`📊 Category "${category}" blocked count: ${stats.categoryStats[category]}`);
+    }
+    
+    // Add to savings history for graph
+    if (!stats.savingsHistory) {
+      stats.savingsHistory = [];
+    }
+    stats.savingsHistory.push(stats.moneySaved);
+    
+    // Add to purchase history
+    stats.purchaseHistory.push({
+      timestamp: new Date().toISOString(),
+      amount: priceValue,
+      saved: true,
+      category: category || 'General',
+      product: productInfo.name,
+      domain: productInfo.domain
+    });
+    
+    // Keep only last 50 history items
+    if (stats.purchaseHistory.length > 50) {
+      stats.purchaseHistory = stats.purchaseHistory.slice(-50);
+    }
+    
+    // Add to recent battles (optional, for future features)
+    if (!stats.recentBattles) {
+      stats.recentBattles = [];
+    }
+    stats.recentBattles.push({
+      date: new Date().toISOString(),
+      product: productInfo.name,
+      price: priceValue,
+      result: 'blocked',
+      domain: productInfo.domain,
+      category: category
+    });
+    
+    // Keep only last 50 battles
+    if (stats.recentBattles.length > 50) {
+      stats.recentBattles = stats.recentBattles.slice(-50);
+    }
+    
+    // Save to storage
+    await chrome.storage.local.set({ stats });
+    
+    console.log('✅ Blocked purchase stats saved:', {
+      product: productInfo.name,
+      price: priceValue,
+      category: category,
+      totalSaved: stats.moneySaved
+    });
+    
+  } catch (error) {
+    console.error('❌ Error saving blocked purchase stats:', error);
+  }
+}
+
+/**
+ * Detect product category from product name, URL, and domain
+ */
+function detectProductCategory(productName, url, domain) {
+  const text = `${productName} ${url} ${domain}`.toLowerCase();
+  
+  // Category keywords - comprehensive list
+  const categories = {
+    Fitness: [
+      // General fitness
+      'fitness', 'gym', 'workout', 'exercise', 'training', 'athletic', 'sports', 'sport',
+      // Cardio
+      'running', 'jogging', 'treadmill', 'elliptical', 'bike', 'bicycle', 'cycling', 'cardio', 'aerobic', 'spin',
+      // Strength
+      'weight', 'weights', 'dumbbell', 'barbell', 'kettlebell', 'strength', 'lifting', 'powerlifting', 'bodybuilding', 'muscle',
+      // Equipment
+      'bench', 'rack', 'resistance', 'band', 'rope', 'pull-up', 'chin-up', 'squat', 'deadlift',
+      // Activities
+      'yoga', 'pilates', 'crossfit', 'hiit', 'boxing', 'martial', 'mma', 'fighting', 'wrestling',
+      // Accessories
+      'mat', 'foam roller', 'jump rope', 'skip rope', 'medicine ball', 'stability ball', 'exercise ball',
+      // Wearables
+      'fitness tracker', 'fitbit', 'garmin', 'pedometer', 'heart rate', 'smartwatch',
+      // Apparel
+      'activewear', 'sportswear', 'athletic wear', 'gym wear', 'leggings', 'shorts', 'tank top', 'sports bra',
+      'compression', 'sweatpants', 'tracksuit', 'joggers',
+      // Nutrition
+      'protein', 'whey', 'creatine', 'bcaa', 'pre-workout', 'post-workout', 'mass gainer', 'amino',
+      'protein bar', 'protein shake', 'shaker', 'supplement',
+      // Swimming
+      'swimming', 'swim', 'pool', 'goggles', 'swimsuit', 'cap', 'fins', 'snorkel'
+    ],
+    Electronics: [
+      // Computers
+      'computer', 'pc', 'laptop', 'notebook', 'desktop', 'workstation', 'chromebook', 'macbook', 'imac',
+      // Mobile devices
+      'phone', 'smartphone', 'iphone', 'android', 'mobile', 'cell', 'cellular', 'galaxy', 'pixel',
+      'tablet', 'ipad', 'kindle', 'e-reader', 'ebook',
+      // Brands
+      'apple', 'samsung', 'sony', 'lg', 'microsoft', 'dell', 'hp', 'lenovo', 'asus', 'acer', 'msi',
+      'google', 'huawei', 'xiaomi', 'oneplus', 'oppo', 'vivo', 'motorola', 'nokia',
+      // Gaming
+      'gaming', 'game', 'console', 'playstation', 'ps5', 'ps4', 'xbox', 'nintendo', 'switch', 'wii',
+      'controller', 'gamepad', 'joystick', 'racing wheel', 'vr', 'virtual reality', 'oculus', 'valve',
+      // Audio
+      'headphone', 'headphones', 'earphone', 'earphones', 'earbud', 'earbuds', 'airpods', 'beats',
+      'speaker', 'speakers', 'soundbar', 'subwoofer', 'amplifier', 'receiver', 'audio',
+      'microphone', 'mic', 'podcast', 'streaming',
+      // Video
+      'tv', 'television', 'monitor', 'display', 'screen', 'projector', 'smart tv', 'oled', 'qled', 'led', '4k', '8k',
+      'camera', 'webcam', 'gopro', 'dslr', 'mirrorless', 'lens', 'tripod', 'gimbal', 'drone',
+      'camcorder', 'video camera',
+      // Peripherals
+      'keyboard', 'mouse', 'mice', 'trackpad', 'touchpad', 'stylus', 'pen', 'wacom',
+      'usb', 'hub', 'dock', 'docking station', 'port', 'adapter', 'converter', 'dongle',
+      // Storage & Memory
+      'hard drive', 'hdd', 'ssd', 'nvme', 'storage', 'external drive', 'flash drive', 'usb drive', 'thumb drive',
+      'memory', 'ram', 'sd card', 'microsd', 'memory card',
+      // Networking
+      'router', 'modem', 'wifi', 'wireless', 'ethernet', 'network', 'mesh', 'access point', 'range extender',
+      // Power & Cables
+      'charger', 'charging', 'power bank', 'battery', 'cable', 'cord', 'wire', 'lightning', 'usb-c', 'hdmi',
+      'power strip', 'surge protector', 'ups', 'adapter',
+      // Smart Home
+      'smart home', 'alexa', 'echo', 'google home', 'nest', 'smart speaker', 'smart display',
+      'smart light', 'smart bulb', 'philips hue', 'smart plug', 'smart switch', 'thermostat',
+      // Wearables
+      'smartwatch', 'apple watch', 'watch', 'wearable', 'fitness band', 'smart ring',
+      // General tech
+      'electronic', 'electronics', 'tech', 'technology', 'gadget', 'device', 'digital', 'wireless', 'bluetooth',
+      'portable', 'handheld', 'rechargeable'
+    ],
+    Clothing: [
+      // General
+      'clothing', 'clothes', 'apparel', 'wear', 'fashion', 'garment', 'outfit', 'style', 'attire',
+      // Tops
+      'shirt', 'shirts', 't-shirt', 'tshirt', 'tee', 'blouse', 'top', 'tank', 'tank top', 'cami', 'camisole',
+      'polo', 'henley', 'tunic', 'sweater', 'cardigan', 'pullover', 'hoodie', 'sweatshirt', 'fleece',
+      // Bottoms
+      'pants', 'trousers', 'jeans', 'denim', 'shorts', 'skirt', 'leggings', 'tights', 'joggers',
+      'chinos', 'khakis', 'slacks', 'capris', 'culottes',
+      // Dresses & Sets
+      'dress', 'gown', 'sundress', 'maxi', 'midi', 'mini', 'romper', 'jumpsuit', 'playsuit', 'overalls',
+      // Outerwear
+      'jacket', 'coat', 'blazer', 'suit', 'parka', 'puffer', 'bomber', 'windbreaker', 'raincoat',
+      'trench', 'peacoat', 'vest', 'gilet',
+      // Footwear
+      'shoe', 'shoes', 'sneaker', 'sneakers', 'trainer', 'trainers', 'boot', 'boots', 'sandal', 'sandals',
+      'flip-flop', 'slipper', 'loafer', 'oxford', 'derby', 'brogue', 'monk', 'heel', 'heels', 'pump',
+      'wedge', 'platform', 'flat', 'flats', 'moccasin', 'espadrille', 'clog', 'mule',
+      // Accessories
+      'hat', 'cap', 'beanie', 'fedora', 'baseball cap', 'snapback', 'bucket hat', 'sun hat', 'visor',
+      'scarf', 'shawl', 'wrap', 'bandana', 'headband',
+      'belt', 'suspenders', 'tie', 'bow tie', 'necktie', 'pocket square',
+      'gloves', 'mittens', 'socks', 'stockings', 'hosiery', 'pantyhose',
+      'bag', 'purse', 'handbag', 'tote', 'clutch', 'crossbody', 'shoulder bag', 'backpack', 'wallet',
+      'jewelry', 'jewellery', 'necklace', 'bracelet', 'ring', 'earring', 'watch', 'brooch', 'pin',
+      'sunglasses', 'glasses', 'shades', 'eyewear',
+      // Underwear & Intimates
+      'underwear', 'undergarment', 'bra', 'panties', 'briefs', 'boxer', 'boxers', 'lingerie', 'sleepwear',
+      'pajamas', 'pjs', 'nightgown', 'robe', 'bathrobe',
+      // Materials & Styles
+      'cotton', 'linen', 'silk', 'wool', 'cashmere', 'leather', 'suede', 'velvet', 'satin', 'chiffon',
+      'polyester', 'nylon', 'spandex', 'denim', 'flannel', 'corduroy',
+      'casual', 'formal', 'business', 'athletic', 'vintage', 'retro', 'bohemian', 'boho'
+    ],
+    Home: [
+      // General
+      'home', 'house', 'household', 'interior', 'decor', 'decoration', 'decorative',
+      // Furniture - Living Room
+      'furniture', 'couch', 'sofa', 'loveseat', 'sectional', 'futon', 'ottoman', 'pouf',
+      'chair', 'armchair', 'recliner', 'accent chair', 'lounge chair', 'bean bag',
+      'coffee table', 'end table', 'side table', 'console table', 'tv stand', 'entertainment center',
+      'bookshelf', 'bookcase', 'shelf', 'shelving', 'cabinet', 'storage', 'organizer',
+      // Furniture - Bedroom
+      'bed', 'mattress', 'box spring', 'bed frame', 'headboard', 'footboard',
+      'nightstand', 'bedside table', 'dresser', 'chest', 'armoire', 'wardrobe', 'closet',
+      // Furniture - Dining
+      'dining table', 'dining chair', 'bar stool', 'counter stool', 'bench', 'buffet', 'sideboard',
+      'china cabinet', 'hutch',
+      // Furniture - Office
+      'desk', 'office chair', 'filing cabinet', 'desk organizer',
+      // Furniture - Outdoor
+      'patio', 'outdoor', 'garden', 'porch', 'deck', 'lawn', 'patio set', 'outdoor furniture',
+      'hammock', 'swing', 'gazebo', 'umbrella', 'canopy',
+      // Bedding
+      'bedding', 'sheets', 'sheet set', 'fitted sheet', 'flat sheet', 'pillowcase',
+      'comforter', 'duvet', 'duvet cover', 'quilt', 'blanket', 'throw', 'bedspread', 'coverlet',
+      'pillow', 'cushion', 'throw pillow', 'body pillow', 'memory foam',
+      'mattress pad', 'mattress protector', 'mattress topper',
+      // Lighting
+      'lamp', 'light', 'lighting', 'floor lamp', 'table lamp', 'desk lamp', 'bedside lamp',
+      'pendant', 'chandelier', 'ceiling light', 'wall sconce', 'track lighting', 'string lights',
+      'led', 'bulb', 'light bulb', 'dimmer', 'smart light',
+      // Window Treatments
+      'curtain', 'curtains', 'drapes', 'drape', 'blind', 'blinds', 'shade', 'shades', 'valance',
+      'rod', 'curtain rod', 'window', 'sheer',
+      // Rugs & Flooring
+      'rug', 'carpet', 'mat', 'runner', 'area rug', 'door mat', 'bath mat', 'floor mat',
+      // Wall Decor
+      'wall art', 'artwork', 'painting', 'print', 'poster', 'canvas', 'frame', 'picture frame',
+      'mirror', 'wall mirror', 'tapestry', 'wall hanging', 'clock', 'wall clock',
+      // Kitchen
+      'kitchen', 'cookware', 'pot', 'pan', 'skillet', 'frying pan', 'sauce pan', 'stock pot',
+      'bakeware', 'baking sheet', 'baking dish', 'cake pan', 'muffin tin', 'loaf pan',
+      'knife', 'knife set', 'cutting board', 'chopping board', 'utensil', 'spatula', 'spoon', 'ladle',
+      'mixing bowl', 'measuring cup', 'measuring spoon', 'whisk', 'tongs', 'peeler', 'grater',
+      'colander', 'strainer', 'sieve',
+      // Kitchen Appliances
+      'appliance', 'blender', 'mixer', 'food processor', 'stand mixer', 'hand mixer', 'immersion blender',
+      'toaster', 'toaster oven', 'microwave', 'oven', 'stove', 'cooktop', 'range',
+      'coffee maker', 'coffee machine', 'espresso', 'keurig', 'french press', 'kettle', 'electric kettle',
+      'slow cooker', 'crock pot', 'instant pot', 'pressure cooker', 'rice cooker', 'air fryer',
+      'grill', 'griddle', 'waffle maker', 'juicer', 'blender', 'can opener',
+      'refrigerator', 'fridge', 'freezer', 'dishwasher', 'garbage disposal',
+      // Tableware
+      'dinnerware', 'dish', 'dishes', 'plate', 'bowl', 'mug', 'cup', 'glass', 'tumbler',
+      'silverware', 'flatware', 'fork', 'knife', 'spoon', 'cutlery',
+      'serving', 'platter', 'serving bowl', 'serving tray',
+      // Bathroom
+      'bathroom', 'bath', 'shower', 'towel', 'bath towel', 'hand towel', 'washcloth',
+      'shower curtain', 'bath mat', 'toilet', 'sink', 'faucet', 'showerhead',
+      'soap dispenser', 'toothbrush holder', 'toilet paper holder', 'towel rack', 'towel bar',
+      // Storage & Organization
+      'storage', 'organizer', 'organization', 'basket', 'bin', 'box', 'container', 'drawer',
+      'closet organizer', 'shoe rack', 'hanger', 'laundry', 'laundry basket', 'hamper',
+      // Cleaning
+      'vacuum', 'cleaner', 'mop', 'broom', 'duster', 'cleaning', 'steam cleaner',
+      // General Home
+      'table', 'living room', 'bedroom', 'dining room', 'entryway', 'hallway', 'foyer'
+    ],
+    Health: [
+      // General Health
+      'health', 'healthcare', 'wellness', 'wellbeing', 'medical', 'medicine', 'medication',
+      // Vitamins & Supplements
+      'vitamin', 'multivitamin', 'supplement', 'mineral', 'nutrition', 'nutritional',
+      'omega', 'fish oil', 'cod liver oil', 'vitamin d', 'vitamin c', 'vitamin b', 'b12', 'b-complex',
+      'calcium', 'magnesium', 'zinc', 'iron', 'potassium', 'selenium',
+      'probiotic', 'prebiotic', 'fiber', 'digestive', 'enzyme',
+      'collagen', 'biotin', 'keratin', 'glucosamine', 'chondroitin', 'turmeric', 'ginger',
+      'herbal', 'botanical', 'extract', 'gummy', 'capsule', 'tablet', 'softgel', 'powder',
+      // Diet & Weight
+      'diet', 'weight loss', 'fat burner', 'metabolism', 'appetite', 'carb', 'keto', 'paleo',
+      'meal replacement', 'shake', 'bar', 'organic', 'natural', 'vegan', 'vegetarian', 'plant-based',
+      // Fitness Nutrition (overlaps with Fitness)
+      'protein', 'whey', 'casein', 'isolate', 'mass gainer', 'gainer', 'creatine', 'bcaa', 'amino',
+      'pre-workout', 'post-workout', 'intra-workout', 'recovery', 'electrolyte', 'hydration',
+      // Skincare
+      'skincare', 'skin care', 'face', 'facial', 'serum', 'moisturizer', 'cream', 'lotion',
+      'cleanser', 'face wash', 'toner', 'exfoliant', 'scrub', 'mask', 'sheet mask', 'clay mask',
+      'eye cream', 'night cream', 'day cream', 'sunscreen', 'spf', 'sun protection', 'sunblock',
+      'retinol', 'hyaluronic', 'niacinamide', 'salicylic', 'glycolic', 'lactic acid', 'peptide',
+      'anti-aging', 'wrinkle', 'acne', 'blemish', 'dark spot', 'brightening', 'hydrating',
+      // Beauty & Cosmetics
+      'beauty', 'cosmetic', 'makeup', 'make-up', 'foundation', 'concealer', 'powder', 'blush',
+      'bronzer', 'highlighter', 'contour', 'eyeshadow', 'eyeliner', 'mascara', 'eyebrow', 'brow',
+      'lipstick', 'lip gloss', 'lip balm', 'lip liner', 'nail polish', 'nail', 'manicure', 'pedicure',
+      'brush', 'makeup brush', 'sponge', 'beauty blender', 'palette',
+      // Hair Care
+      'hair', 'haircare', 'hair care', 'shampoo', 'conditioner', 'hair mask', 'hair oil',
+      'hair serum', 'leave-in', 'styling', 'gel', 'mousse', 'spray', 'hairspray', 'dry shampoo',
+      'hair dryer', 'blow dryer', 'straightener', 'flat iron', 'curling iron', 'curler', 'hot tool',
+      'hair color', 'dye', 'bleach', 'toner', 'treatment',
+      // Personal Care & Hygiene
+      'personal care', 'hygiene', 'deodorant', 'antiperspirant', 'body wash', 'shower gel', 'soap',
+      'body lotion', 'body butter', 'body oil', 'body scrub', 'exfoliating',
+      'toothpaste', 'toothbrush', 'electric toothbrush', 'mouthwash', 'floss', 'dental', 'oral care',
+      'razor', 'shaving', 'shave', 'shaving cream', 'aftershave', 'trimmer', 'epilator', 'wax',
+      'feminine', 'menstrual', 'pad', 'tampon', 'cup', 'period',
+      // Aromatherapy & Relaxation
+      'aromatherapy', 'essential oil', 'diffuser', 'candle', 'incense', 'fragrance', 'perfume',
+      'massage', 'massage oil', 'relaxation', 'stress relief', 'meditation', 'sleep', 'melatonin',
+      // First Aid & Medical
+      'first aid', 'bandage', 'band-aid', 'gauze', 'antiseptic', 'antibiotic', 'pain relief',
+      'thermometer', 'blood pressure', 'monitor', 'nebulizer', 'inhaler', 'cpap', 'mask',
+      'heating pad', 'ice pack', 'hot pack', 'cold pack', 'brace', 'support', 'compression',
+      // Specialty Health
+      'allergy', 'antihistamine', 'cold', 'flu', 'cough', 'sinus', 'nasal', 'throat',
+      'digestive', 'stomach', 'antacid', 'laxative', 'anti-diarrheal',
+      'sleep aid', 'melatonin', 'calming', 'anxiety', 'stress',
+      // Baby & Mother
+      'prenatal', 'postnatal', 'pregnancy', 'maternity', 'baby', 'infant', 'pediatric'
+    ]
+  };
+  
+  // Count keyword matches for each category
+  const scores = {};
+  for (const [category, keywords] of Object.entries(categories)) {
+    scores[category] = keywords.filter(keyword => text.includes(keyword)).length;
+  }
+  
+  // Find category with highest score
+  let maxScore = 0;
+  let detectedCategory = null;
+  
+  for (const [category, score] of Object.entries(scores)) {
+    if (score > maxScore) {
+      maxScore = score;
+      detectedCategory = category;
+    }
+  }
+  
+  console.log('🔍 Category detection scores:', scores);
+  console.log(`✅ Detected category: ${detectedCategory || 'Unknown'} (score: ${maxScore})`);
+  
+  return detectedCategory;
+}
+
+/**
+ * Save stats when user proceeds with purchase
+ * This counts as an allowed purchase (no money saved)
+ */
+async function saveAllowedPurchaseStats() {
+  try {
+    const priceValue = parsePriceValue(productInfo.price);
+    
+    // Detect product category
+    const category = detectProductCategory(productInfo.name, productInfo.url, productInfo.domain);
+    
+    // Get current stats
+    const result = await chrome.storage.local.get('stats');
+    const stats = result.stats || {
+      totalBattles: 0,
+      victories: 0,
+      defeats: 0,
+      moneySaved: 0,
+      savingsHistory: [],
+      recentBattles: [],
+      purchaseHistory: []
+    };
+    
+    // Initialize purchaseHistory if it doesn't exist
+    if (!stats.purchaseHistory) {
+      stats.purchaseHistory = [];
+    }
+    
+    // Update stats - defeats = allowed purchases = user lost
+    stats.totalBattles += 1;
+    stats.defeats += 1;  // Allowed = defeat for user (impulse won)
+    // Note: moneySaved stays the same (no savings on allowed purchase)
+    
+    // Add current total to savings history (no change in savings)
+    if (!stats.savingsHistory) {
+      stats.savingsHistory = [];
+    }
+    stats.savingsHistory.push(stats.moneySaved);
+    
+    // Add to purchase history
+    stats.purchaseHistory.push({
+      timestamp: new Date().toISOString(),
+      amount: priceValue,
+      saved: false,
+      category: category || 'General',
+      product: productInfo.name,
+      domain: productInfo.domain
+    });
+    
+    // Keep only last 50 history items
+    if (stats.purchaseHistory.length > 50) {
+      stats.purchaseHistory = stats.purchaseHistory.slice(-50);
+    }
+    
+    // Add to recent battles
+    if (!stats.recentBattles) {
+      stats.recentBattles = [];
+    }
+    stats.recentBattles.push({
+      date: new Date().toISOString(),
+      product: productInfo.name,
+      price: priceValue,
+      result: 'allowed',
+      domain: productInfo.domain
+    });
+    
+    // Keep only last 50 battles
+    if (stats.recentBattles.length > 50) {
+      stats.recentBattles = stats.recentBattles.slice(-50);
+    }
+    
+    // Save to storage
+    await chrome.storage.local.set({ stats });
+    
+    console.log('✅ Allowed purchase stats saved:', {
+      product: productInfo.name,
+      price: priceValue,
+      totalSaved: stats.moneySaved
+    });
+    
+  } catch (error) {
+    console.error('❌ Error saving allowed purchase stats:', error);
+  }
 }

@@ -1,11 +1,20 @@
-// Load real-time stats from stats.json
+// Store chart instances for updating
+let activityChartInstance = null;
+let radarChartInstance = null;
+
+// Load real-time stats from Chrome extension API
 async function loadStats() {
     try {
-        const response = await fetch('stats.json');
+        // Get live data from extension API endpoint
+        const response = await fetch('/api/extension-stats');
         const data = await response.json();
+        
+        console.log('📊 Raw extension data:', data);
         
         // Transform the data to match our dashboard format
         const transformedData = transformStatsData(data);
+        
+        console.log('✅ Transformed data:', transformedData);
         
         // Update stat cards with real data
         document.getElementById('stat-total').textContent = transformedData.total_attempts || 0;
@@ -33,10 +42,11 @@ async function loadStats() {
         // Populate top performers with real category data
         populateTopPerformers(transformedData);
         
-        console.log('✅ Loaded stats:', transformedData);
+        console.log('✅ Dashboard updated with extension data');
         
     } catch (error) {
         console.error('❌ Error loading stats:', error);
+        console.log('⚠️ Make sure the extension is installed and has data, and the server is running');
         showEmptyState();
     }
 }
@@ -47,42 +57,66 @@ function transformStatsData(data) {
     const victories = data.victories || 0;
     const defeats = data.defeats || 0;
     const moneySaved = data.moneySaved || 0;
-    const recentBattles = data.recentBattles || [];
-    const weeklyStats = data.weeklyStats || {};
+    const savingsHistory = data.savingsHistory || [];
+    const purchaseHistory = data.purchaseHistory || [];
     const categoryStats = data.categoryStats || {};
     
-    // Create timeline from weeklyStats for last 7 days
+    // Create timeline from savingsHistory (last 7 days)
     const timeline = [];
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const today = new Date();
     
-    days.forEach(day => {
-        const dayData = weeklyStats[day] || { battles: 0, victories: 0, defeats: 0, saved: 0 };
-        const date = new Date();
-        const currentDay = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
-        const targetDay = days.indexOf(day);
+    // Group purchases by date
+    const purchasesByDate = {};
+    purchaseHistory.forEach(purchase => {
+        const date = new Date(purchase.timestamp);
+        const dateKey = date.toISOString().split('T')[0];
         
-        // Calculate offset from current day
-        let offset = targetDay - (currentDay === 0 ? 6 : currentDay - 1);
-        if (offset > 0) offset -= 7;
+        if (!purchasesByDate[dateKey]) {
+            purchasesByDate[dateKey] = {
+                blocked: 0,
+                allowed: 0,
+                money_saved: 0
+            };
+        }
         
-        date.setDate(date.getDate() + offset);
-        
-        timeline.push({
-            date: date.toISOString().split('T')[0],
-            blocked: dayData.victories || 0,  // victories = purchases blocked
-            allowed: dayData.defeats || 0,     // defeats = purchases allowed
-            money_saved: dayData.saved || 0
-        });
+        if (purchase.saved) {
+            purchasesByDate[dateKey].blocked++;
+            purchasesByDate[dateKey].money_saved += purchase.amount || 0;
+        } else {
+            purchasesByDate[dateKey].allowed++;
+        }
     });
     
-    // Transform category stats
+    // Create timeline for last 7 days
+    for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        const dateKey = date.toISOString().split('T')[0];
+        
+        const dayData = purchasesByDate[dateKey] || { blocked: 0, allowed: 0, money_saved: 0 };
+        
+        timeline.push({
+            date: dateKey,
+            blocked: dayData.blocked,
+            allowed: dayData.allowed,
+            money_saved: dayData.money_saved
+        });
+    }
+    
+    // Transform category stats (extension format is simpler - just counts)
     const transformedCategories = {};
     Object.keys(categoryStats).forEach(category => {
-        const catData = categoryStats[category];
+        const count = categoryStats[category] || 0;
+        
+        // Calculate money saved for this category from purchase history
+        const categorySaved = purchaseHistory
+            .filter(p => p.category === category && p.saved)
+            .reduce((sum, p) => sum + (p.amount || 0), 0);
+        
         transformedCategories[category] = {
-            blocked: catData.blocked || 0,
-            attempts: catData.attempts || 0,
-            money_saved: catData.saved || 0
+            blocked: count,
+            attempts: count,  // For now, blocked = attempts
+            money_saved: categorySaved
         };
     });
     
@@ -102,7 +136,8 @@ function transformStatsData(data) {
         money_saved: moneySaved,
         timeline: timeline,
         categories: transformedCategories,
-        top_categories: top_categories
+        top_categories: top_categories,
+        purchase_history: purchaseHistory
     };
 }
 
@@ -119,7 +154,13 @@ function showEmptyState() {
 }
 
 function createActivityChart(data) {
-    const ctx = document.getElementById('activityChart').getContext('2d');
+    const ctx = document.getElementById('activityChart');
+    if (!ctx) return;
+    
+    // Destroy existing chart instance
+    if (activityChartInstance) {
+        activityChartInstance.destroy();
+    }
     
     // Extract timeline data from backend
     const labels = [];
@@ -152,7 +193,7 @@ function createActivityChart(data) {
         });
     }
     
-    new Chart(ctx, {
+    activityChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
@@ -314,7 +355,13 @@ function createActivityChart(data) {
 }
 
 function createRadarChart(data) {
-    const ctx = document.getElementById('radarChart').getContext('2d');
+    const ctx = document.getElementById('radarChart');
+    if (!ctx) return;
+    
+    // Destroy existing chart instance
+    if (radarChartInstance) {
+        radarChartInstance.destroy();
+    }
     
     // Extract category data
     const categories = data.categories || {};
@@ -358,7 +405,7 @@ function createRadarChart(data) {
         });
     }
     
-    new Chart(ctx, {
+    radarChartInstance = new Chart(ctx, {
         type: 'radar',
         data: {
             labels: labels,
@@ -655,6 +702,11 @@ document.addEventListener('DOMContentLoaded', () => {
     initChannelsPage();
     initTooltips();
     initSearchAndFilters();
+    
+    // Auto-refresh extension data every 5 seconds
+    setInterval(() => {
+        loadStats();
+    }, 5000);
 });
 
 // Initialize notification popup functionality

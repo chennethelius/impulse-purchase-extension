@@ -6,16 +6,45 @@
   "permissions": ["storage", "tabs", "scripting"],
   "host_permissions": [
     "*://*.amazon.com/*",
+    "*://*.amazon.co.uk/*",
+    "*://*.amazon.ca/*",
     "*://*.ebay.com/*",
-    "*://*.etsy.com/*"
+    "*://*.etsy.com/*",
+    "*://*.walmart.com/*",
+    "*://*.target.com/*",
+    "*://*.bestbuy.com/*",
+    "*://*.aliexpress.com/*",
+    "*://*.alibaba.com/*",
+    "*://*.wish.com/*",
+    "*://*.shopify.com/*",
+    "*://checkout.shopify.com/*"
   ],
+  "action": {
+    "default_popup": "stats.html",
+    "default_title": "Impulse Guard Stats"
+  },
   "background": {
     "service_worker": "background.js"
   },
   "content_scripts": [
     {
-      "matches": ["*://*.amazon.com/*", "*://*.ebay.com/*", "*://*.etsy.com/*"],
-      "js": ["content.js"]
+      "matches": [
+        "*://*.amazon.com/*",
+        "*://*.amazon.co.uk/*",
+        "*://*.amazon.ca/*",
+        "*://*.ebay.com/*",
+        "*://*.etsy.com/*",
+        "*://*.walmart.com/*",
+        "*://*.target.com/*",
+        "*://*.bestbuy.com/*",
+        "*://*.aliexpress.com/*",
+        "*://*.alibaba.com/*",
+        "*://*.wish.com/*",
+        "*://*.shopify.com/*",
+        "*://checkout.shopify.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
