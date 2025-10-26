@@ -164,8 +164,10 @@ function startTimer() {
 }
 
 function updateTimerDisplay(shouldFlash = false) {
-  const minutes = Math.floor(Math.max(0, timeRemaining) / 60);
-  const seconds = Math.max(0, timeRemaining) % 60;
+  const safeTime = Math.max(0, timeRemaining);
+  const displayTime = Math.floor(safeTime);
+  const minutes = Math.floor(displayTime / 60);
+  const seconds = displayTime % 60;
   
   // Check if elements exist, if not create them
   let timerMain = timerDisplay.querySelector('.timer-main');
@@ -187,7 +189,8 @@ function updateTimerDisplay(shouldFlash = false) {
       timeSavedDiv.className = 'time-saved';
       timerDisplay.appendChild(timeSavedDiv);
     }
-    timeSavedDiv.textContent = `-${totalTimeSaved}s saved!`;
+    const savedDisplay = Math.max(0, Math.round(totalTimeSaved));
+    timeSavedDiv.textContent = `-${savedDisplay}s saved!`;
   }
   
   // Update urgency styling
@@ -731,26 +734,32 @@ function checkForCopyPaste(text) {
 }
 
 async function applyTimeReduction(seconds) {
-  // Animate the time reduction
-  const reductionSteps = Math.min(seconds, 10); // Animate in steps
-  const stepSize = seconds / reductionSteps;
-  const stepDelay = 100; // ms between steps
+  const totalReduction = Math.max(0, Math.round(seconds));
+  const currentRemaining = Math.max(0, Math.round(timeRemaining));
   
-  for (let i = 0; i < reductionSteps; i++) {
-    timeRemaining -= stepSize;
-    totalTimeSaved += stepSize;
-    updateTimerDisplay(false); // Don't flash during animation
+  if (totalReduction === 0 || currentRemaining === 0) {
+    return;
+  }
+  
+  const targetReduction = Math.min(totalReduction, currentRemaining);
+  const stepDelay = 100;
+  const stepCount = Math.min(targetReduction, 10);
+  const baseStep = Math.floor(targetReduction / stepCount);
+  const remainder = targetReduction % stepCount;
+  
+  for (let i = 0; i < stepCount; i++) {
+    const stepDecrement = baseStep + (i < remainder ? 1 : 0);
+    timeRemaining -= stepDecrement;
+    totalTimeSaved += stepDecrement;
+    updateTimerDisplay(false);
     await new Promise(resolve => setTimeout(resolve, stepDelay));
   }
   
-  // Round to avoid floating point errors
-  timeRemaining = Math.round(timeRemaining);
+  timeRemaining = Math.max(0, Math.round(timeRemaining));
   totalTimeSaved = Math.round(totalTimeSaved);
   
-  // Flash success animation ONLY after time reduction
-  updateTimerDisplay(true); // Flash on final update
+  updateTimerDisplay(true);
   
-  // Check if timer reached zero
   if (timeRemaining <= 0) {
     endWaitingPeriod();
   }
@@ -803,7 +812,8 @@ async function addTypingMessage(type, text, animationType, value) {
     if (!messageDiv.querySelector('.time-badge')) {
       const badge = document.createElement('div');
       badge.className = 'time-badge reduction';
-      badge.textContent = `-${value}s ⏱️`;
+      const badgeValue = Math.round(value);
+      badge.textContent = `-${badgeValue}s ⏱️`;
       messageDiv.appendChild(badge);
     }
   } else if (type === 'ai' && animationType === 'penalty' && value > 0) {
@@ -811,7 +821,8 @@ async function addTypingMessage(type, text, animationType, value) {
     if (!messageDiv.querySelector('.time-badge')) {
       const badge = document.createElement('div');
       badge.className = 'time-badge penalty';
-      badge.textContent = `+${value}s ⏱️`;
+      const badgeValue = Math.round(value);
+      badge.textContent = `+${badgeValue}s ⏱️`;
       messageDiv.appendChild(badge);
     }
   }
@@ -829,12 +840,12 @@ async function addMessageWithAnimation(type, text, animationType, value) {
   if (type === 'ai' && animationType === 'time-reduction' && value > 0) {
     messageDiv.innerHTML = `
       <div class="message-content">${text}</div>
-      <div class="time-badge reduction">-${value}s ⏱️</div>
+      <div class="time-badge reduction">-${Math.round(value)}s ⏱️</div>
     `;
   } else if (type === 'ai' && animationType === 'penalty' && value > 0) {
     messageDiv.innerHTML = `
       <div class="message-content">${text}</div>
-      <div class="time-badge penalty">+${value}s ⏱️</div>
+      <div class="time-badge penalty">+${Math.round(value)}s ⏱️</div>
     `;
   } else {
     messageDiv.textContent = text;
