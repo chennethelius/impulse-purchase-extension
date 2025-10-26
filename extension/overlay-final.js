@@ -23,15 +23,148 @@ let totalTimeSaved = 0;
 let messageHistory = [];
 let conversationMessages = []; // Full conversation for AI context
 let previousArguments = new Set(); // Track previous arguments to prevent repetition
+let urgentSoundPlayed = false; // Ensure urgent tone only plays once per session
 
 // Product information from URL params
-let productInfo = {
+const productInfo = {
   name: 'Unknown Product',
   price: 'Price not found',
   category: '',
   url: '',
   domain: ''
 };
+
+// Lightweight Web Audio manager for subtle interface cues
+const soundManager = (() => {
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) {
+    return { play: () => undefined, prime: () => undefined, isReady: () => false };
+  }
+
+  let ctx = null;
+  let masterGain = null;
+  let enabled = false;
+  const queue = [];
+
+  const ensureContext = () => {
+    if (!ctx) {
+      ctx = new AudioContextCtor();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = 0.25;
+      masterGain.connect(ctx.destination);
+    }
+    return ctx;
+  };
+
+  const flushQueue = () => {
+    while (queue.length) {
+      const job = queue.shift();
+      try {
+        job();
+      } catch (err) {
+        console.warn('Sound playback failed:', err);
+      }
+    }
+  };
+
+  const enableContext = () => {
+    const context = ensureContext();
+    if (enabled || context.state === 'running') {
+      enabled = true;
+      flushQueue();
+      return;
+    }
+
+    context.resume()
+      .then(() => {
+        enabled = true;
+        flushQueue();
+      })
+      .catch(err => {
+        console.warn('Audio context resume blocked:', err);
+      });
+  };
+
+  const schedule = (job) => {
+    if (!enabled) {
+      if (queue.length < 8) {
+        queue.push(job);
+      }
+      return;
+    }
+    job();
+  };
+
+  const playTone = (context, step, baseTime) => {
+    const { freq, offset = 0, duration = 0.18, gain = 0.08, type = 'sine' } = step;
+    const start = baseTime + offset;
+    const oscillator = context.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(freq, start);
+
+    const gainNode = context.createGain();
+    const attackEnd = start + Math.min(0.02, duration / 3);
+    const releaseStart = start + duration;
+
+    gainNode.gain.setValueAtTime(0.0001, start);
+    gainNode.gain.exponentialRampToValueAtTime(gain, attackEnd);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, releaseStart);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(masterGain);
+
+    oscillator.start(start);
+    oscillator.stop(releaseStart + 0.08);
+  };
+
+  const sequences = {
+    send: [
+      { freq: 720, duration: 0.1, gain: 0.06, type: 'triangle' },
+      { freq: 1080, offset: 0.05, duration: 0.08, gain: 0.05, type: 'sine' }
+    ],
+    neutral: [
+      { freq: 440, duration: 0.12, gain: 0.05, type: 'sine' }
+    ],
+    timeSave: [
+      { freq: 660, duration: 0.18, gain: 0.08, type: 'sine' },
+      { freq: 990, offset: 0.09, duration: 0.16, gain: 0.07, type: 'triangle' },
+      { freq: 1320, offset: 0.18, duration: 0.14, gain: 0.06, type: 'sine' }
+    ],
+    urgent: [
+      { freq: 320, duration: 0.24, gain: 0.09, type: 'sawtooth' },
+      { freq: 220, offset: 0.3, duration: 0.28, gain: 0.08, type: 'sawtooth' }
+    ],
+    complete: [
+      { freq: 540, duration: 0.22, gain: 0.08, type: 'triangle' },
+      { freq: 810, offset: 0.1, duration: 0.2, gain: 0.07, type: 'sine' },
+      { freq: 1080, offset: 0.2, duration: 0.18, gain: 0.06, type: 'triangle' }
+    ],
+    action: [
+      { freq: 500, duration: 0.16, gain: 0.07, type: 'triangle' },
+      { freq: 750, offset: 0.08, duration: 0.12, gain: 0.06, type: 'sine' }
+    ]
+  };
+
+  const play = (type) => {
+    const pattern = sequences[type];
+    if (!pattern) return;
+
+    schedule(() => {
+      const context = ensureContext();
+      const baseTime = context.currentTime + 0.02;
+      pattern.forEach(step => playTone(context, step, baseTime));
+    });
+  };
+
+  document.addEventListener('pointerdown', enableContext, { once: true, passive: true });
+  document.addEventListener('keydown', enableContext, { once: true });
+
+  return {
+    play,
+    prime: enableContext,
+    isReady: () => enabled
+  };
+})();
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,6 +179,7 @@ function initialize() {
   productInfo.category = urlParams.get('category') || '';
   productInfo.url = urlParams.get('url') || '';
   productInfo.domain = urlParams.get('domain') || '';
+  urgentSoundPlayed = false;
   
   // Add initial system message with product info
   let productText;
@@ -79,6 +213,8 @@ function initialize() {
 
   // Handle cancel purchase button - close the entire tab
   reconsiderBtn.addEventListener('click', async () => {
+    soundManager.prime();
+    soundManager.play('action');
     // Update stats - purchase was blocked
     await updateStats(false);
     
@@ -102,6 +238,8 @@ function initialize() {
   
   // Handle proceed button
   proceedBtn.addEventListener('click', async () => {
+    soundManager.prime();
+    soundManager.play('action');
     // Update stats - purchase was allowed
     await updateStats(true);
     
@@ -164,8 +302,10 @@ function startTimer() {
 }
 
 function updateTimerDisplay(shouldFlash = false) {
-  const minutes = Math.floor(Math.max(0, timeRemaining) / 60);
-  const seconds = Math.max(0, timeRemaining) % 60;
+  const safeTime = Math.max(0, timeRemaining);
+  const displayTime = Math.floor(safeTime);
+  const minutes = Math.floor(displayTime / 60);
+  const seconds = displayTime % 60;
   
   // Check if elements exist, if not create them
   let timerMain = timerDisplay.querySelector('.timer-main');
@@ -187,12 +327,17 @@ function updateTimerDisplay(shouldFlash = false) {
       timeSavedDiv.className = 'time-saved';
       timerDisplay.appendChild(timeSavedDiv);
     }
-    timeSavedDiv.textContent = `-${totalTimeSaved}s saved!`;
+    const savedDisplay = Math.max(0, Math.round(totalTimeSaved));
+    timeSavedDiv.textContent = `-${savedDisplay}s saved!`;
   }
   
   // Update urgency styling
   if (timeRemaining <= 10 && timeRemaining > 0) {
     timerDisplay.classList.add('urgent');
+    if (!urgentSoundPlayed && soundManager.isReady()) {
+      soundManager.play('urgent');
+      urgentSoundPlayed = true;
+    }
   } else if (timeRemaining <= 0) {
     timerDisplay.classList.add('complete');
   }
@@ -207,8 +352,10 @@ function updateTimerDisplay(shouldFlash = false) {
 }
 
 async function handleSendMessage() {
+  soundManager.prime();
   const userText = userInput.value.trim();
   if (!userText) return;
+  soundManager.play('send');
   
   // Disable input while processing
   sendBtn.disabled = true;
@@ -245,6 +392,7 @@ async function handleSendMessage() {
       await applyTimeReduction(evaluation.timeReduction);
     } else {
       // Neutral response (0 time) - no penalty, just no reward
+      soundManager.play('neutral');
       await addTypingMessage('ai', evaluation.feedback, 'neutral', 0);
     }
     
@@ -731,26 +879,33 @@ function checkForCopyPaste(text) {
 }
 
 async function applyTimeReduction(seconds) {
-  // Animate the time reduction
-  const reductionSteps = Math.min(seconds, 10); // Animate in steps
-  const stepSize = seconds / reductionSteps;
-  const stepDelay = 100; // ms between steps
+  const totalReduction = Math.max(0, Math.round(seconds));
+  const currentRemaining = Math.max(0, Math.round(timeRemaining));
   
-  for (let i = 0; i < reductionSteps; i++) {
-    timeRemaining -= stepSize;
-    totalTimeSaved += stepSize;
-    updateTimerDisplay(false); // Don't flash during animation
+  if (totalReduction === 0 || currentRemaining === 0) {
+    return;
+  }
+  soundManager.play('timeSave');
+  
+  const targetReduction = Math.min(totalReduction, currentRemaining);
+  const stepDelay = 100;
+  const stepCount = Math.min(targetReduction, 10);
+  const baseStep = Math.floor(targetReduction / stepCount);
+  const remainder = targetReduction % stepCount;
+  
+  for (let i = 0; i < stepCount; i++) {
+    const stepDecrement = baseStep + (i < remainder ? 1 : 0);
+    timeRemaining -= stepDecrement;
+    totalTimeSaved += stepDecrement;
+    updateTimerDisplay(false);
     await new Promise(resolve => setTimeout(resolve, stepDelay));
   }
   
-  // Round to avoid floating point errors
-  timeRemaining = Math.round(timeRemaining);
+  timeRemaining = Math.max(0, Math.round(timeRemaining));
   totalTimeSaved = Math.round(totalTimeSaved);
   
-  // Flash success animation ONLY after time reduction
-  updateTimerDisplay(true); // Flash on final update
+  updateTimerDisplay(true);
   
-  // Check if timer reached zero
   if (timeRemaining <= 0) {
     endWaitingPeriod();
   }
@@ -803,7 +958,8 @@ async function addTypingMessage(type, text, animationType, value) {
     if (!messageDiv.querySelector('.time-badge')) {
       const badge = document.createElement('div');
       badge.className = 'time-badge reduction';
-      badge.textContent = `-${value}s ⏱️`;
+      const badgeValue = Math.round(value);
+      badge.textContent = `-${badgeValue}s ⏱️`;
       messageDiv.appendChild(badge);
     }
   } else if (type === 'ai' && animationType === 'penalty' && value > 0) {
@@ -811,7 +967,8 @@ async function addTypingMessage(type, text, animationType, value) {
     if (!messageDiv.querySelector('.time-badge')) {
       const badge = document.createElement('div');
       badge.className = 'time-badge penalty';
-      badge.textContent = `+${value}s ⏱️`;
+      const badgeValue = Math.round(value);
+      badge.textContent = `+${badgeValue}s ⏱️`;
       messageDiv.appendChild(badge);
     }
   }
@@ -829,12 +986,12 @@ async function addMessageWithAnimation(type, text, animationType, value) {
   if (type === 'ai' && animationType === 'time-reduction' && value > 0) {
     messageDiv.innerHTML = `
       <div class="message-content">${text}</div>
-      <div class="time-badge reduction">-${value}s ⏱️</div>
+      <div class="time-badge reduction">-${Math.round(value)}s ⏱️</div>
     `;
   } else if (type === 'ai' && animationType === 'penalty' && value > 0) {
     messageDiv.innerHTML = `
       <div class="message-content">${text}</div>
-      <div class="time-badge penalty">+${value}s ⏱️</div>
+      <div class="time-badge penalty">+${Math.round(value)}s ⏱️</div>
     `;
   } else {
     messageDiv.textContent = text;
@@ -883,6 +1040,9 @@ async function endWaitingPeriod() {
   
   // Show result section
   resultSection.style.display = 'flex';
+  if (soundManager.isReady()) {
+    soundManager.play('complete');
+  }
   
   // Calculate performance
   const timeSavedPercent = Math.round((totalTimeSaved / 120) * 100);
