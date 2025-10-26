@@ -1171,11 +1171,68 @@ async function displayAlternatives() {
 }
 
 // Stats tracking functions
+async function categorizeProduct(productName) {
+  // If no API key or no product name, return default
+  if (!window.CEREBRAS_API_KEY || !productName) {
+    return 'Home'; // Default category
+  }
+  
+  try {
+    console.log('🏷️ Categorizing product:', productName);
+    
+    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${window.CEREBRAS_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama3.1-8b",
+        messages: [
+          {
+            role: "system",
+            content: "You are a product categorizer. You must respond with ONLY ONE of these exact words: Fitness, Electronics, Clothing, Home, or Health. Nothing else."
+          },
+          {
+            role: "user",
+            content: `Categorize this product into ONE of these categories: Fitness, Electronics, Clothing, Home, or Health.\n\nProduct: ${productName}\n\nRespond with only the category name.`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 10
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Categorization API error:', response.status);
+      return 'Home'; // Default fallback
+    }
+
+    const data = await response.json();
+    const category = data.choices?.[0]?.message?.content?.trim() || 'Home';
+    
+    // Validate the category is one of our expected values
+    const validCategories = ['Fitness', 'Electronics', 'Clothing', 'Home', 'Health'];
+    const normalizedCategory = validCategories.find(cat => 
+      category.toLowerCase().includes(cat.toLowerCase())
+    ) || 'Home';
+    
+    console.log('✅ Product categorized as:', normalizedCategory);
+    return normalizedCategory;
+    
+  } catch (error) {
+    console.error('Error categorizing product:', error);
+    return 'Home'; // Default fallback
+  }
+}
+
 async function updateStats(purchaseAllowed) {
   try {
     // Extract price as number
     const priceNum = extractNumericPrice(productInfo.price);
-    const category = productInfo.category || 'General';
+    
+    // Use AI to categorize the product
+    const category = await categorizeProduct(productInfo.name);
     
     // Prepare stats update data
     const statsUpdate = {

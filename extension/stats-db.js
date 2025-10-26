@@ -46,7 +46,20 @@ class StatsDB {
             request.onsuccess = () => {
                 if (request.result) {
                     console.log('Stats retrieved from IndexedDB:', request.result.data);
-                    resolve(request.result.data);
+                    const stats = request.result.data;
+                    
+                    // Ensure categoryStats has all required categories
+                    if (!stats.categoryStats) {
+                        stats.categoryStats = {};
+                    }
+                    const requiredCategories = ['Fitness', 'Electronics', 'Clothing', 'Home', 'Health'];
+                    requiredCategories.forEach(cat => {
+                        if (stats.categoryStats[cat] === undefined) {
+                            stats.categoryStats[cat] = 0;
+                        }
+                    });
+                    
+                    resolve(stats);
                 } else {
                     // Return default stats if none exist
                     const defaultStats = {
@@ -56,7 +69,13 @@ class StatsDB {
                         moneySaved: 0,
                         savingsHistory: [],
                         purchaseHistory: [],
-                        categoryStats: {}
+                        categoryStats: {
+                            Fitness: 0,
+                            Electronics: 0,
+                            Clothing: 0,
+                            Home: 0,
+                            Health: 0
+                        }
                     };
                     console.log('No stats found, returning defaults');
                     resolve(defaultStats);
