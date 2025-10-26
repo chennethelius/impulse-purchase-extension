@@ -35,17 +35,17 @@
 </head>
 <body class="font-tahoma bg-peach min-h-screen p-8">
     <div class="max-w-7xl mx-auto">
-        <div class="bg-cream rounded-3xl shadow-2xl overflow-hidden flex">
+        <div class="bg-cream rounded-3xl shadow-xl overflow-hidden flex border border-gray-200/50">
             <!-- Sidebar -->
-            <aside class="w-64 bg-white bg-opacity-40 p-6 flex flex-col">
+            <aside class="w-64 bg-white/60 backdrop-blur-sm p-6 flex flex-col border-r border-gray-200/50">
                 <!-- Logo -->
                 <div class="mb-8 text-center">
-                    <h1 class="text-xl font-bold text-gray-800">Impulse Guard</h1>
+                    <h1 class="text-xl font-bold text-gray-800 gradient-text">Impulse Guard</h1>
                 </div>
                 
                 <!-- User Profile -->
                 <div class="mb-8 text-center">
-                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 mx-auto mb-3 flex items-center justify-center">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 mx-auto mb-3 flex items-center justify-center shadow-lg ring-2 ring-white ring-offset-2">
                         <i class="fas fa-user text-white text-3xl"></i>
                     </div>
                     <h2 class="font-bold text-gray-800 text-sm">Guest User</h2>
@@ -84,13 +84,13 @@
             </aside>
             
             <!-- Main Content -->
-            <main class="flex-1 p-8 overflow-y-auto max-h-screen relative">
+            <main class="flex-1 p-8 overflow-y-auto max-h-screen relative bg-gradient-to-br from-transparent to-white/30">
                 <!-- Global Notification Popup (fixed position) -->
-                <div id="notification-popup" class="fixed top-20 right-12 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 hidden z-50">
+                <div id="notification-popup" class="fixed top-20 right-12 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200/80 hidden z-50 backdrop-blur-sm">
                     <div class="p-4 border-b border-gray-100">
                         <div class="flex items-center justify-between">
                             <h3 class="text-lg font-bold text-gray-800">Notifications</h3>
-                            <span class="text-xs text-gray-500">5 new</span>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">5 new</span>
                         </div>
                     </div>
                     <div class="max-h-96 overflow-y-auto">
@@ -172,12 +172,12 @@
                     <div class="flex items-center justify-between mb-6">
                         <h1 class="text-4xl font-bold text-gray-800">Dashboard</h1>
                         <div class="flex items-center space-x-3">
-                            <button class="notification-trigger w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center relative hover:bg-opacity-90 transition-all">
+                            <button class="notification-trigger w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center relative hover:bg-opacity-90 transition-all ripple hover:shadow-lg">
                                 <i class="fas fa-bell text-sm"></i>
-                                <span class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                                <span class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse ring-2 ring-white"></span>
                             </button>
                             
-                            <button class="settings-trigger w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center hover:bg-gray-400 transition-all">
+                            <button class="settings-trigger w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center hover:bg-gray-400 transition-all ripple hover:shadow-lg">
                                 <i class="fas fa-cog text-sm"></i>
                             </button>
                         </div>
@@ -299,11 +299,11 @@
                         <div class="flex items-center justify-between mb-6">
                             <h1 class="text-4xl font-bold text-gray-800">Insights</h1>
                             <div class="flex items-center space-x-3">
-                                <button class="notification-trigger w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center relative hover:bg-opacity-90 transition-all">
+                                <button class="notification-trigger w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center relative hover:bg-opacity-90 transition-all ripple hover:shadow-lg">
                                     <i class="fas fa-bell text-sm"></i>
-                                    <span class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
+                                    <span class="notification-badge absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse ring-2 ring-white"></span>
                                 </button>
-                                <button class="settings-trigger w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center hover:bg-gray-400 transition-all">
+                                <button class="settings-trigger w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center hover:bg-gray-400 transition-all ripple hover:shadow-lg">
                                     <i class="fas fa-cog text-sm"></i>
                                 </button>
                             </div>
@@ -311,46 +311,46 @@
                         
                         <!-- Insight Cards -->
                         <div class="grid grid-cols-2 gap-6 mb-6">
-                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white">
+                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white shadow-lg hover:shadow-xl">
                                 <div class="flex items-start justify-between mb-3">
                                     <div>
                                         <div class="text-sm opacity-90 mb-1">Most Vulnerable Time</div>
                                         <div class="text-3xl font-bold">9-11 PM</div>
                                     </div>
-                                    <i class="fas fa-clock text-3xl opacity-30"></i>
+                                    <i class="fas fa-clock text-3xl opacity-30 float-animation"></i>
                                 </div>
                                 <p class="text-xs opacity-80">You're 3x more likely to make impulse purchases during late evening hours</p>
                             </div>
                             
-                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white">
+                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white shadow-lg hover:shadow-xl">
                                 <div class="flex items-start justify-between mb-3">
                                     <div>
                                         <div class="text-sm opacity-90 mb-1">Biggest Weakness</div>
                                         <div class="text-2xl font-bold">Electronics</div>
                                     </div>
-                                    <i class="fas fa-laptop text-3xl opacity-30"></i>
+                                    <i class="fas fa-laptop text-3xl opacity-30 float-animation"></i>
                                 </div>
                                 <p class="text-xs opacity-80">42% of your impulse attempts are electronics. Average item: $287</p>
                             </div>
                             
-                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white">
+                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white shadow-lg hover:shadow-xl">
                                 <div class="flex items-start justify-between mb-3">
                                     <div>
                                         <div class="text-sm opacity-90 mb-1">Weekly Trend</div>
                                         <div class="text-3xl font-bold">↑ 23%</div>
                                     </div>
-                                    <i class="fas fa-chart-line text-3xl opacity-30"></i>
+                                    <i class="fas fa-chart-line text-3xl opacity-30 float-animation"></i>
                                 </div>
                                 <p class="text-xs opacity-80">Your impulse resistance has improved 23% compared to last week</p>
                             </div>
                             
-                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white">
+                            <div class="card bg-gradient-to-br from-orange-400 to-pink-400 text-white shadow-lg hover:shadow-xl">
                                 <div class="flex items-start justify-between mb-3">
                                     <div>
                                         <div class="text-sm opacity-90 mb-1">Streak Record</div>
                                         <div class="text-3xl font-bold">12 Days</div>
                                     </div>
-                                    <i class="fas fa-fire text-3xl opacity-30"></i>
+                                    <i class="fas fa-fire text-3xl opacity-30 float-animation"></i>
                                 </div>
                                 <p class="text-xs opacity-80">Your longest streak of resisting all impulse purchases</p>
                             </div>

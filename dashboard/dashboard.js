@@ -663,10 +663,16 @@ function createSpendingPatternChart() {
 
 // Load data on page load
 document.addEventListener('DOMContentLoaded', () => {
+    loadDarkModePreference(); // Load dark mode first
     loadStats();
     initTabSwitching();
     initNotifications();
     initSettings();
+    initReportsPage();
+    initCommentsPage();
+    initChannelsPage();
+    initTooltips();
+    initSearchAndFilters();
 });
 
 // Initialize notification popup functionality
@@ -683,7 +689,19 @@ function initNotifications() {
     notificationTriggers.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
+            const wasHidden = notificationPopup.classList.contains('hidden');
             notificationPopup.classList.toggle('hidden');
+            
+            // Animate in
+            if (wasHidden) {
+                notificationPopup.style.opacity = '0';
+                notificationPopup.style.transform = 'translateY(-10px)';
+                setTimeout(() => {
+                    notificationPopup.style.transition = 'all 0.2s ease';
+                    notificationPopup.style.opacity = '1';
+                    notificationPopup.style.transform = 'translateY(0)';
+                }, 10);
+            }
             
             // Hide all badges when opened
             if (!notificationPopup.classList.contains('hidden')) {
@@ -705,21 +723,470 @@ function initNotifications() {
     const notificationItems = document.querySelectorAll('.notification-item');
     notificationItems.forEach(item => {
         item.addEventListener('click', () => {
-            // Mark as read (fade effect)
-            item.style.opacity = '0.6';
-            console.log('Notification clicked');
+            // Mark as read with smooth transition
+            item.style.transition = 'opacity 0.3s ease';
+            item.style.opacity = '0.5';
+            
+            // Show toast notification
+            showToast('Notification marked as read', 'success');
         });
     });
+    
+    // View all notifications button
+    const viewAllBtn = notificationPopup.querySelector('button');
+    if (viewAllBtn) {
+        viewAllBtn.addEventListener('click', () => {
+            showToast('Full notification history coming soon!', 'info');
+            notificationPopup.classList.add('hidden');
+        });
+    }
 }
 
-// Initialize settings button functionality
+// Initialize settings button functionality with modal
 function initSettings() {
     const settingsTriggers = document.querySelectorAll('.settings-trigger');
     
     settingsTriggers.forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
-            alert('Settings panel coming soon! 🎨\n\nYou will be able to customize:\n• Alert thresholds\n• Theme colors\n• Notification preferences\n• AI difficulty level');
+            showSettingsModal();
         });
     });
+}
+
+// Show settings modal
+function showSettingsModal() {
+    // Check current dark mode state
+    const isDarkMode = document.body.classList.contains('dark-mode');
+    const darkModeChecked = isDarkMode ? 'checked' : '';
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in" style="animation: fadeIn 0.2s ease">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
+                <button class="close-modal w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center transition-all">
+                    <i class="fas fa-times text-gray-500"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 mb-6">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-semibold text-gray-700">Notifications</label>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" checked class="sr-only peer" id="notifications-toggle">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500">Receive alerts for impulse purchases</p>
+                </div>
+                
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-semibold text-gray-700">AI Difficulty</label>
+                        <select id="ai-difficulty" class="px-3 py-1 border border-gray-200 rounded-lg text-sm focus:border-teal focus:outline-none">
+                            <option>Easy</option>
+                            <option selected>Normal</option>
+                            <option>Hard</option>
+                            <option>Extreme</option>
+                        </select>
+                    </div>
+                    <p class="text-xs text-gray-500">How strict should the AI guardian be?</p>
+                </div>
+                
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-sm font-semibold text-gray-700">Dark Mode</label>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" ${darkModeChecked} class="sr-only peer" id="dark-mode-toggle">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-teal"></div>
+                        </label>
+                    </div>
+                    <p class="text-xs text-gray-500">Switch between light and dark theme</p>
+                </div>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button class="save-settings flex-1 px-4 py-2 bg-teal text-white font-semibold rounded-lg hover:bg-opacity-90 transition-all">
+                    Save Changes
+                </button>
+                <button class="close-modal px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition-all">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Dark mode toggle handler
+    const darkModeToggle = modal.querySelector('#dark-mode-toggle');
+    darkModeToggle.addEventListener('change', (e) => {
+        toggleDarkMode(e.target.checked);
+    });
+    
+    // Close modal handlers
+    modal.querySelectorAll('.close-modal').forEach(btn => {
+        btn.addEventListener('click', () => {
+            modal.style.opacity = '0';
+            setTimeout(() => modal.remove(), 200);
+        });
+    });
+    
+    // Save settings
+    modal.querySelector('.save-settings').addEventListener('click', () => {
+        const settings = {
+            notifications: modal.querySelector('#notifications-toggle').checked,
+            aiDifficulty: modal.querySelector('#ai-difficulty').value,
+            darkMode: modal.querySelector('#dark-mode-toggle').checked
+        };
+        
+        // Save to localStorage
+        localStorage.setItem('impulseGuardSettings', JSON.stringify(settings));
+        
+        showToast('Settings saved successfully!', 'success');
+        modal.style.opacity = '0';
+        setTimeout(() => modal.remove(), 200);
+    });
+    
+    // Click outside to close
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => modal.remove(), 200);
+        }
+    });
+}
+
+// Toggle dark mode
+function toggleDarkMode(enabled) {
+    if (enabled) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+        showToast('Dark mode enabled 🌙', 'success');
+    } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+        showToast('Light mode enabled ☀️', 'success');
+    }
+}
+
+// Load dark mode preference on page load
+function loadDarkModePreference() {
+    const darkMode = localStorage.getItem('darkMode');
+    if (darkMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+    }
+    
+    // Also load other settings
+    const settings = localStorage.getItem('impulseGuardSettings');
+    if (settings) {
+        try {
+            const parsed = JSON.parse(settings);
+            console.log('Loaded settings:', parsed);
+        } catch (e) {
+            console.error('Failed to parse settings:', e);
+        }
+    }
+}
+
+// Initialize Reports page functionality
+function initReportsPage() {
+    // Period selector buttons
+    const periodButtons = document.querySelectorAll('#reports-page button');
+    periodButtons.forEach(btn => {
+        if (btn.textContent.includes('Weekly') || btn.textContent.includes('Monthly') || btn.textContent.includes('Yearly')) {
+            btn.addEventListener('click', () => {
+                // Remove active state from all
+                periodButtons.forEach(b => {
+                    if (b.textContent.includes('Weekly') || b.textContent.includes('Monthly') || b.textContent.includes('Yearly')) {
+                        b.className = b.className.replace('text-coral border-coral border-2', 'text-gray-600');
+                        b.className += ' hover:bg-gray-50';
+                    }
+                });
+                
+                // Add active state to clicked
+                btn.className = btn.className.replace('hover:bg-gray-50', '');
+                btn.className += ' text-coral border-coral border-2';
+                
+                showToast(`Showing ${btn.textContent.trim()} report`, 'info');
+            });
+        }
+        
+        // Export button
+        if (btn.textContent.includes('Export')) {
+            btn.addEventListener('click', () => {
+                showToast('Exporting report as PDF...', 'success');
+                setTimeout(() => {
+                    showToast('Report exported successfully!', 'success');
+                }, 1500);
+            });
+        }
+    });
+}
+
+// Initialize Comments page functionality
+function initCommentsPage() {
+    // Save note button
+    const saveNoteBtn = document.querySelector('#comments-page button[class*="bg-teal"]');
+    if (saveNoteBtn) {
+        saveNoteBtn.addEventListener('click', () => {
+            const textarea = document.querySelector('#comments-page textarea');
+            if (textarea && textarea.value.trim()) {
+                showToast('Note saved successfully!', 'success');
+                textarea.value = '';
+                // Animate success
+                saveNoteBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Saved!';
+                setTimeout(() => {
+                    saveNoteBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Note';
+                }, 2000);
+            } else {
+                showToast('Please write something first', 'error');
+            }
+        });
+    }
+    
+    // Add Tag and Mood buttons
+    const tagButtons = document.querySelectorAll('#comments-page button[class*="bg-gray-100"]');
+    tagButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (btn.textContent.includes('Tag')) {
+                showToast('Tag selector coming soon!', 'info');
+            } else if (btn.textContent.includes('Mood')) {
+                showMoodSelector();
+            }
+        });
+    });
+    
+    // Like and comment buttons on existing notes
+    const noteActions = document.querySelectorAll('#comments-page .notification-item button');
+    noteActions.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const icon = btn.querySelector('i');
+            if (icon.classList.contains('fa-thumbs-up')) {
+                const count = parseInt(btn.textContent.trim()) || 0;
+                btn.innerHTML = `<i class="fas fa-thumbs-up mr-1 text-teal"></i>${count + 1}`;
+                showToast('Liked!', 'success');
+            } else if (icon.classList.contains('fa-comment')) {
+                showToast('Comments feature coming soon!', 'info');
+            }
+        });
+    });
+}
+
+// Show mood selector
+function showMoodSelector() {
+    const moods = [
+        { emoji: '😊', label: 'Happy', color: 'bg-green-100 text-green-600' },
+        { emoji: '😰', label: 'Tempted', color: 'bg-orange-100 text-orange-600' },
+        { emoji: '😔', label: 'Regret', color: 'bg-red-100 text-red-600' },
+        { emoji: '💪', label: 'Strong', color: 'bg-blue-100 text-blue-600' },
+        { emoji: '🎉', label: 'Victory', color: 'bg-purple-100 text-purple-600' }
+    ];
+    
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    modal.innerHTML = `
+        <div class="bg-white rounded-2xl p-6 max-w-sm w-full mx-4 shadow-2xl">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">How are you feeling?</h3>
+            <div class="grid grid-cols-2 gap-3">
+                ${moods.map(mood => `
+                    <button class="mood-option p-4 ${mood.color} rounded-lg font-semibold text-sm hover:scale-105 transition-transform">
+                        <div class="text-3xl mb-2">${mood.emoji}</div>
+                        ${mood.label}
+                    </button>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    modal.querySelectorAll('.mood-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const mood = btn.textContent.trim();
+            showToast(`Mood set to ${mood}`, 'success');
+            modal.remove();
+        });
+    });
+    
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+}
+
+// Initialize Channels page functionality
+function initChannelsPage() {
+    // Toggle switches
+    const toggles = document.querySelectorAll('#channels-page input[type="checkbox"]');
+    toggles.forEach(toggle => {
+        toggle.addEventListener('change', (e) => {
+            const card = e.target.closest('.card');
+            const channelName = card ? card.querySelector('h3').textContent : 'Channel';
+            
+            if (e.target.checked) {
+                showToast(`${channelName} protection enabled`, 'success');
+            } else {
+                showToast(`${channelName} protection disabled`, 'info');
+            }
+        });
+    });
+    
+    // Add custom website button
+    const addWebsiteBtn = document.querySelector('#channels-page button[class*="bg-teal"]');
+    const websiteInput = document.querySelector('#channels-page input[type="text"]');
+    
+    if (addWebsiteBtn && websiteInput) {
+        addWebsiteBtn.addEventListener('click', () => {
+            const url = websiteInput.value.trim();
+            if (url) {
+                if (isValidUrl(url)) {
+                    showToast(`Added ${url} to protected sites!`, 'success');
+                    websiteInput.value = '';
+                } else {
+                    showToast('Please enter a valid URL', 'error');
+                }
+            } else {
+                showToast('Please enter a website URL', 'error');
+            }
+        });
+        
+        // Enter key support
+        websiteInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addWebsiteBtn.click();
+            }
+        });
+    }
+}
+
+// Validate URL
+function isValidUrl(string) {
+    try {
+        const pattern = /^([a-zA-Z0-9]+\.)?[a-zA-Z0-9][a-zA-Z0-9-]+\.[a-zA-Z]{2,}$/;
+        return pattern.test(string.replace(/^https?:\/\//, ''));
+    } catch (_) {
+        return false;
+    }
+}
+
+// Initialize tooltips
+function initTooltips() {
+    const infoIcons = document.querySelectorAll('.fa-info-circle');
+    infoIcons.forEach(icon => {
+        icon.style.cursor = 'pointer';
+        icon.addEventListener('mouseenter', (e) => {
+            const tooltipText = getTooltipText(e.target);
+            showTooltip(e.target, tooltipText);
+        });
+        icon.addEventListener('mouseleave', () => {
+            hideTooltip();
+        });
+    });
+}
+
+// Get tooltip text based on context
+function getTooltipText(element) {
+    const parent = element.closest('.stat-box');
+    if (parent) {
+        const label = parent.querySelector('span').textContent;
+        const tooltips = {
+            'Total Attempts': 'Total number of times the AI guardian intercepted a purchase attempt',
+            'Resisted': 'Number of purchases you successfully resisted',
+            'Money Saved': 'Total amount of money saved by not making impulse purchases'
+        };
+        return tooltips[label] || 'More information';
+    }
+    return 'More information';
+}
+
+// Show tooltip
+let currentTooltip = null;
+function showTooltip(element, text) {
+    hideTooltip();
+    
+    const tooltip = document.createElement('div');
+    tooltip.className = 'fixed bg-gray-800 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-50 max-w-xs';
+    tooltip.textContent = text;
+    tooltip.style.pointerEvents = 'none';
+    
+    document.body.appendChild(tooltip);
+    currentTooltip = tooltip;
+    
+    const rect = element.getBoundingClientRect();
+    tooltip.style.top = `${rect.top - tooltip.offsetHeight - 8}px`;
+    tooltip.style.left = `${rect.left - tooltip.offsetWidth / 2}px`;
+    
+    // Animate in
+    tooltip.style.opacity = '0';
+    tooltip.style.transform = 'translateY(5px)';
+    setTimeout(() => {
+        tooltip.style.transition = 'all 0.2s ease';
+        tooltip.style.opacity = '1';
+        tooltip.style.transform = 'translateY(0)';
+    }, 10);
+}
+
+// Hide tooltip
+function hideTooltip() {
+    if (currentTooltip) {
+        currentTooltip.remove();
+        currentTooltip = null;
+    }
+}
+
+// Initialize search and filters
+function initSearchAndFilters() {
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        // Ctrl/Cmd + K for search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            e.preventDefault();
+            showToast('Quick search coming soon!', 'info');
+        }
+        
+        // Escape to close modals/popups
+        if (e.key === 'Escape') {
+            document.getElementById('notification-popup')?.classList.add('hidden');
+            document.querySelectorAll('.fixed.inset-0').forEach(modal => modal.remove());
+        }
+    });
+}
+
+// Toast notification system
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    const icons = {
+        success: 'fa-check-circle text-green-500',
+        error: 'fa-exclamation-circle text-red-500',
+        info: 'fa-info-circle text-blue-500',
+        warning: 'fa-exclamation-triangle text-yellow-500'
+    };
+    
+    toast.className = 'fixed bottom-6 right-6 bg-white rounded-lg shadow-2xl p-4 flex items-center space-x-3 z-50 border border-gray-200';
+    toast.innerHTML = `
+        <i class="fas ${icons[type]} text-xl"></i>
+        <span class="text-gray-800 font-medium">${message}</span>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    // Animate in
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(20px)';
+    setTimeout(() => {
+        toast.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateY(0)';
+    }, 10);
+    
+    // Auto remove
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
