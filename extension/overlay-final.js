@@ -76,17 +76,42 @@ function initialize() {
 
   // Handle reconsider button
   reconsiderBtn.addEventListener('click', () => {
-    window.top.document.querySelector('iframe').remove();
+    // Try to remove the iframe from parent window
+    try {
+      window.parent.postMessage({ action: 'remove-impulse-overlay' }, '*');
+      
+      // Also try direct removal if we have access
+      if (window.parent && window.parent.document) {
+        const iframe = window.parent.document.querySelector('iframe[src*="overlay.html"]');
+        if (iframe) {
+          iframe.remove();
+        }
+      }
+    } catch (e) {
+      console.log('Could not remove iframe, attempting to hide:', e);
+      window.parent.postMessage({ action: 'hide-impulse-overlay' }, '*');
+    }
   });
   
   // Handle proceed button
   proceedBtn.addEventListener('click', () => {
-    chrome.runtime.sendMessage(
-      { type: "requestUnlock", domain: window.location.hostname },
-      () => {
-        window.top.document.querySelector('iframe').remove();
+    // Try to remove the iframe from parent window
+    try {
+      // Send message to parent window to remove iframe
+      window.parent.postMessage({ action: 'remove-impulse-overlay' }, '*');
+      
+      // Also try direct removal if we have access
+      if (window.parent && window.parent.document) {
+        const iframe = window.parent.document.querySelector('iframe[src*="overlay.html"]');
+        if (iframe) {
+          iframe.remove();
+        }
       }
-    );
+    } catch (e) {
+      // If cross-origin blocks access, at least hide the iframe
+      console.log('Could not remove iframe, attempting to hide:', e);
+      window.parent.postMessage({ action: 'hide-impulse-overlay' }, '*');
+    }
   });
 }
 
@@ -131,10 +156,29 @@ function startTimer() {
 function updateTimerDisplay(shouldFlash = false) {
   const minutes = Math.floor(Math.max(0, timeRemaining) / 60);
   const seconds = Math.max(0, timeRemaining) % 60;
-  timerDisplay.innerHTML = `
-    <div class="timer-main ${shouldFlash ? 'flash-success' : ''}">${minutes}:${seconds.toString().padStart(2, '0')}</div>
-    ${totalTimeSaved > 0 ? `<div class="time-saved">-${totalTimeSaved}s saved!</div>` : ''}
-  `;
+  
+  // Check if elements exist, if not create them
+  let timerMain = timerDisplay.querySelector('.timer-main');
+  let timeSavedDiv = timerDisplay.querySelector('.time-saved');
+  
+  if (!timerMain) {
+    timerMain = document.createElement('div');
+    timerMain.className = 'timer-main';
+    timerDisplay.appendChild(timerMain);
+  }
+  
+  // Update timer text
+  timerMain.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  
+  // Only update saved time if it changed
+  if (totalTimeSaved > 0) {
+    if (!timeSavedDiv) {
+      timeSavedDiv = document.createElement('div');
+      timeSavedDiv.className = 'time-saved';
+      timerDisplay.appendChild(timeSavedDiv);
+    }
+    timeSavedDiv.textContent = `-${totalTimeSaved}s saved!`;
+  }
   
   // Update urgency styling
   if (timeRemaining <= 10 && timeRemaining > 0) {
@@ -143,13 +187,11 @@ function updateTimerDisplay(shouldFlash = false) {
     timerDisplay.classList.add('complete');
   }
   
-  // Remove flash class after animation
+  // Flash ONLY the timer-main on time reduction
   if (shouldFlash) {
+    timerMain.classList.add('flash-success');
     setTimeout(() => {
-      const timerMain = timerDisplay.querySelector('.timer-main');
-      if (timerMain) {
-        timerMain.classList.remove('flash-success');
-      }
+      timerMain.classList.remove('flash-success');
     }, 500);
   }
 }
@@ -715,8 +757,13 @@ async function addTypingMessage(type, text, animationType, value) {
   
   chatMessages.appendChild(messageDiv);
   
-  // Scroll immediately when message is added
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  // Force scroll immediately and repeatedly
+  const forceScroll = () => {
+    chatMessages.scrollTop = chatMessages.scrollHeight + 100;
+    messageDiv.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  };
+  
+  forceScroll();
   
   // Type out the message character by character
   let currentText = '';
@@ -726,17 +773,19 @@ async function addTypingMessage(type, text, animationType, value) {
     currentText += text[i];
     contentDiv.textContent = currentText;
     
-    // Scroll every 5 characters for smoother following
-    if (i % 5 === 0) {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Scroll every 3 characters for better following
+    if (i % 3 === 0) {
+      forceScroll();
     }
     
     // Wait before next character
     await new Promise(resolve => setTimeout(resolve, typingSpeed));
   }
   
-  // Final scroll after typing complete
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  // Multiple final scrolls to ensure it sticks
+  forceScroll();
+  setTimeout(forceScroll, 100);
+  setTimeout(forceScroll, 300);
   
   // Add time badge after typing is complete (only if one doesn't exist)
   if (type === 'ai' && animationType === 'time-reduction' && value > 0) {

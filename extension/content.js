@@ -55,8 +55,17 @@ function extractProductInfo() {
   for (const selector of priceSelectors) {
     const element = document.querySelector(selector);
     if (element && element.textContent.match(/\$|€|£|\d+/)) {
-      productPrice = element.textContent.trim();
-      break;
+      // Clean up price text - remove extra whitespace and labels
+      let priceText = element.textContent.trim();
+      priceText = priceText.replace(/\s+/g, ' '); // Replace multiple spaces with single space
+      priceText = priceText.replace(/Order total:?/i, '').trim(); // Remove "Order total" label
+      priceText = priceText.replace(/Subtotal:?/i, '').trim(); // Remove "Subtotal" label
+      priceText = priceText.replace(/Total:?/i, '').trim(); // Remove "Total" label
+      
+      if (priceText && priceText.match(/\$|€|£|\d+/)) {
+        productPrice = priceText;
+        break;
+      }
     }
   }
   
@@ -296,8 +305,8 @@ function aggressivePriceExtraction() {
   
   const prices = [];
   
-  // Price patterns
-  const pricePattern = /\$\s*([\d,]+\.\d{2})|([\d,]+\.\d{2})\s*\$|€\s*([\d,]+\.\d{2})|£\s*([\d,]+\.\d{2})/g;
+  // Price patterns - more flexible to catch various formats
+  const pricePattern = /\$\s*([\d,]+(?:\.\d{2})?)|€\s*([\d,]+(?:\.\d{2})?)|£\s*([\d,]+(?:\.\d{2})?)|USD\s*([\d,]+(?:\.\d{2})?)/gi;
   
   // 1. Check elements with price-related attributes
   const priceSelectors = [
@@ -349,12 +358,18 @@ function aggressivePriceExtraction() {
     }
   });
   
-  // Sort by score and return best
-  prices.sort((a, b) => b.score - a.score);
+  // Filter out $0.00 and $0 prices
+  const validPrices = prices.filter(p => {
+    const amount = p.text.replace(/[^0-9.]/g, '');
+    return parseFloat(amount) > 0;
+  });
   
-  if (prices.length > 0) {
-    console.log(`  ✨ Best price: ${prices[0].text}`);
-    return prices[0].text;
+  // Sort by score and return best
+  validPrices.sort((a, b) => b.score - a.score);
+  
+  if (validPrices.length > 0) {
+    console.log(`  ✨ Best price: ${validPrices[0].text}`);
+    return validPrices[0].text;
   }
   
   console.log('  ❌ No price found');
@@ -409,5 +424,21 @@ function blockPage() {
   iframe.style.border = "none";
   iframe.style.zIndex = 999999;
   iframe.style.backgroundColor = "rgba(0,0,0,0.8)";
+  iframe.id = "impulse-purchase-overlay";
   document.body.appendChild(iframe);
+  
+  // Listen for messages from the iframe to remove it
+  window.addEventListener('message', (event) => {
+    if (event.data.action === 'remove-impulse-overlay') {
+      const overlayIframe = document.getElementById('impulse-purchase-overlay');
+      if (overlayIframe) {
+        overlayIframe.remove();
+      }
+    } else if (event.data.action === 'hide-impulse-overlay') {
+      const overlayIframe = document.getElementById('impulse-purchase-overlay');
+      if (overlayIframe) {
+        overlayIframe.style.display = 'none';
+      }
+    }
+  });
 }
