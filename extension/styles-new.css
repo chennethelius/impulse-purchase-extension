@@ -305,9 +305,10 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 40px;
   background: white;
+  overflow-y: auto;
 }
 
 #result-title {
@@ -415,21 +416,25 @@ body {
 }
 
 /* Custom scrollbar */
-#chat-section::-webkit-scrollbar {
+#chat-section::-webkit-scrollbar,
+#result-section::-webkit-scrollbar {
   width: 6px;
 }
 
-#chat-section::-webkit-scrollbar-track {
+#chat-section::-webkit-scrollbar-track,
+#result-section::-webkit-scrollbar-track {
   background: #f3f4f6;
   border-radius: 3px;
 }
 
-#chat-section::-webkit-scrollbar-thumb {
+#chat-section::-webkit-scrollbar-thumb,
+#result-section::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 3px;
 }
 
-#chat-section::-webkit-scrollbar-thumb:hover {
+#chat-section::-webkit-scrollbar-thumb:hover,
+#result-section::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
 

@@ -439,6 +439,9 @@ function blockPage() {
       if (overlayIframe) {
         overlayIframe.style.display = 'none';
       }
+    } else if (event.data.action === 'close-tab') {
+      // Send message to background script to close the current tab
+      chrome.runtime.sendMessage({ action: 'close-current-tab' });
     }
   });
 }
