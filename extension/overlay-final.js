@@ -1177,19 +1177,25 @@ async function findCheaperAlternatives() {
     : 'this product';
   const currentPrice = extractNumericPrice(productInfo.price);
   
-  const prompt = `Product: ${productName}
+  // Extract key terms from the product name
+  const keyTerms = extractKeyTerms(productName);
+  
+  const prompt = `You are a product search assistant. Given a product name, suggest 3 cheaper alternative products or places to search.
 
-Task: Find 3 cheaper alternatives. Extract the KEY product type (remove brand names, specific models, extra details).
+Product: ${productName}
 
-Example: "Amazon Basics Velvet Suit Hangers 50-Pack" → key terms: "velvet suit hangers"
-Example: "Apple iPhone 15 Pro Max 256GB" → key terms: "iphone 15 pro"
+CRITICAL: Return ONLY valid JSON array. No other text, no explanation, no markdown. Just the JSON array.
 
-Return ONLY this JSON with key terms in URLs:
+Format (use actual product key terms in URLs, not "key+terms"):
 [
-  {"title":"Alternative 1 Name","source":"Amazon","url":"https://www.amazon.com/s?k=key+terms"},
-  {"title":"Alternative 2 Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=key+terms"},
-  {"title":"Alternative 3 Name","source":"Walmart","url":"https://www.walmart.com/search?q=key+terms"}
-]`;
+  {"title":"Specific Alternative Name","source":"Amazon","url":"https://www.amazon.com/s?k=actual+search+terms"},
+  {"title":"Specific Alternative Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=actual+search+terms"},
+  {"title":"Specific Alternative Name","source":"Walmart","url":"https://www.walmart.com/search?q=actual+search+terms"}
+]
+
+Key search terms for this product: ${keyTerms}
+
+JSON array only:`;
   
   try {
     const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
@@ -1206,8 +1212,8 @@ Return ONLY this JSON with key terms in URLs:
             content: prompt
           }
         ],
-        max_tokens: 300,
-        temperature: 0.7
+        max_tokens: 500,
+        temperature: 0.3
       })
     });
     
@@ -1221,23 +1227,45 @@ Return ONLY this JSON with key terms in URLs:
     console.log('📥 Cerebras response:', data);
     
     // Extract content from Cerebras response
-    const content = data.choices[0].message.content;
+    const content = data.choices[0].message.content.trim();
     console.log('📝 Content:', content);
     
-    // Extract JSON from the response
-    const jsonMatch = content.match(/\[.*\]/s);
+    // Try to extract JSON - handle various formats
+    let jsonText = content;
+    
+    // Remove markdown code blocks if present
+    jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    
+    // Find JSON array
+    const jsonMatch = jsonText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    
     if (jsonMatch) {
-      const alternatives = JSON.parse(jsonMatch[0]);
-      console.log('✅ Found alternatives:', alternatives);
-      
-      // Ensure all alternatives have required fields
-      return alternatives.map(alt => ({
-        title: alt.title || 'Alternative Product',
-        source: alt.source || 'Online',
-        url: alt.url || `https://www.google.com/search?q=${encodeURIComponent(alt.title || productName + ' cheaper')}`
-      })).slice(0, 3);
+      try {
+        const alternatives = JSON.parse(jsonMatch[0]);
+        console.log('✅ Parsed alternatives:', alternatives);
+        
+        // Validate that we have an array with objects
+        if (Array.isArray(alternatives) && alternatives.length > 0) {
+          // Ensure all alternatives have required fields and valid URLs
+          const validAlternatives = alternatives
+            .filter(alt => alt.title && alt.url && alt.url.startsWith('http'))
+            .map(alt => ({
+              title: alt.title || 'Alternative Product',
+              source: alt.source || 'Online',
+              url: alt.url
+            }))
+            .slice(0, 3);
+          
+          if (validAlternatives.length > 0) {
+            console.log('✅ Returning valid alternatives:', validAlternatives);
+            return validAlternatives;
+          }
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+      }
     } else {
-      console.error('No JSON found in response');
+      console.error('No JSON array found in response');
     }
   } catch (error) {
     console.error('Error fetching alternatives:', error);
@@ -1249,8 +1277,8 @@ Return ONLY this JSON with key terms in URLs:
 function extractKeyTerms(productName) {
   // Remove common brand names and extra details
   let keyTerms = productName
-    .replace(/\b(Amazon|Apple|Samsung|Sony|Microsoft|Google|Nike|Adidas|etc)\b/gi, '')
-    .replace(/\b(Basics|Essentials|Premium|Pro|Plus|Max|Ultra)\b/gi, '')
+    .replace(/\b(Amazon|Apple|Samsung|Sony|Microsoft|Google|Nike|Adidas|Dell|HP|Lenovo|etc)\b/gi, '')
+    .replace(/\b(Basics|Essentials|Premium|Pro|Plus|Max|Ultra|Edition|System)\b/gi, '')
     .replace(/\b\d+[-\s]?(pack|count|piece|set|gb|tb|oz|lb)\b/gi, '') // Remove quantities
     .replace(/\b\d{2,4}GB\b/gi, '') // Remove storage sizes
     .replace(/\b(black|white|blue|red|gray|silver|gold)\b/gi, '') // Remove colors
@@ -1260,7 +1288,14 @@ function extractKeyTerms(productName) {
   
   // Take first 3-4 meaningful words
   const words = keyTerms.split(' ').filter(w => w.length > 2);
-  return words.slice(0, 4).join(' ').toLowerCase();
+  const result = words.slice(0, 4).join(' ').toLowerCase();
+  
+  // If we end up with nothing, use the original name but cleaned
+  if (!result || result.length < 3) {
+    return productName.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  
+  return result;
 }
 
 function getFallbackAlternatives() {
