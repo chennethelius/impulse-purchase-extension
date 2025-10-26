@@ -19,4 +19,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // must return true for async sendResponse
     return true;
   }
+
+  if (message.action === "close-current-tab") {
+    // Close the tab that sent this message
+    if (sender.tab && sender.tab.id) {
+      chrome.tabs.remove(sender.tab.id);
+      sendResponse({ success: true });
+    }
+  }
 });

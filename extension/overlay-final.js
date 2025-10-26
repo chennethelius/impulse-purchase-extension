@@ -74,22 +74,23 @@ function initialize() {
     }
   });
 
-  // Handle reconsider button
+  // Handle cancel purchase button - close the entire tab
   reconsiderBtn.addEventListener('click', () => {
-    // Try to remove the iframe from parent window
+    // Send message to background script to close the tab
     try {
-      window.parent.postMessage({ action: 'remove-impulse-overlay' }, '*');
+      window.parent.postMessage({ action: 'close-tab' }, '*');
       
-      // Also try direct removal if we have access
-      if (window.parent && window.parent.document) {
-        const iframe = window.parent.document.querySelector('iframe[src*="overlay.html"]');
-        if (iframe) {
-          iframe.remove();
-        }
+      // Also try to close the window directly
+      if (window.parent && window.parent !== window) {
+        window.parent.close();
       }
+      
+      // If we're in the top window, close it
+      window.close();
     } catch (e) {
-      console.log('Could not remove iframe, attempting to hide:', e);
-      window.parent.postMessage({ action: 'hide-impulse-overlay' }, '*');
+      console.log('Could not close tab:', e);
+      // Fallback: try to remove the overlay
+      window.parent.postMessage({ action: 'remove-impulse-overlay' }, '*');
     }
   });
   
