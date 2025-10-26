@@ -9,10 +9,6 @@
     "*://*.ebay.com/*",
     "*://*.etsy.com/*"
   ],
-  "action": {
-    "default_title": "Impulse Purchase Guardian",
-    "default_popup": "popup-compact.html"
-  },
   "background": {
     "service_worker": "background.js"
   },
@@ -26,12 +22,6 @@
     {
       "resources": [
         "overlay.html",
-        "dashboard.html",
-        "dashboard.css",
-        "dashboard.js",
-        "popup-compact.html",
-        "popup-compact.css",
-        "popup-compact.js",
         "config.js",
         "fonts.css",
         "styles.css",
