@@ -482,6 +482,19 @@ function blockPageWithProductInfo(productInfo) {
       clearDebounceForProduct(productInfo);
       // Send message to background script to close the current tab
       chrome.runtime.sendMessage({ action: 'close-current-tab' });
+    } else if (event.data.action === 'update-stats') {
+      // Forward stats update to background script
+      console.log('Content script forwarding stats update:', event.data.data);
+      chrome.runtime.sendMessage({
+        type: 'updateStats',
+        data: event.data.data
+      }, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('Failed to update stats:', chrome.runtime.lastError);
+        } else {
+          console.log('Stats updated via content script:', response);
+        }
+      });
     }
   });
 }

@@ -36,6 +36,7 @@
       "resources": [
         "overlay.html",
         "config.js",
+        "stats-db.js",
         "fonts.css",
         "styles.css",
         "styles-new.css",
