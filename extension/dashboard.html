@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Purchase Analytics Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="dashboard-wrapper">
+        <!-- Top Header Bar (Tableau Style) -->
+        <header class="tableau-header">
+            <div class="header-left">
+                <span class="header-brand">datavizfairy</span>
+                <h1 class="header-title">Impulse Purchase Analytics Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <button class="header-icon-btn" id="refreshBtn" title="Refresh">🔄</button>
+                <button class="header-icon-btn" id="exportBtn" title="Export">💾</button>
+                <button class="header-icon-btn" id="closeBtn" title="Close">✕</button>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Left Sidebar: Navigation & Filters (Tableau Style) -->
+            <aside class="tableau-sidebar">
+                <!-- User Welcome -->
+                <div class="sidebar-section user-welcome">
+                    <div class="user-avatar">G</div>
+                    <div class="user-info">
+                        <div class="welcome-text">Welcome</div>
+                        <div class="user-name">Guest</div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="sidebar-section">
+                    <div class="nav-item active" id="overviewNav">
+                        <span class="nav-icon">📊</span>
+                        <span class="nav-text">Overview</span>
+                    </div>
+                    <div class="nav-item" id="detailedNav">
+                        <span class="nav-icon">📋</span>
+                        <span class="nav-text">Detailed View</span>
+                    </div>
+                </div>
+
+                <!-- Filters Section -->
+                <div class="sidebar-section">
+                    <div class="filter-header">
+                        <span class="filter-icon">⚙</span>
+                        <span class="filter-title">Filters</span>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label class="filter-label">Time Period</label>
+                        <select class="filter-select" id="timePeriodFilter">
+                            <option value="all">All Time</option>
+                            <option value="week">Last Week</option>
+                            <option value="month">Last Month</option>
+                            <option value="year">This Year</option>
+                        </select>
+                    </div>
+
+                    <div class="filter-group">
+                        <label class="filter-label">Category</label>
+                        <select class="filter-select" id="categoryFilter">
+                            <option value="all">All Categories</option>
+                            <option value="shopping">Shopping</option>
+                            <option value="electronics">Electronics</option>
+                            <option value="fashion">Fashion</option>
+                            <option value="food">Food</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Download Section -->
+                <div class="sidebar-section download-section">
+                    <button class="download-btn" id="downloadBtn">
+                        <span class="download-icon">⬇</span>
+                        <span>Download</span>
+                    </button>
+                </div>
+            </aside>
+
+            <!-- Main Content Area -->
+            <main class="main-content">
+                <!-- Overview Header -->
+                <div class="content-header">
+                    <h2 class="content-title">Spending Overview: <span id="currentYear">2024</span></h2>
+                    <div class="header-actions">
+                        <span class="header-hint">Click on a chart to <strong>filter</strong> the dashboard</span>
+                    </div>
+                </div>
+
+                <!-- Top Row: Three Key Charts -->
+                <div class="viz-grid top-row">
+                    <!-- Spending Trends -->
+                    <div class="viz-card">
+                        <div class="viz-header">
+                            <h3 class="viz-title">Spending Trends</h3>
+                            <p class="viz-subtitle">Compare spending patterns over time</p>
+                        </div>
+                        <div class="viz-body">
+                            <div class="viz-metrics">
+                                <div class="metric-item">
+                                    <span class="metric-label">Total Saved</span>
+                                    <span class="metric-value large" id="totalSaved">$0</span>
+                                    <span class="metric-change positive" id="savingsChange">↑ 5.2% vs. PY</span>
+                                </div>
+                                <div class="metric-item">
+                                    <span class="metric-label">Win Rate</span>
+                                    <span class="metric-value" id="winRate">0%</span>
+                                    <span class="metric-change negative" id="winRateChange">↓ -14.7% vs. PY</span>
+                                </div>
+                            </div>
+                            <canvas id="spendingTrendChart" width="600" height="250"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Battles Funnel -->
+                    <div class="viz-card">
+                        <div class="viz-header">
+                            <h3 class="viz-title">Battles Funnel</h3>
+                            <p class="viz-subtitle">How spending attempts progress through stages</p>
+                        </div>
+                        <div class="viz-body">
+                            <canvas id="battlesFunnelChart" width="400" height="350"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Spending by Category -->
+                    <div class="viz-card">
+                        <div class="viz-header">
+                            <h3 class="viz-title">Spending by Category</h3>
+                            <p class="viz-subtitle">Compare spending across different categories</p>
+                        </div>
+                        <div class="viz-body">
+                            <div class="category-list" id="categoryList">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Three More Visualizations -->
+                <div class="viz-grid bottom-row">
+                    <!-- Demographics -->
+                    <div class="viz-card">
+                        <div class="viz-header">
+                            <h3 class="viz-title">Spending Patterns</h3>
+                            <p class="viz-subtitle">Analyze your spending behavior</p>
+                        </div>
+                        <div class="viz-body demographics">
+                            <div class="demo-row">
+                                <div class="demo-item">
+                                    <h4 class="demo-title">TIME OF DAY</h4>
+                                    <canvas id="timeOfDayChart" width="180" height="180"></canvas>
+                                </div>
+                                <div class="demo-item">
+                                    <h4 class="demo-title">DAY OF WEEK</h4>
+                                    <canvas id="dayOfWeekChart" width="180" height="180"></canvas>
+                                </div>
+                            </div>
+                            <div class="demo-item full-width">
+                                <h4 class="demo-title">PURCHASE AMOUNT BANDS</h4>
+                                <canvas id="amountBandsChart" width="400" height="120"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Map/Timeline -->
+                    <div class="viz-card">
+                        <div class="viz-header">
+                            <h3 class="viz-title">Recent Activity</h3>
+                            <p class="viz-subtitle">Your latest spending battles</p>
+                            <div class="viz-header-icons">
+                                <button class="viz-icon-btn active">🗺️</button>
+                                <button class="viz-icon-btn">📊</button>
+                            </div>
+                        </div>
+                        <div class="viz-body">
+                            <div class="activity-timeline" id="activityTimeline">
+                                <!-- Populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Time to Decision -->
+                    <div class="viz-card">
+                        <div class="viz-header">
+                            <h3 class="viz-title">Decision Time Analysis</h3>
+                            <p class="viz-subtitle">How quickly you make purchase decisions</p>
+                        </div>
+                        <div class="viz-body">
+                            <canvas id="decisionTimeChart" width="400" height="350"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer Info (Tableau Style) -->
+        <footer class="tableau-footer">
+            <div class="footer-info">
+                <span class="footer-icon">ℹ️</span>
+                <span class="footer-text">Data updates in real-time as you battle impulse purchases</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

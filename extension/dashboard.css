@@ -1,0 +1,1002 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
+    color: #333;
+    overflow-x: hidden;
+    animation: fadeIn 0.6s ease-in;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.dashboard-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Tableau-Style Header with Animation */
+.tableau-header {
+    background: linear-gradient(135deg, #6b7c93 0%, #8a9aaf 50%, #6b7c93 100%);
+    background-size: 200% 100%;
+    color: white;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    animation: headerGradient 8s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes headerGradient {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.tableau-header::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+    animation: headerShine 3s infinite;
+}
+
+@keyframes headerShine {
+    0% {
+        transform: translateX(-100%) translateY(-100%) rotate(45deg);
+    }
+    100% {
+        transform: translateX(100%) translateY(100%) rotate(45deg);
+    }
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-brand {
+    font-size: 13px;
+    font-weight: 400;
+    opacity: 0.9;
+}
+
+.header-title {
+    font-size: 16px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.header-right {
+    display: flex;
+    gap: 8px;
+}
+
+.header-icon-btn {
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 4px;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    z-index: 1;
+}
+
+.header-icon-btn:hover {
+    background: rgba(255,255,255,0.25);
+    transform: scale(1.15) rotate(5deg);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.header-icon-btn:active {
+    transform: scale(0.95);
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    flex: 1;
+    background: #f5f7fa;
+}
+
+/* Tableau-Style Sidebar */
+.tableau-sidebar {
+    background: #e6eaed;
+    border-right: 1px solid #d3d8dc;
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+}
+
+.sidebar-section {
+    padding: 16px 12px;
+    border-bottom: 1px solid #d3d8dc;
+}
+
+/* User Welcome */
+.user-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 20px 12px;
+}
+
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    animation: avatarPulse 3s ease-in-out infinite;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+@keyframes avatarPulse {
+    0%, 100% {
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(102, 126, 234, 0.7);
+    }
+}
+
+.user-avatar:hover {
+    transform: scale(1.1) rotate(360deg);
+    transition: transform 0.6s ease;
+}
+
+.user-info {
+    text-align: center;
+}
+
+.welcome-text {
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.user-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Navigation Items */
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    margin: 4px 0;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-size: 13px;
+    color: #333;
+}
+
+.nav-item:hover {
+    background: #d3d8dc;
+}
+
+.nav-item.active {
+    background: #c1c9d0;
+    font-weight: 500;
+}
+
+.nav-icon {
+    font-size: 14px;
+}
+
+/* Filters */
+.filter-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+}
+
+.filter-icon {
+    font-size: 14px;
+}
+
+.filter-group {
+    margin-bottom: 12px;
+}
+
+.filter-label {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-bottom: 4px;
+    font-weight: 400;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 6px 8px;
+    border: 1px solid #c1c9d0;
+    border-radius: 3px;
+    background: white;
+    font-size: 12px;
+    font-family: 'Roboto', sans-serif;
+    color: #333;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+/* Download Section */
+.download-section {
+    margin-top: auto;
+}
+
+.download-btn {
+    width: 100%;
+    padding: 10px;
+    background: white;
+    border: 1px solid #c1c9d0;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+}
+
+.download-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.download-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.download-btn:hover {
+    background: #f5f7fa;
+    border-color: #667eea;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.download-btn:active {
+    transform: scale(0.95);
+}
+
+.download-icon {
+    font-size: 14px;
+}
+
+/* Main Content */
+.main-content {
+    padding: 20px;
+    overflow-y: auto;
+    background: #f5f7fa;
+}
+
+/* Content Header */
+.content-header {
+    margin-bottom: 20px;
+}
+
+.content-title {
+    font-size: 18px;
+    font-weight: 400;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.content-title span {
+    font-weight: 500;
+}
+
+.header-hint {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Visualization Grid */
+.viz-grid {
+    display: grid;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.viz-grid.top-row {
+    grid-template-columns: 1.5fr 1fr 1fr;
+}
+
+.viz-grid.bottom-row {
+    grid-template-columns: 1.2fr 1fr 0.8fr;
+}
+
+/* Visualization Cards with Hover Effects */
+.viz-card {
+    background: white;
+    border: 1px solid #d3d8dc;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    animation: cardSlideIn 0.6s ease-out backwards;
+}
+
+.viz-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #667eea, transparent);
+    animation: borderScan 3s infinite;
+}
+
+@keyframes borderScan {
+    0% {
+        left: -100%;
+    }
+    100% {
+        left: 100%;
+    }
+}
+
+@keyframes cardSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.viz-card:nth-child(1) { animation-delay: 0.1s; }
+.viz-card:nth-child(2) { animation-delay: 0.2s; }
+.viz-card:nth-child(3) { animation-delay: 0.3s; }
+
+.viz-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(102, 126, 234, 0.2);
+    border-color: #667eea;
+}
+
+.viz-header {
+    padding: 16px;
+    border-bottom: 1px solid #e6eaed;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    position: relative;
+}
+
+.viz-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.viz-subtitle {
+    font-size: 11px;
+    color: #666;
+    font-weight: 400;
+}
+
+.viz-header-icons {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    display: flex;
+    gap: 4px;
+}
+
+.viz-icon-btn {
+    background: transparent;
+    border: 1px solid #d3d8dc;
+    border-radius: 3px;
+    padding: 4px 8px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.viz-icon-btn:hover {
+    background: #f5f7fa;
+}
+
+.viz-icon-btn.active {
+    background: #667eea;
+    border-color: #667eea;
+    filter: grayscale(0) brightness(1.2);
+}
+
+.viz-body {
+    padding: 16px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Metrics within viz cards */
+.viz-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.metric-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.metric-label {
+    font-size: 10px;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-value {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    transition: all 0.3s ease;
+}
+
+.metric-value.large {
+    font-size: 28px;
+    font-weight: 400;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: valueShimmer 2s ease-in-out infinite;
+}
+
+@keyframes valueShimmer {
+    0%, 100% {
+        filter: brightness(1);
+    }
+    50% {
+        filter: brightness(1.2);
+    }
+}
+
+.metric-change {
+    font-size: 11px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
+
+.metric-change.positive {
+    color: #10b981;
+}
+
+.metric-change.negative {
+    color: #ef4444;
+}
+
+/* Category List */
+.category-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.category-rank {
+    font-size: 14px;
+    font-weight: 500;
+    color: #666;
+    min-width: 20px;
+}
+
+.category-name {
+    flex: 1;
+    font-size: 13px;
+    color: #333;
+}
+
+.category-bar-container {
+    flex: 2;
+    height: 24px;
+    background: #f0f3f5;
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+}
+
+.category-bar {
+    height: 100%;
+    background: linear-gradient(to right, #667eea, #764ba2);
+    transition: width 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    position: relative;
+    overflow: hidden;
+}
+
+.category-bar::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: barShine 2s infinite;
+}
+
+@keyframes barShine {
+    0% {
+        left: -100%;
+    }
+    50%, 100% {
+        left: 100%;
+    }
+}
+
+.category-value {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    min-width: 40px;
+    text-align: right;
+}
+
+/* Demographics Section */
+.demographics {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.demo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.demo-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.demo-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.demo-title {
+    font-size: 10px;
+    font-weight: 500;
+    color: #666;
+    letter-spacing: 0.5px;
+}
+
+/* Activity Timeline */
+.activity-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: #f9fafb;
+    border-radius: 4px;
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+    animation: activitySlideIn 0.5s ease-out backwards;
+}
+
+@keyframes activitySlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.activity-item:nth-child(1) { animation-delay: 0.1s; }
+.activity-item:nth-child(2) { animation-delay: 0.2s; }
+.activity-item:nth-child(3) { animation-delay: 0.3s; }
+.activity-item:nth-child(4) { animation-delay: 0.4s; }
+.activity-item:nth-child(5) { animation-delay: 0.5s; }
+
+.activity-item:hover {
+    background: white;
+    transform: translateX(5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    border-left-width: 4px;
+}
+
+.activity-icon {
+    font-size: 18px;
+}
+
+.activity-content {
+    flex: 1;
+}
+
+.activity-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 2px;
+}
+
+.activity-details {
+    font-size: 11px;
+    color: #666;
+}
+
+.activity-time {
+    font-size: 10px;
+    color: #999;
+    margin-top: 4px;
+}
+
+/* Canvas Styling */
+canvas {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Tableau Footer with Animation */
+.tableau-footer {
+    background: linear-gradient(to right, #e6eaed, #f0f3f5, #e6eaed);
+    background-size: 200% 100%;
+    border-top: 1px solid #d3d8dc;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: footerGradient 5s ease infinite;
+}
+
+@keyframes footerGradient {
+    0%, 100% {
+        background-position: 0% 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+}
+
+.footer-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.footer-icon {
+    font-size: 14px;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f0f3f5;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c9d0;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8b1ba;
+}
+
+/* Responsive Design */
+@media (max-width: 1400px) {
+    .viz-grid.top-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .viz-grid.bottom-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 968px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .tableau-sidebar {
+        border-right: none;
+        border-bottom: 1px solid #d3d8dc;
+    }
+}
+
+@media (max-width: 640px) {
+    .tableau-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    
+    .main-content {
+        padding: 12px;
+    }
+    
+    .viz-metrics {
+        grid-template-columns: 1fr;
+    }
+    
+    .demo-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Additional Animations */
+@keyframes ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+@keyframes fadeInOut {
+    0%, 100% {
+        opacity: 0;
+    }
+    50% {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+}
+
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(102, 126, 234, 0.4);
+    transform: scale(0);
+    animation: ripple 0.6s ease-out;
+    pointer-events: none;
+}
+
+/* Glow effects for interactive elements */
+.nav-item:hover {
+    box-shadow: inset 0 0 10px rgba(102, 126, 234, 0.2);
+}
+
+.filter-select:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+/* Smooth transitions for all interactive elements */
+* {
+    transition: background 0.3s ease, border 0.3s ease, transform 0.3s ease;
+}
+
+button, .nav-item, .filter-select, .viz-card, .activity-item, .category-item {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Loading spinner for refresh */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.loading {
+    animation: spin 1s linear infinite;
+}
+
+/* Pulse animation for important metrics */
+@keyframes metricPulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.metric-value.highlight {
+    animation: metricPulse 2s ease-in-out infinite;
+}
+
+/* Category bar hover effect */
+.category-item:hover .category-bar {
+    transform: scaleX(1.05);
+    transform-origin: left;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+}
+
+.category-item {
+    transition: transform 0.3s ease;
+}
+
+.category-item:hover {
+    transform: translateX(5px);
+}
+
+/* Enhanced viz card shadow on hover */
+.viz-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    border-radius: 8px;
+}
+
+.viz-card:hover::after {
+    opacity: 1;
+}
+
+/* Smooth scroll behavior */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom cursor for interactive elements */
+button, .nav-item, .download-btn, .viz-icon-btn, .filter-select {
+    cursor: pointer;
+}
+
+button:hover, .nav-item:hover, .download-btn:hover {
+    cursor: pointer;
+}
+
+/* Add glass morphism effect to sidebar */
+.tableau-sidebar {
+    backdrop-filter: blur(10px);
+}
+
+/* Activity icon animations */
+.activity-icon {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.activity-item:hover .activity-icon {
+    transform: scale(1.2) rotate(10deg);
+}
+
+/* Demo chart hover effects */
+.demo-item canvas {
+    transition: transform 0.3s ease;
+}
+
+.demo-item:hover canvas {
+    transform: scale(1.05);
+}
+
+/* Viz header title animation */
+.viz-title {
+    position: relative;
+}
+
+.viz-title::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s ease;
+}
+
+.viz-card:hover .viz-title::after {
+    width: 50px;
+}
