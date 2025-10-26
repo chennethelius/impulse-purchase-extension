@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battle Statistics</title>
+    <link rel="stylesheet" href="stats.css">
+</head>
+<body>
+    <div class="stats-container">
+        <h1 class="stats-title">Impulse Stats</h1>
+        
+        <div class="stats-grid compact">
+            <div class="stat-box mini">
+                <div class="stat-label">Purchases</div>
+                <div class="stat-value" id="totalBattles">0</div>
+            </div>
+            
+            <div class="stat-box mini">
+                <div class="stat-label">Blocked</div>
+                <div class="stat-value victory" id="victories">0</div>
+            </div>
+            
+            <div class="stat-box mini">
+                <div class="stat-label">Allowed</div>
+                <div class="stat-value defeat" id="defeats">0</div>
+            </div>
+            
+            <div class="stat-box mini">
+                <div class="stat-label">Block Rate</div>
+                <div class="stat-value" id="winRate">0%</div>
+            </div>
+            
+            <div class="stat-box mini money-box">
+                <div class="stat-label">💰 Saved</div>
+                <div class="stat-value money" id="moneySaved">$0</div>
+            </div>
+        </div>
+        
+        <div class="graphs-row">
+            <div class="graph-container half">
+                <div class="graph-title">SAVINGS</div>
+                <canvas id="savingsGraph" width="380" height="280"></canvas>
+            </div>
+            
+            <div class="graph-container half">
+                <div class="graph-title">CATEGORIES</div>
+                <canvas id="categoryRadar" width="380" height="280"></canvas>
+            </div>
+        </div>
+        
+        <!-- Purchase History Section -->
+        <div class="history-section">
+            <div class="history-header">
+                <h2 class="history-title">Purchase History</h2>
+                <span class="history-count" id="historyCount">0 attempts</span>
+            </div>
+            <div class="history-list" id="historyList">
+                <div class="history-empty">No purchase attempts yet</div>
+            </div>
+        </div>
+        
+        <div class="button-row">
+            <button id="testButton" class="test-button" style="background: #3b82f6; color: white;">Add Test Data</button>
+            <button id="resetButton" class="reset-button">RESET</button>
+        </div>
+    </div>
+    
+    <script src="../stats-db.js"></script>
+    <script src="stats.js"></script>
+</body>
+</html>
