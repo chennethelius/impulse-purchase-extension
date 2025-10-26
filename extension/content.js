@@ -91,6 +91,75 @@ function extractPrice() {
   return detectedPrice > 0 ? detectedPrice : 50; // Default to $50 if no price found
 }
 
+// Function to extract item description from page
+function extractItemDescription() {
+  // Priority 1: Product-specific selectors
+  const productSelectors = [
+    'h1[class*="product"]',
+    '[class*="product-title"]',
+    '[class*="product-name"]',
+    '[id*="product-title"]',
+    '[id*="product-name"]',
+    '[itemprop="name"]',
+    '#productTitle', // Amazon
+    '.product-title',
+    '.product-name',
+    '[data-product-name]',
+    '.a-size-large.product-title-word-break', // Amazon specific
+    'h1.product_title', // WooCommerce
+    '.product-info-main .page-title', // Magento
+    '[class*="ProductName"]',
+    '[class*="itemTitle"]'
+  ];
+  
+  for (const selector of productSelectors) {
+    const element = document.querySelector(selector);
+    if (element) {
+      const text = element.textContent || element.getAttribute('data-product-name') || '';
+      const cleaned = text.trim().replace(/\s+/g, ' ');
+      if (cleaned.length > 0 && cleaned.length < 200) {
+        console.log('Found item via selector:', selector, '→', cleaned);
+        return cleaned;
+      }
+    }
+  }
+  
+  // Priority 2: Open Graph meta tags
+  const ogTitle = document.querySelector('meta[property="og:title"]');
+  if (ogTitle) {
+    const content = ogTitle.getAttribute('content')?.trim();
+    if (content && content.length < 200) {
+      console.log('Found item via og:title →', content);
+      return content;
+    }
+  }
+  
+  // Priority 3: First h1 on page
+  const h1 = document.querySelector('h1');
+  if (h1) {
+    const text = h1.textContent?.trim().replace(/\s+/g, ' ');
+    if (text && text.length > 0 && text.length < 200) {
+      console.log('Found item via h1 →', text);
+      return text;
+    }
+  }
+  
+  // Priority 4: Page title (clean up common suffixes)
+  const pageTitle = document.title
+    .replace(/\s*[-|]\s*(Amazon|eBay|Shop|Store|Buy|Price).*$/i, '')
+    .trim()
+    .replace(/\s+/g, ' ');
+  
+  if (pageTitle && pageTitle.length > 0 && pageTitle.length < 200) {
+    console.log('Found item via page title →', pageTitle);
+    return pageTitle;
+  }
+  
+  // Fallback: Unknown Item
+  console.log('Could not determine item description, using fallback');
+  return 'Unknown Item';
+}
+
 // Function to check if element is a purchase button
 function isPurchaseButton(element) {
   const text = element.textContent.toLowerCase().trim();
@@ -117,8 +186,15 @@ function injectPopup(itemIdentifier = null) {
   currentPrice = extractPrice();
   console.log('Detected price:', currentPrice);
   
-  // Store the price for the popup to access
-  chrome.storage.local.set({ currentPrice: currentPrice });
+  // Extract item description
+  const currentItemDescription = extractItemDescription();
+  console.log('Detected item:', currentItemDescription);
+  
+  // Store the price and item description for the popup to access
+  chrome.storage.local.set({ 
+    currentPrice: currentPrice,
+    currentItemDescription: currentItemDescription
+  });
   
   // Create overlay container
   const overlay = document.createElement('div');

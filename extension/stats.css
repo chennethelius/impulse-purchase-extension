@@ -120,6 +120,31 @@ body {
     image-rendering: crisp-edges;
 }
 
+.dashboard-button {
+    margin-top: 5px;
+    padding: 10px 16px;
+    background: linear-gradient(to bottom, #3b82f6, #2563eb);
+    border: 2px solid rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    color: #fff;
+    font-family: 'Press Start 2P', 'Courier New', monospace;
+    font-size: 7px;
+    cursor: pointer;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    transition: all 0.2s;
+}
+
+.dashboard-button:hover {
+    background: linear-gradient(to bottom, #2563eb, #1d4ed8);
+    transform: translateY(-2px);
+    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+}
+
+.dashboard-button:active {
+    transform: translateY(1px);
+    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+}
+
 .reset-button {
     margin-top: 5px;
     padding: 8px 16px;

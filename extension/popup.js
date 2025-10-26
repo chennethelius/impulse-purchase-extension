@@ -437,14 +437,18 @@ function handleDefeat() {
 // Update statistics
 async function updateStats(result) {
     try {
-        const data = await chrome.storage.local.get(['stats', 'currentPrice']);
+        const data = await chrome.storage.local.get(['stats', 'currentPrice', 'currentItemDescription']);
         const stats = data.stats || {
             totalBattles: 0,
             victories: 0,
             defeats: 0,
             moneySaved: 0,
-            savingsHistory: []
+            savingsHistory: [],
+            recentBattles: []
         };
+        
+        const currentPrice = data.currentPrice || 50;
+        const currentItemDescription = data.currentItemDescription || 'Unknown Item';
         
         stats.totalBattles += 1;
         
@@ -452,14 +456,39 @@ async function updateStats(result) {
             stats.victories += 1;
             // Add current cumulative savings to history (no change)
             stats.savingsHistory.push(stats.moneySaved);
+            
+            // Add to recent battles
+            stats.recentBattles = stats.recentBattles || [];
+            stats.recentBattles.push({
+                result: 'victory',
+                amount: currentPrice,
+                timestamp: Date.now(),
+                description: currentItemDescription,
+                item: currentItemDescription
+            });
         } else if (result === 'defeat') {
             stats.defeats += 1;
             // Use the actual detected price from content script
-            const detectedPrice = data.currentPrice || 50; // Fallback to $50 if no price found
+            const detectedPrice = currentPrice;
             stats.moneySaved += detectedPrice;
             // Add new cumulative savings to history
             stats.savingsHistory.push(stats.moneySaved);
             console.log('Added to money saved:', detectedPrice);
+            
+            // Add to recent battles
+            stats.recentBattles = stats.recentBattles || [];
+            stats.recentBattles.push({
+                result: 'defeat',
+                amount: detectedPrice,
+                timestamp: Date.now(),
+                description: currentItemDescription,
+                item: currentItemDescription
+            });
+        }
+        
+        // Keep only last 100 battles
+        if (stats.recentBattles.length > 100) {
+            stats.recentBattles = stats.recentBattles.slice(-100);
         }
         
         await chrome.storage.local.set({ stats });

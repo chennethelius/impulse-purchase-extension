@@ -10,6 +10,41 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
+// Sync stats to Python dashboard
+async function syncStatsToDashboard() {
+    try {
+        const data = await chrome.storage.local.get(['stats']);
+        const stats = data.stats || {
+            totalBattles: 0,
+            victories: 0,
+            defeats: 0,
+            moneySaved: 0,
+            savingsHistory: [],
+            recentBattles: []
+        };
+        
+        // Send to Python Flask dashboard
+        await fetch('http://localhost:5000/api/update', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(stats)
+        });
+        
+        console.log('✅ Stats synced to dashboard');
+    } catch (error) {
+        console.log('⚠️ Dashboard sync failed (is Flask running?):', error.message);
+    }
+}
+
+// Listen for storage changes and sync to dashboard
+chrome.storage.onChanged.addListener((changes, namespace) => {
+    if (namespace === 'local' && changes.stats) {
+        syncStatsToDashboard();
+    }
+});
+
 // Listen for messages from content scripts
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === 'PURCHASE_BLOCKED') {
@@ -24,6 +59,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             const newCount = (result.totalPurchasesAllowed || 0) + 1;
             chrome.storage.local.set({ totalPurchasesAllowed: newCount });
         });
+    } else if (request.type === 'SYNC_DASHBOARD') {
+        // Manual sync request
+        syncStatsToDashboard();
+        sendResponse({ success: true });
+        return true;
     }
     
     sendResponse({ success: true });

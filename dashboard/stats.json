@@ -1,0 +1,70 @@
+{
+  "defeats": 13,
+  "moneySaved": 1474.5600000000002,
+  "recentBattles": [
+    {
+      "amount": 36,
+      "description": "Guardian Control Center",
+      "item": "Guardian Control Center",
+      "result": "victory",
+      "timestamp": 1761440364278
+    },
+    {
+      "amount": 36,
+      "description": "Guardian Control Center",
+      "item": "Guardian Control Center",
+      "result": "victory",
+      "timestamp": 1761440364449
+    },
+    {
+      "amount": 217.16,
+      "description": "Secure checkout",
+      "item": "Secure checkout",
+      "result": "defeat",
+      "timestamp": 1761440415611
+    }
+  ],
+  "savingsHistory": [
+    0,
+    0,
+    0,
+    300,
+    600,
+    651.77,
+    703.54,
+    703.54,
+    703.54,
+    755.31,
+    755.31,
+    755.31,
+    755.31,
+    807.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    811.0799999999999,
+    815.0799999999999,
+    815.0799999999999,
+    815.0799999999999,
+    815.0799999999999,
+    815.0799999999999,
+    819.0799999999999,
+    823.0799999999999,
+    1040.24,
+    1257.4,
+    1257.4,
+    1257.4,
+    1257.4,
+    1257.4,
+    1257.4,
+    1257.4,
+    1257.4,
+    1474.5600000000002
+  ],
+  "totalBattles": 39,
+  "victories": 26
+}

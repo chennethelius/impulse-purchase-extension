@@ -2,6 +2,11 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStats();
     
+    // Dashboard button handler - opens Python Flask dashboard
+    document.getElementById('dashboardButton').addEventListener('click', () => {
+        chrome.tabs.create({ url: 'http://localhost:5000' });
+    });
+    
     // Reset button handler
     document.getElementById('resetButton').addEventListener('click', async () => {
         if (confirm('Reset all stats?')) {
@@ -11,7 +16,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     victories: 0,
                     defeats: 0,
                     moneySaved: 0,
-                    savingsHistory: []
+                    savingsHistory: [],
+                    recentBattles: []
                 }
             });
             await loadStats();

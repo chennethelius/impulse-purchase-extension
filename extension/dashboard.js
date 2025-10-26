@@ -1,763 +1,629 @@
-// Tableau-Style Dashboard JavaScript with Enhanced Interactivity
-let particlesEnabled = true;
-let chartAnimationSpeed = 1;
+// Modern Dashboard Script
+let spendingTrendChart = null;
+let battlesFunnelChart = null;
+let timeOfDayChart = null;
+let dayOfWeekChart = null;
+let amountBandsChart = null;
+let decisionTimeChart = null;
 
-document.addEventListener('DOMContentLoaded', function() {
-    initializeParticleBackground();
-    loadDashboard();
+// Load data when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    initializeDashboard();
     setupEventListeners();
-    setupInteractiveEffects();
-    startLiveUpdates();
+    
+    // Auto-refresh every 30 seconds
+    setInterval(loadDashboardData, 30000);
 });
 
-function setupEventListeners() {
-    document.getElementById('refreshBtn').addEventListener('click', () => {
-        showRefreshAnimation();
-        loadDashboard();
-    });
-    document.getElementById('exportBtn').addEventListener('click', exportData);
-    document.getElementById('downloadBtn').addEventListener('click', () => {
-        createDownloadRipple(event);
-        exportData();
-    });
-    document.getElementById('closeBtn').addEventListener('click', () => window.close());
-    
-    // Filter listeners with animation
-    document.getElementById('timePeriodFilter').addEventListener('change', () => {
-        showFilterAnimation();
-        loadDashboard();
-    });
-    document.getElementById('categoryFilter').addEventListener('change', () => {
-        showFilterAnimation();
-        loadDashboard();
-    });
-}
-
-function showRefreshAnimation() {
-    const btn = document.getElementById('refreshBtn');
-    btn.style.transform = 'rotate(360deg)';
-    btn.style.transition = 'transform 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
-    setTimeout(() => {
-        btn.style.transform = 'rotate(0deg)';
-    }, 600);
-}
-
-function showFilterAnimation() {
-    const cards = document.querySelectorAll('.viz-card');
-    cards.forEach((card, index) => {
-        card.style.animation = 'none';
-        setTimeout(() => {
-            card.style.animation = `cardSlideIn 0.6s ease-out backwards ${index * 0.1}s`;
-        }, 10);
-    });
-}
-
-function createDownloadRipple(event) {
-    const btn = event.currentTarget;
-    const ripple = document.createElement('span');
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
-    
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    ripple.style.position = 'absolute';
-    ripple.style.borderRadius = '50%';
-    ripple.style.background = 'rgba(102, 126, 234, 0.5)';
-    ripple.style.transform = 'scale(0)';
-    ripple.style.animation = 'ripple 0.6s ease-out';
-    
-    btn.appendChild(ripple);
-    setTimeout(() => ripple.remove(), 600);
-}
-
-async function loadDashboard() {
-    const data = await chrome.storage.local.get(['stats']);
-    const stats = data.stats || {
-        totalBattles: 0,
-        victories: 0,
-        defeats: 0,
-        moneySaved: 0,
-        savingsHistory: [],
-        recentBattles: [],
-        installDate: Date.now()
-    };
-
-    // Update current year
+function initializeDashboard() {
+    // Set current year
     document.getElementById('currentYear').textContent = new Date().getFullYear();
     
-    updateSpendingTrends(stats);
-    drawBattlesFunnel(stats);
-    displayCategoryList(stats);
-    drawSpendingPatterns(stats);
-    displayRecentActivity(stats);
-    drawDecisionTimeAnalysis(stats);
+    // Load data
+    loadDashboardData();
 }
 
-function updateSpendingTrends(stats) {
-    // Update metrics with count-up animation
-    animateValue('totalSaved', 0, stats.moneySaved, 1500, '$');
+function setupEventListeners() {
+    // Header button listeners
+    document.getElementById('refreshBtn')?.addEventListener('click', () => {
+        loadDashboardData();
+        showNotification('Data refreshed successfully');
+    });
     
-    const winRate = stats.totalBattles > 0 ? ((stats.victories / stats.totalBattles) * 100).toFixed(1) : 0;
-    animateValue('winRate', 0, winRate, 1500, '', '%');
+    document.getElementById('exportBtn')?.addEventListener('click', exportData);
+    document.getElementById('closeBtn')?.addEventListener('click', () => window.close());
     
-    // Mock year-over-year changes
-    const savingsChange = Math.random() * 10;
-    document.getElementById('savingsChange').textContent = `↑ ${savingsChange.toFixed(1)}% vs. PY`;
+    // Navigation listeners
+    document.getElementById('overviewNav')?.addEventListener('click', () => {
+        // Already on overview
+    });
     
-    const winRateChange = (Math.random() * 20) - 10;
-    const changeElem = document.getElementById('winRateChange');
-    if (winRateChange >= 0) {
-        changeElem.textContent = `↑ ${winRateChange.toFixed(1)}% vs. PY`;
-        changeElem.className = 'metric-change positive';
-    } else {
-        changeElem.textContent = `↓ ${winRateChange.toFixed(1)}% vs. PY`;
-        changeElem.className = 'metric-change negative';
-    }
+    document.getElementById('detailedNav')?.addEventListener('click', () => {
+        // Switch to detailed view (future implementation)
+    });
     
-    // Draw trend chart with animation
-    drawAnimatedTrendChart(stats);
+    // Filter listeners
+    document.getElementById('timePeriodFilter')?.addEventListener('change', (e) => {
+        applyFilters();
+    });
+    
+    document.getElementById('categoryFilter')?.addEventListener('change', (e) => {
+        applyFilters();
+    });
+    
+    // Download button
+    document.getElementById('downloadBtn')?.addEventListener('click', exportData);
 }
 
-function animateValue(elementId, start, end, duration, prefix = '', suffix = '') {
-    const element = document.getElementById(elementId);
-    const range = end - start;
-    const increment = range / (duration / 16);
-    let current = start;
-    
-    const timer = setInterval(() => {
-        current += increment;
-        if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
-            current = end;
-            clearInterval(timer);
-        }
-        element.textContent = prefix + current.toFixed(0) + suffix;
-    }, 16);
+async function loadDashboardData() {
+    try {
+        // Load from Chrome storage
+        chrome.storage.local.get(['stats'], (result) => {
+            const stats = result.stats || {
+                totalBattles: 0,
+                victories: 0,
+                defeats: 0,
+                moneySaved: 0,
+                savingsHistory: [],
+                recentBattles: []
+            };
+            
+            // Calculate metrics
+            const metrics = calculateMetrics(stats);
+            
+            // Update all visualizations
+            updateKeyMetrics(metrics);
+            updateSpendingTrendChart(stats.savingsHistory || []);
+            updateBattlesFunnelChart(stats);
+            updateCategoryList(stats.recentBattles || []);
+            updateDemographics(stats.recentBattles || []);
+            updateActivityTimeline(stats.recentBattles || []);
+            updateDecisionTimeChart(stats.recentBattles || []);
+        });
+        
+    } catch (error) {
+        console.error('Error loading dashboard data:', error);
+        showError('Failed to load dashboard data');
+    }
 }
 
-function drawAnimatedTrendChart(stats) {
-    const canvas = document.getElementById('spendingTrendChart');
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+function calculateMetrics(stats) {
+    const metrics = {
+        totalSaved: stats.moneySaved || 0,
+        winRate: stats.totalBattles > 0 ? ((stats.defeats / stats.totalBattles) * 100).toFixed(1) : 0,
+        savingsChange: '+5.2', // Placeholder - calculate from historical data
+        winRateChange: '-14.7', // Placeholder
+        totalBattles: stats.totalBattles || 0,
+        victories: stats.victories || 0,
+        defeats: stats.defeats || 0,
+        avgBattle: stats.defeats > 0 ? (stats.moneySaved / stats.defeats) : 0
+    };
     
-    ctx.clearRect(0, 0, width, height);
-    
-    const history = stats.savingsHistory || [];
-    if (history.length < 2) {
-        ctx.fillStyle = '#999';
-        ctx.font = '13px Roboto';
-        ctx.textAlign = 'center';
-        ctx.fillText('No data yet. Start battling to see trends!', width / 2, height / 2);
-        return;
-    }
-    
-    const padding = { top: 20, right: 30, bottom: 40, left: 60 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
-    
-    // Draw grid with fade-in
-    ctx.strokeStyle = '#e6eaed';
-    ctx.lineWidth = 1;
-    for (let i = 0; i <= 5; i++) {
-        const y = padding.top + (chartHeight / 5) * i;
-        ctx.beginPath();
-        ctx.moveTo(padding.left, y);
-        ctx.lineTo(width - padding.right, y);
-        ctx.stroke();
-    }
-    
-    // Y-axis labels
-    const maxValue = Math.max(...history, 10);
-    ctx.fillStyle = '#666';
-    ctx.font = '11px Roboto';
-    ctx.textAlign = 'right';
-    for (let i = 0; i <= 5; i++) {
-        const value = (maxValue / 5) * (5 - i);
-        const y = padding.top + (chartHeight / 5) * i;
-        ctx.fillText(`$${value.toFixed(0)}`, padding.left - 8, y + 4);
-    }
-    
-    // X-axis
-    ctx.textAlign = 'center';
-    const step = Math.max(1, Math.floor(history.length / 6));
-    for (let i = 0; i < history.length; i += step) {
-        const x = padding.left + (chartWidth / (history.length - 1)) * i;
-        ctx.fillText(i + 1, x, height - padding.bottom + 20);
-    }
-    
-    // Axis labels
-    ctx.fillStyle = '#333';
-    ctx.font = '11px Roboto';
-    ctx.fillText('Battles', width / 2, height - 5);
-    
-    // Animate line drawing
-    let animationProgress = 0;
-    const animationDuration = 1000;
-    const startTime = Date.now();
-    
-    function drawFrame() {
-        const elapsed = Date.now() - startTime;
-        animationProgress = Math.min(elapsed / animationDuration, 1);
-        
-        const pointsToDraw = Math.floor(history.length * animationProgress);
-        
-        // Clear previous frame (keep grid and labels)
-        ctx.clearRect(padding.left, padding.top, chartWidth, chartHeight);
-        
-        // Redraw grid
-        ctx.strokeStyle = '#e6eaed';
-        ctx.lineWidth = 1;
-        for (let i = 0; i <= 5; i++) {
-            const y = padding.top + (chartHeight / 5) * i;
-            ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
-            ctx.stroke();
-        }
-        
-        if (pointsToDraw < 2) {
-            if (animationProgress < 1) requestAnimationFrame(drawFrame);
-            return;
-        }
-        
-        // Draw line with gradient
-        const gradient = ctx.createLinearGradient(0, padding.top, 0, padding.top + chartHeight);
-        gradient.addColorStop(0, '#667eea');
-        gradient.addColorStop(1, '#764ba2');
-        
-        ctx.strokeStyle = gradient;
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        
-        for (let i = 0; i < pointsToDraw; i++) {
-            const x = padding.left + (chartWidth / (history.length - 1)) * i;
-            const y = padding.top + chartHeight - (history[i] / maxValue) * chartHeight;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        
-        // Draw points with glow
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = '#667eea';
-        ctx.fillStyle = '#4a5f8a';
-        
-        for (let i = 0; i < pointsToDraw; i++) {
-            const x = padding.left + (chartWidth / (history.length - 1)) * i;
-            const y = padding.top + chartHeight - (history[i] / maxValue) * chartHeight;
-            ctx.beginPath();
-            ctx.arc(x, y, 4, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        ctx.shadowBlur = 0;
-        
-        if (animationProgress < 1) {
-            requestAnimationFrame(drawFrame);
-        }
-    }
-    
-    drawFrame();
+    return metrics;
 }
 
-function drawBattlesFunnel(stats) {
-    const canvas = document.getElementById('battlesFunnelChart');
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+function updateKeyMetrics(metrics) {
+    // Update top metrics
+    document.getElementById('totalSaved').textContent = `$${metrics.totalSaved.toFixed(2)}`;
+    document.getElementById('savingsChange').textContent = `↑ ${metrics.savingsChange}% vs. PY`;
+    document.getElementById('winRate').textContent = `${metrics.winRate}%`;
+    document.getElementById('winRateChange').textContent = `↓ ${metrics.winRateChange}% vs. PY`;
+}
+
+function updateSpendingTrendChart(savingsHistory) {
+    const ctx = document.getElementById('spendingTrendChart')?.getContext('2d');
+    if (!ctx) return;
     
-    ctx.clearRect(0, 0, width, height);
+    // Destroy existing chart
+    if (spendingTrendChart) {
+        spendingTrendChart.destroy();
+    }
     
-    // Funnel stages
+    // Prepare data
+    const labels = savingsHistory.map((_, i) => `Battle ${i + 1}`);
+    const data = savingsHistory.length > 0 ? savingsHistory : [0];
+    
+    // Create gradient
+    const gradient = ctx.createLinearGradient(0, 0, 0, 250);
+    gradient.addColorStop(0, 'rgba(6, 182, 212, 0.5)');
+    gradient.addColorStop(1, 'rgba(6, 182, 212, 0.05)');
+    
+    spendingTrendChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Cumulative Savings',
+                data: data,
+                borderColor: '#06b6d4',
+                backgroundColor: gradient,
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointHoverRadius: 6,
+                pointBackgroundColor: '#06b6d4',
+                pointBorderColor: '#0f172a',
+                pointBorderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#cbd5e1',
+                    borderColor: 'rgba(148, 163, 184, 0.2)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8,
+                    displayColors: false,
+                    callbacks: {
+                        label: (context) => `Saved: $${context.parsed.y.toFixed(2)}`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: 11 },
+                        callback: (value) => '$' + value
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: 10 },
+                        maxRotation: 0,
+                        autoSkip: true,
+                        maxTicksLimit: 10
+                    }
+                }
+            }
+        }
+    });
+}
+
+function updateBattlesFunnelChart(stats) {
+    const ctx = document.getElementById('battlesFunnelChart')?.getContext('2d');
+    if (!ctx) return;
+    
+    if (battlesFunnelChart) {
+        battlesFunnelChart.destroy();
+    }
+    
     const stages = [
-        { label: 'Stage 1', sublabel: '100%', count: stats.totalBattles, color: '#e67e22' },
-        { label: 'Stage 2', sublabel: '77.7%', count: Math.floor(stats.totalBattles * 0.777), color: '#f39c12' },
-        { label: 'Stage 3', sublabel: '50.0%', count: Math.floor(stats.totalBattles * 0.5), color: '#ff8c42' }
+        { label: 'Total Attempts', value: stats.totalBattles || 0, color: '#06b6d4' },
+        { label: 'Resisted', value: stats.defeats || 0, color: '#10b981' },
+        { label: 'Purchased', value: stats.victories || 0, color: '#ef4444' }
     ];
     
-    const padding = { top: 40, bottom: 60, left: 50, right: 50 };
-    const funnelHeight = height - padding.top - padding.bottom;
-    const funnelWidth = width - padding.left - padding.right;
-    
-    // Draw funnel segments
-    stages.forEach((stage, index) => {
-        const segmentHeight = funnelHeight / stages.length;
-        const y = padding.top + segmentHeight * index;
-        
-        const topWidth = funnelWidth * (1 - index * 0.25);
-        const bottomWidth = funnelWidth * (1 - (index + 1) * 0.25);
-        
-        const x1 = (width - topWidth) / 2;
-        const x2 = (width + topWidth) / 2;
-        const x3 = (width + bottomWidth) / 2;
-        const x4 = (width - bottomWidth) / 2;
-        
-        // Draw trapezoid
-        ctx.fillStyle = stage.color;
-        ctx.beginPath();
-        ctx.moveTo(x1, y);
-        ctx.lineTo(x2, y);
-        ctx.lineTo(x3, y + segmentHeight);
-        ctx.lineTo(x4, y + segmentHeight);
-        ctx.closePath();
-        ctx.fill();
-        
-        // Draw label
-        ctx.fillStyle = 'white';
-        ctx.font = 'bold 14px Roboto';
-        ctx.textAlign = 'center';
-        ctx.fillText(stage.label, width / 2, y + segmentHeight / 2);
-        ctx.font = '12px Roboto';
-        ctx.fillText(stage.sublabel, width / 2, y + segmentHeight / 2 + 20);
+    battlesFunnelChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: stages.map(s => s.label),
+            datasets: [{
+                data: stages.map(s => s.value),
+                backgroundColor: stages.map(s => s.color),
+                borderRadius: 8,
+                barThickness: 50
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#cbd5e1',
+                    borderColor: 'rgba(148, 163, 184, 0.2)',
+                    borderWidth: 1,
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: 11 }
+                    }
+                },
+                y: {
+                    grid: { display: false },
+                    ticks: {
+                        color: '#f1f5f9',
+                        font: { size: 12, weight: '600' }
+                    }
+                }
+            }
+        }
     });
-    
-    // Draw rejected/lost sections
-    ctx.fillStyle = '#95a5a6';
-    ctx.font = '11px Roboto';
-    ctx.textAlign = 'left';
-    ctx.fillText('Rejected', padding.left - 40, padding.top + funnelHeight / 3);
-    ctx.fillText('Lost', padding.left - 40, padding.top + funnelHeight * 2 / 3);
 }
 
-function displayCategoryList(stats) {
-    const categories = [
-        { name: 'Shopping', count: Math.floor(stats.totalBattles * 0.4) },
-        { name: 'Electronics', count: Math.floor(stats.totalBattles * 0.25) },
-        { name: 'Fashion', count: Math.floor(stats.totalBattles * 0.2) },
-        { name: 'Food Delivery', count: Math.floor(stats.totalBattles * 0.1) },
-        { name: 'Entertainment', count: Math.floor(stats.totalBattles * 0.05) }
-    ];
+function updateCategoryList(recentBattles) {
+    const categoryList = document.getElementById('categoryList');
+    if (!categoryList) return;
     
-    const maxCount = Math.max(...categories.map(c => c.count), 1);
+    // Categorize purchases
+    const categories = {};
+    const categoryIcons = {
+        'Electronics': '💻',
+        'Fashion': '👕',
+        'Food': '🍔',
+        'Entertainment': '🎮',
+        'Home': '🏠',
+        'Beauty': '💄',
+        'Fitness': '💪',
+        'Other': '📦'
+    };
     
-    const container = document.getElementById('categoryList');
-    container.innerHTML = categories.map((cat, index) => `
-        <div class="category-item">
-            <div class="category-rank">${index + 1}</div>
-            <div class="category-name">${cat.name}</div>
-            <div class="category-bar-container">
-                <div class="category-bar" style="width: ${(cat.count / maxCount) * 100}%"></div>
+    recentBattles.forEach(battle => {
+        const category = categorizeItem(battle.description || battle.item || 'Other');
+        if (!categories[category]) {
+            categories[category] = { total: 0, amount: 0 };
+        }
+        categories[category].total++;
+        categories[category].amount += battle.amount || 0;
+    });
+    
+    // Sort by total
+    const sorted = Object.entries(categories).sort((a, b) => b[1].total - a[1].total);
+    const maxTotal = sorted[0]?.[1].total || 1;
+    
+    categoryList.innerHTML = sorted.slice(0, 6).map(([name, data]) => {
+        const percentage = (data.total / maxTotal) * 100;
+        return `
+            <div class="category-item">
+                <div class="category-icon">${categoryIcons[name] || '📦'}</div>
+                <div class="category-info">
+                    <div class="category-name">${name}</div>
+                    <div class="category-bar">
+                        <div class="category-fill" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+                <div class="category-value">$${data.amount.toFixed(0)}</div>
             </div>
-            <div class="category-value">${cat.count}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-function drawSpendingPatterns(stats) {
-    // Time of Day donut chart
-    drawDonutChart('timeOfDayChart', [
-        { label: 'Morning', value: 20, color: '#667eea' },
-        { label: 'Afternoon', value: 35, color: '#764ba2' },
-        { label: 'Evening', value: 30, color: '#f093fb' },
-        { label: 'Night', value: 15, color: '#4facfe' }
-    ], 'TIME');
-    
-    // Day of Week donut chart
-    drawDonutChart('dayOfWeekChart', [
-        { label: 'Weekday', value: 60, color: '#667eea' },
-        { label: 'Weekend', value: 40, color: '#764ba2' }
-    ], 'DAY');
-    
-    // Amount bands bar chart
-    const canvas = document.getElementById('amountBandsChart');
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    
-    ctx.clearRect(0, 0, width, height);
-    
-    const bands = [
-        { label: '<$18', value: 15 },
-        { label: '$18-21', value: 25 },
-        { label: '$22-30', value: 35 },
-        { label: '$30+', value: 25 }
-    ];
-    
-    const padding = { top: 20, bottom: 30, left: 40, right: 20 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
-    const barWidth = chartWidth / bands.length - 10;
-    
-    bands.forEach((band, index) => {
-        const x = padding.left + (chartWidth / bands.length) * index + 5;
-        const barHeight = (band.value / 100) * chartHeight;
-        const y = padding.top + chartHeight - barHeight;
-        
-        ctx.fillStyle = '#667eea';
-        ctx.fillRect(x, y, barWidth, barHeight);
-        
-        // Label
-        ctx.fillStyle = '#666';
-        ctx.font = '10px Roboto';
-        ctx.textAlign = 'center';
-        ctx.fillText(band.label, x + barWidth / 2, height - 10);
-    });
+function categorizeItem(description) {
+    const desc = description.toLowerCase();
+    if (desc.includes('phone') || desc.includes('laptop') || desc.includes('computer') || desc.includes('tech')) return 'Electronics';
+    if (desc.includes('shirt') || desc.includes('shoes') || desc.includes('clothes') || desc.includes('fashion')) return 'Fashion';
+    if (desc.includes('food') || desc.includes('restaurant') || desc.includes('meal')) return 'Food';
+    if (desc.includes('game') || desc.includes('movie') || desc.includes('entertainment')) return 'Entertainment';
+    if (desc.includes('home') || desc.includes('furniture') || desc.includes('decor')) return 'Home';
+    if (desc.includes('beauty') || desc.includes('makeup') || desc.includes('cosmetic')) return 'Beauty';
+    if (desc.includes('fitness') || desc.includes('gym') || desc.includes('workout')) return 'Fitness';
+    return 'Other';
 }
 
-function drawDonutChart(canvasId, data, centerText) {
-    const canvas = document.getElementById(canvasId);
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
-    const centerX = width / 2;
-    const centerY = height / 2;
-    const radius = Math.min(width, height) / 2 - 20;
-    const innerRadius = radius * 0.6;
-    
-    ctx.clearRect(0, 0, width, height);
-    
-    const total = data.reduce((sum, item) => sum + item.value, 0);
-    let currentAngle = -Math.PI / 2;
-    
-    // Draw segments
-    data.forEach(item => {
-        const sliceAngle = (item.value / total) * Math.PI * 2;
+function updateDemographics(recentBattles) {
+    // Time of day chart
+    const timeCtx = document.getElementById('timeOfDayChart')?.getContext('2d');
+    if (timeCtx) {
+        const timeData = [0, 0, 0, 0]; // Morning, Afternoon, Evening, Night
         
-        ctx.fillStyle = item.color;
-        ctx.beginPath();
-        ctx.arc(centerX, centerY, radius, currentAngle, currentAngle + sliceAngle);
-        ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
-        ctx.closePath();
-        ctx.fill();
+        recentBattles.forEach(battle => {
+            const hour = new Date(battle.timestamp).getHours();
+            if (hour >= 6 && hour < 12) timeData[0]++;
+            else if (hour >= 12 && hour < 18) timeData[1]++;
+            else if (hour >= 18 && hour < 22) timeData[2]++;
+            else timeData[3]++;
+        });
         
-        currentAngle += sliceAngle;
-    });
+        if (timeOfDayChart) timeOfDayChart.destroy();
+        
+        timeOfDayChart = new Chart(timeCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Morning', 'Afternoon', 'Evening', 'Night'],
+                datasets: [{
+                    data: timeData,
+                    backgroundColor: ['#06b6d4', '#0284c7', '#0369a1', '#075985'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#cbd5e1',
+                            font: { size: 10 },
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#cbd5e1'
+                    }
+                }
+            }
+        });
+    }
     
-    // Draw center text
-    ctx.fillStyle = '#333';
-    ctx.font = 'bold 16px Roboto';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(centerText, centerX, centerY);
+    // Day of week chart
+    const dayCtx = document.getElementById('dayOfWeekChart')?.getContext('2d');
+    if (dayCtx) {
+        const dayData = [0, 0, 0, 0, 0, 0, 0];
+        
+        recentBattles.forEach(battle => {
+            const day = new Date(battle.timestamp).getDay();
+            dayData[day]++;
+        });
+        
+        if (dayOfWeekChart) dayOfWeekChart.destroy();
+        
+        dayOfWeekChart = new Chart(dayCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                datasets: [{
+                    data: dayData,
+                    backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#06b6d4', '#6366f1', '#8b5cf6', '#ec4899'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#cbd5e1',
+                            font: { size: 10 },
+                            padding: 10
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#cbd5e1'
+                    }
+                }
+            }
+        });
+    }
+    
+    // Amount bands chart
+    const amountCtx = document.getElementById('amountBandsChart')?.getContext('2d');
+    if (amountCtx) {
+        const bands = { '0-25': 0, '25-50': 0, '50-100': 0, '100-250': 0, '250+': 0 };
+        
+        recentBattles.forEach(battle => {
+            const amt = battle.amount || 0;
+            if (amt < 25) bands['0-25']++;
+            else if (amt < 50) bands['25-50']++;
+            else if (amt < 100) bands['50-100']++;
+            else if (amt < 250) bands['100-250']++;
+            else bands['250+']++;
+        });
+        
+        if (amountBandsChart) amountBandsChart.destroy();
+        
+        amountBandsChart = new Chart(amountCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(bands),
+                datasets: [{
+                    data: Object.values(bands),
+                    backgroundColor: '#06b6d4',
+                    borderRadius: 6,
+                    barThickness: 40
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                        titleColor: '#f1f5f9',
+                        bodyColor: '#cbd5e1'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(148, 163, 184, 0.1)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#94a3b8',
+                            font: { size: 10 }
+                        }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            color: '#cbd5e1',
+                            font: { size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    }
 }
 
-function displayRecentActivity(stats) {
-    const recentBattles = (stats.recentBattles || []).slice(-10).reverse();
-    const container = document.getElementById('activityTimeline');
+function updateActivityTimeline(recentBattles) {
+    const timeline = document.getElementById('activityTimeline');
+    if (!timeline) return;
     
-    if (recentBattles.length === 0) {
-        container.innerHTML = '<div style="text-align:center;padding:40px;color:#999;">No recent activity</div>';
+    const recent = recentBattles.slice(-10).reverse();
+    
+    if (recent.length === 0) {
+        timeline.innerHTML = `
+            <div class="no-data">
+                <div class="no-data-icon">📊</div>
+                <div class="no-data-title">No Activity Yet</div>
+                <div class="no-data-text">Your purchase battles will appear here</div>
+            </div>
+        `;
         return;
     }
     
-    container.innerHTML = recentBattles.map(battle => `
-        <div class="activity-item">
-            <div class="activity-icon">${battle.result === 'victory' ? '✅' : '❌'}</div>
-            <div class="activity-content">
-                <div class="activity-title">${battle.result === 'victory' ? 'Battle Won' : 'Purchase Made'}</div>
-                <div class="activity-details">Amount: $${battle.amount.toFixed(2)}</div>
-                <div class="activity-time">${getTimeAgo(battle.timestamp)}</div>
+    timeline.innerHTML = recent.map(battle => {
+        const isWin = battle.result === 'defeat';
+        const icon = isWin ? '🛡️' : '🛍️';
+        const title = isWin ? 'Purchase Resisted' : 'Purchase Made';
+        const amount = `$${(battle.amount || 0).toFixed(2)}`;
+        const timeAgo = formatTimeAgo(battle.timestamp);
+        const description = battle.description || battle.item || 'Unknown item';
+        
+        return `
+            <div class="timeline-item">
+                <div class="timeline-icon">${icon}</div>
+                <div class="timeline-info">
+                    <div class="timeline-title">${title}</div>
+                    <div class="timeline-desc">${description} • ${timeAgo}</div>
+                </div>
+                <div class="timeline-amount">${amount}</div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
-function drawDecisionTimeAnalysis(stats) {
-    const canvas = document.getElementById('decisionTimeChart');
-    const ctx = canvas.getContext('2d');
-    const width = canvas.width;
-    const height = canvas.height;
+function updateDecisionTimeChart(recentBattles) {
+    const ctx = document.getElementById('decisionTimeChart')?.getContext('2d');
+    if (!ctx) return;
     
-    ctx.clearRect(0, 0, width, height);
+    // Simulate decision time data (in future, track actual decision times)
+    const decisionTimes = recentBattles.map(() => Math.floor(Math.random() * 60) + 5);
     
-    // Mock decision time data (in reality, track actual time spent in battles)
-    const programs = [
-        { name: 'Quick Decisions', median: 30, range: [20, 45] },
-        { name: 'Moderate Decisions', median: 60, range: [45, 80] },
-        { name: 'Careful Decisions', median: 90, range: [75, 120] },
-        { name: 'Very Careful', median: 120, range: [100, 150] }
-    ];
+    if (decisionTimeChart) decisionTimeChart.destroy();
     
-    const padding = { top: 30, bottom: 40, left: 150, right: 80 };
-    const chartWidth = width - padding.left - padding.right;
-    const chartHeight = height - padding.top - padding.bottom;
-    const rowHeight = chartHeight / programs.length;
-    
-    // Draw labels
-    ctx.fillStyle = '#666';
-    ctx.font = '11px Roboto';
-    ctx.textAlign = 'right';
-    programs.forEach((prog, index) => {
-        const y = padding.top + rowHeight * index + rowHeight / 2;
-        ctx.fillText(prog.name, padding.left - 10, y + 4);
-        
-        // Draw median value
-        ctx.textAlign = 'left';
-        ctx.fillStyle = '#333';
-        ctx.font = 'bold 12px Roboto';
-        ctx.fillText(prog.median + 's', padding.left + chartWidth + 10, y + 4);
+    decisionTimeChart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+            datasets: [{
+                label: 'Decision Time (seconds)',
+                data: decisionTimes.map((time, i) => ({ x: i + 1, y: time })),
+                backgroundColor: '#06b6d4',
+                borderColor: '#0284c7',
+                borderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 7
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: 'rgba(30, 41, 59, 0.95)',
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#cbd5e1',
+                    callbacks: {
+                        label: (context) => `${context.parsed.y} seconds`
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Time (seconds)',
+                        color: '#94a3b8'
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: 11 }
+                    }
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Purchase Attempt',
+                        color: '#94a3b8'
+                    },
+                    grid: {
+                        color: 'rgba(148, 163, 184, 0.1)'
+                    },
+                    ticks: {
+                        color: '#94a3b8',
+                        font: { size: 11 }
+                    }
+                }
+            }
+        }
     });
-    
-    // Draw box plots
-    programs.forEach((prog, index) => {
-        const y = padding.top + rowHeight * index + rowHeight / 2;
-        const maxTime = 200;
-        
-        const rangeStart = padding.left + (prog.range[0] / maxTime) * chartWidth;
-        const rangeEnd = padding.left + (prog.range[1] / maxTime) * chartWidth;
-        const medianX = padding.left + (prog.median / maxTime) * chartWidth;
-        
-        // Draw range line
-        ctx.strokeStyle = '#c1c9d0';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.moveTo(rangeStart, y);
-        ctx.lineTo(rangeEnd, y);
-        ctx.stroke();
-        
-        // Draw box
-        ctx.fillStyle = '#667eea';
-        ctx.fillRect(rangeStart, y - 8, rangeEnd - rangeStart, 16);
-        
-        // Draw median line
-        ctx.strokeStyle = '#333';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(medianX, y - 8);
-        ctx.lineTo(medianX, y + 8);
-        ctx.stroke();
-    });
-    
-    // Draw scale
-    ctx.fillStyle = '#666';
-    ctx.font = '10px Roboto';
-    ctx.textAlign = 'center';
-    for (let i = 0; i <= 200; i += 50) {
-        const x = padding.left + (i / 200) * chartWidth;
-        ctx.fillText(i, x, height - 10);
-    }
 }
 
-function getTimeAgo(timestamp) {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return 'Just now';
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes} min ago`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-    const days = Math.floor(hours / 24);
-    return `${days} day${days > 1 ? 's' : ''} ago`;
+function applyFilters() {
+    // Reload data with filters applied
+    loadDashboardData();
 }
 
 function exportData() {
-    chrome.storage.local.get(['stats'], (data) => {
-        const stats = data.stats || {};
+    chrome.storage.local.get(['stats'], (result) => {
+        const stats = result.stats || {};
         const dataStr = JSON.stringify(stats, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-        
-        const exportFileDefaultName = `impulse-analytics-${new Date().toISOString().split('T')[0]}.json`;
-        
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', dataUri);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        linkElement.click();
-        
-        // Show success notification
-        showNotification('Data exported successfully! 📊', 'success');
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `impulse-guard-data-${Date.now()}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+        showNotification('Data exported successfully');
     });
 }
 
-// Particle Background Animation
-function initializeParticleBackground() {
-    const canvas = document.createElement('canvas');
-    canvas.style.position = 'fixed';
-    canvas.style.top = '0';
-    canvas.style.left = '0';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-    canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '0';
-    canvas.style.opacity = '0.3';
-    document.body.prepend(canvas);
-    
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    
-    const particles = [];
-    const particleCount = 50;
-    
-    class Particle {
-        constructor() {
-            this.x = Math.random() * canvas.width;
-            this.y = Math.random() * canvas.height;
-            this.size = Math.random() * 3 + 1;
-            this.speedX = Math.random() * 0.5 - 0.25;
-            this.speedY = Math.random() * 0.5 - 0.25;
-            this.color = `rgba(102, 126, 234, ${Math.random() * 0.5})`;
-        }
-        
-        update() {
-            this.x += this.speedX;
-            this.y += this.speedY;
-            
-            if (this.x > canvas.width) this.x = 0;
-            if (this.x < 0) this.x = canvas.width;
-            if (this.y > canvas.height) this.y = 0;
-            if (this.y < 0) this.y = canvas.height;
-        }
-        
-        draw() {
-            ctx.fillStyle = this.color;
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fill();
-        }
-    }
-    
-    for (let i = 0; i < particleCount; i++) {
-        particles.push(new Particle());
-    }
-    
-    function animateParticles() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        particles.forEach(particle => {
-            particle.update();
-            particle.draw();
-        });
-        
-        // Draw connections
-        particles.forEach((p1, i) => {
-            particles.slice(i + 1).forEach(p2 => {
-                const dx = p1.x - p2.x;
-                const dy = p1.y - p2.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-                
-                if (distance < 100) {
-                    ctx.strokeStyle = `rgba(102, 126, 234, ${0.2 * (1 - distance / 100)})`;
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(p1.x, p1.y);
-                    ctx.lineTo(p2.x, p2.y);
-                    ctx.stroke();
-                }
-            });
-        });
-        
-        requestAnimationFrame(animateParticles);
-    }
-    
-    animateParticles();
-    
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
+function showNotification(message) {
+    // Simple notification (can be enhanced with toast)
+    console.log(message);
 }
 
-// Interactive Effects
-function setupInteractiveEffects() {
-    // Add hover effects to viz cards
-    const vizCards = document.querySelectorAll('.viz-card');
-    vizCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.zIndex = '10';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.zIndex = '1';
-        });
-        
-        // Add tilt effect
-        card.addEventListener('mousemove', function(e) {
-            const rect = this.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-            
-            const rotateX = (y - centerY) / 20;
-            const rotateY = (centerX - x) / 20;
-            
-            this.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-8px) scale(1.02)`;
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateY(0) scale(1)';
-        });
-    });
-    
-    // Add click ripple effect to all buttons
-    const buttons = document.querySelectorAll('button, .nav-item, .filter-select');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            const ripple = document.createElement('span');
-            const rect = this.getBoundingClientRect();
-            const size = Math.max(rect.width, rect.height);
-            const x = e.clientX - rect.left - size / 2;
-            const y = e.clientY - rect.top - size / 2;
-            
-            ripple.style.width = ripple.style.height = size + 'px';
-            ripple.style.left = x + 'px';
-            ripple.style.top = y + 'px';
-            ripple.classList.add('ripple-effect');
-            
-            this.style.position = 'relative';
-            this.style.overflow = 'hidden';
-            this.appendChild(ripple);
-            
-            setTimeout(() => ripple.remove(), 600);
-        });
-    });
+function showError(message) {
+    console.error(message);
 }
 
-// Live Updates Simulation
-function startLiveUpdates() {
-    // Simulate real-time data updates every 30 seconds
-    setInterval(() => {
-        const updateIndicator = document.createElement('div');
-        updateIndicator.textContent = '● Live';
-        updateIndicator.style.position = 'fixed';
-        updateIndicator.style.top = '20px';
-        updateIndicator.style.right = '20px';
-        updateIndicator.style.background = 'rgba(16, 185, 129, 0.9)';
-        updateIndicator.style.color = 'white';
-        updateIndicator.style.padding = '8px 16px';
-        updateIndicator.style.borderRadius = '20px';
-        updateIndicator.style.fontSize = '12px';
-        updateIndicator.style.fontWeight = '500';
-        updateIndicator.style.zIndex = '1000';
-        updateIndicator.style.animation = 'fadeInOut 2s ease-in-out';
-        
-        document.body.appendChild(updateIndicator);
-        setTimeout(() => updateIndicator.remove(), 2000);
-    }, 30000);
-}
-
-// Notification System
-function showNotification(message, type = 'info') {
-    const notification = document.createElement('div');
-    notification.textContent = message;
-    notification.style.position = 'fixed';
-    notification.style.bottom = '20px';
-    notification.style.right = '20px';
-    notification.style.padding = '16px 24px';
-    notification.style.borderRadius = '8px';
-    notification.style.fontSize = '14px';
-    notification.style.fontWeight = '500';
-    notification.style.zIndex = '1000';
-    notification.style.animation = 'slideInUp 0.3s ease-out';
-    notification.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+function formatTimeAgo(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
     
-    if (type === 'success') {
-        notification.style.background = 'linear-gradient(135deg, #10b981, #059669)';
-        notification.style.color = 'white';
-    } else if (type === 'error') {
-        notification.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        notification.style.color = 'white';
-    } else {
-        notification.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-        notification.style.color = 'white';
-    }
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
     
-    document.body.appendChild(notification);
-    setTimeout(() => {
-        notification.style.animation = 'slideOutDown 0.3s ease-out';
-        setTimeout(() => notification.remove(), 300);
-    }, 3000);
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return 'Just now';
 }
