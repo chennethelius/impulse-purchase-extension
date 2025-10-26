@@ -1011,13 +1011,13 @@ async function findCheaperAlternatives() {
     : 'this product';
   const currentPrice = extractNumericPrice(productInfo.price);
   
-  const prompt = `Find 3 cheaper alternatives for: ${productName} ($${currentPrice})
+  const prompt = `Find 3 cheaper alternatives for: ${productName}
 
-Return ONLY this JSON (no other text):
+Return ONLY this JSON:
 [
-  {"title":"product name","price":50,"source":"Amazon","url":"https://amazon.com/s?k=..."},
-  {"title":"product name","price":45,"source":"eBay","url":"https://ebay.com/sch/i.html?_nkw=..."},
-  {"title":"product name","price":40,"source":"Walmart","url":"https://walmart.com/search?q=..."}
+  {"title":"Product Name","source":"Amazon","url":"https://www.amazon.com/s?k=product+name"},
+  {"title":"Product Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=product+name"},
+  {"title":"Product Name","source":"Walmart","url":"https://www.walmart.com/search?q=product+name"}
 ]`;
   
   try {
@@ -1062,10 +1062,9 @@ Return ONLY this JSON (no other text):
       // Ensure all alternatives have required fields
       return alternatives.map(alt => ({
         title: alt.title || 'Alternative Product',
-        price: alt.price || Math.floor(currentPrice * 0.7),
         source: alt.source || 'Online',
         url: alt.url || `https://www.google.com/search?q=${encodeURIComponent(alt.title || productName + ' cheaper')}`
-      })).slice(0, 3).sort((a, b) => a.price - b.price);
+      })).slice(0, 3);
     } else {
       console.error('No JSON found in response');
     }
@@ -1078,30 +1077,26 @@ Return ONLY this JSON (no other text):
 
 function getFallbackAlternatives() {
   const productName = productInfo.name !== 'Unknown Product' ? productInfo.name : 'Similar Item';
-  const basePrice = extractNumericPrice(productInfo.price);
   
   const alternatives = [
     {
-      price: basePrice > 0 ? Math.floor(basePrice * 0.6) : Math.floor(Math.random() * 50) + 20,
       title: `Refurbished ${productName}`,
       source: "eBay",
       url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(productName + ' refurbished')}`
     },
     {
-      price: basePrice > 0 ? Math.floor(basePrice * 0.7) : Math.floor(Math.random() * 40) + 15,
       title: `Generic Alternative`,
       source: "Amazon",
       url: `https://www.amazon.com/s?k=${encodeURIComponent(productName + ' alternative cheaper')}`
     },
     {
-      price: basePrice > 0 ? Math.floor(basePrice * 0.5) : Math.floor(Math.random() * 30) + 10,
       title: `Used/Open Box`,
       source: "BestBuy",
       url: `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(productName + ' open box')}`
     }
   ];
   
-  return alternatives.sort((a, b) => a.price - b.price);
+  return alternatives;
 }
 
 function extractNumericPrice(priceString) {
@@ -1117,7 +1112,7 @@ async function displayAlternatives() {
   
   // Show loading state
   boxes.forEach(box => {
-    box.querySelector('.alt-price').textContent = '$--';
+    box.querySelector('.alt-price').textContent = '';
     box.querySelector('.alt-title').textContent = 'Searching...';
     box.querySelector('.alt-source').textContent = 'Finding deals';
     box.style.cursor = 'wait';
@@ -1130,7 +1125,7 @@ async function displayAlternatives() {
   alternatives.forEach((alt, index) => {
     if (boxes[index]) {
       const box = boxes[index];
-      box.querySelector('.alt-price').textContent = `$${alt.price}`;
+      box.querySelector('.alt-price').textContent = ''; // Hide price
       box.querySelector('.alt-title').textContent = alt.title;
       box.querySelector('.alt-source').textContent = alt.source;
       box.style.cursor = 'pointer';
