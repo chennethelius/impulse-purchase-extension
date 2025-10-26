@@ -2,9 +2,9 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStats();
     
-    // Dashboard button handler - opens Python Flask dashboard
+    // Dashboard button handler - opens extension dashboard
     document.getElementById('dashboardButton').addEventListener('click', () => {
-        chrome.tabs.create({ url: 'http://localhost:5000' });
+        chrome.tabs.create({ url: chrome.runtime.getURL('Impulse Guard Dashboard.html') });
     });
     
     // Reset button handler

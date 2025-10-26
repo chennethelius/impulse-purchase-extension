@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Guard Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'peach': '#E5A88C',
+                        'cream': '#F5E6D3',
+                        'teal': '#5FBDBD',
+                        'coral': '#E16B5A',
+                    },
+                    fontFamily: {
+                        'tahoma': ['Tahoma', 'Geneva', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <link rel="stylesheet" href="dashboard-styles.css">
+</head>
+<body class="font-tahoma bg-peach min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-cream rounded-3xl shadow-xl overflow-hidden flex border border-gray-200/50">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-white/60 backdrop-blur-sm p-6 flex flex-col border-r border-gray-200/50">
+                <!-- Logo -->
+                <div class="mb-8 text-center">
+                    <h1 class="text-xl font-bold text-gray-800 gradient-text">Impulse Guard</h1>
+                </div>
+                
+                <!-- User Profile -->
+                <div class="mb-8 text-center">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 mx-auto mb-3 flex items-center justify-center shadow-lg ring-2 ring-white ring-offset-2">
+                        <i class="fas fa-user text-white text-3xl"></i>
+                    </div>
+                    <h2 class="font-bold text-gray-800 text-sm">Guest User</h2>
+                    <p class="text-xs text-gray-500">Member</p>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex-1 space-y-1">
+                    <a href="#" class="nav-link active" data-tab="dashboard">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link" data-tab="insights">
+                        <i class="fas fa-lightbulb mr-3"></i>
+                        <span>Insights</span>
+                    </a>
+                    <a href="#" class="nav-link" data-tab="reports">
+                        <i class="fas fa-file-alt mr-3"></i>
+                        <span>Reports</span>
+                    </a>
+                    <a href="#" class="nav-link" data-tab="comments">
+                        <i class="fas fa-comments mr-3"></i>
+                        <span>Comments</span>
+                    </a>
+                    <a href="#" class="nav-link" data-tab="channels">
+                        <i class="fas fa-share-alt mr-3"></i>
+                        <span>Channels</span>
+                    </a>
+                </nav>
+                
+                <!-- Back to Stats -->
+                <button id="backToStats" class="flex items-center space-x-2 text-gray-600 text-sm mt-auto hover:text-gray-800 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Stats</span>
+                </button>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 p-8 overflow-y-auto max-h-screen relative bg-gradient-to-br from-transparent to-white/30">
+                <!-- Global Notification Popup -->
+                <div id="notification-popup" class="fixed top-20 right-12 w-80 bg-white rounded-2xl shadow-2xl border border-gray-200/80 z-50 backdrop-blur-sm hidden">
+                    <div class="p-4 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-gray-800">Notifications</h3>
+                            <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full">0 new</span>
+                        </div>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto">
+                        <div class="p-4 text-center text-gray-500">
+                            No notifications yet
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Dashboard Page -->
+                <div id="dashboard-page" class="page-content">
+                    <!-- Header -->
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h1 class="text-4xl font-bold text-gray-800">Dashboard</h1>
+                            <div class="flex items-center space-x-3">
+                                <button class="notification-trigger w-8 h-8 rounded-full bg-coral text-white flex items-center justify-center relative hover:bg-opacity-90 transition-all ripple hover:shadow-lg">
+                                    <i class="fas fa-bell text-sm"></i>
+                                </button>
+                                <button class="settings-trigger w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center hover:bg-gray-400 transition-all ripple hover:shadow-lg">
+                                    <i class="fas fa-cog text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Stats Cards -->
+                        <div class="grid grid-cols-3 gap-6 mb-6">
+                            <div class="stat-box">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs text-gray-500 font-semibold">Total Attempts</span>
+                                    <i class="fas fa-info-circle text-teal text-xs" style="cursor: pointer;"></i>
+                                </div>
+                                <div class="text-3xl font-bold text-gray-800" id="stat-total">0</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs text-gray-500 font-semibold">Resisted</span>
+                                    <i class="fas fa-info-circle text-coral text-xs" style="cursor: pointer;"></i>
+                                </div>
+                                <div class="text-3xl font-bold text-gray-800" id="stat-resisted">0</div>
+                            </div>
+                            <div class="stat-box">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-xs text-gray-500 font-semibold">Money Saved</span>
+                                    <i class="fas fa-info-circle text-teal text-xs" style="cursor: pointer;"></i>
+                                </div>
+                                <div class="text-3xl font-bold text-gray-800" id="stat-saved">$0.00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Activity Chart -->
+                    <div class="card mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Activity</h2>
+                            <div class="flex items-center space-x-4">
+                                <span class="text-xs text-gray-400">Last 7 days</span>
+                            </div>
+                        </div>
+                        <div style="height: 250px;">
+                            <canvas id="activityChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Category Resistance Radar Chart -->
+                    <div class="card mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-gray-800">Impulse Resistance by Category</h2>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-shield-alt text-teal text-sm"></i>
+                                <span class="text-xs text-gray-400">Your strongest defenses</span>
+                            </div>
+                        </div>
+                        <div style="height: 350px;" class="flex items-center justify-center">
+                            <canvas id="radarChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-6">
+                        <!-- Top Performers -->
+                        <div class="card">
+                            <h2 class="text-2xl font-bold text-gray-800 mb-4">Top Categories</h2>
+                            <div class="space-y-3" id="top-performers">
+                                <div class="text-center text-gray-400 py-8">
+                                    <i class="fas fa-chart-line text-4xl mb-3"></i>
+                                    <p>No purchase attempts yet</p>
+                                    <p class="text-xs mt-2">Data will appear here as you use the extension</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Upgrade Banner & Quick Stats -->
+                        <div class="space-y-6">
+                            <!-- Upgrade Banner -->
+                            <div class="card bg-gradient-to-br from-teal to-blue-400 text-white relative overflow-hidden" style="min-height: 120px;">
+                                <div class="relative z-10">
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <h3 class="text-lg font-bold mb-1">Upgrade Your</h3>
+                                            <h3 class="text-lg font-bold mb-2">Guard</h3>
+                                            <p class="text-xs opacity-90">Pro plan for better results</p>
+                                        </div>
+                                        <button class="bg-coral px-4 py-1.5 rounded-full text-sm font-bold hover:bg-red-500 transition-colors">
+                                            NOW
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="absolute top-0 right-0 w-32 h-32 opacity-20">
+                                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                                        <circle cx="50" cy="50" r="40" fill="none" stroke="white" stroke-width="8"></circle>
+                                        <circle cx="50" cy="50" r="25" fill="none" stroke="white" stroke-width="8"></circle>
+                                    </svg>
+                                </div>
+                            </div>
+                            
+                            <!-- Quick Stats -->
+                            <div class="card">
+                                <h2 class="text-2xl font-bold text-gray-800 mb-4">Quick Stats</h2>
+                                <div class="space-y-3">
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-shield-alt text-teal mr-3"></i>
+                                            <span class="text-sm text-gray-700">Success Rate</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800" id="success-rate">0%</span>
+                                    </div>
+                                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-calendar-day text-coral mr-3"></i>
+                                            <span class="text-sm text-gray-700">Avg per Day</span>
+                                        </div>
+                                        <span class="font-bold text-gray-800" id="avg-per-day">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Other pages (Insights, Reports, Comments, Channels) will be hidden by default -->
+                <div id="insights-page" class="page-content hidden">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-6">Insights</h1>
+                    <p class="text-gray-600">Coming soon - AI-powered insights about your spending patterns</p>
+                </div>
+                
+                <div id="reports-page" class="page-content hidden">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-6">Reports</h1>
+                    <p class="text-gray-600">Coming soon - Detailed reports and analytics</p>
+                </div>
+                
+                <div id="comments-page" class="page-content hidden">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-6">Comments & Notes</h1>
+                    <p class="text-gray-600">Coming soon - Track your thoughts and reflections</p>
+                </div>
+                
+                <div id="channels-page" class="page-content hidden">
+                    <h1 class="text-4xl font-bold text-gray-800 mb-6">Shopping Channels</h1>
+                    <p class="text-gray-600">Coming soon - Manage which websites trigger Impulse Guard</p>
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <script src="dashboard-full.js"></script>
+</body>
+</html>

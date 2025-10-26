@@ -1,402 +1,186 @@
-<!DOCTYPE html><!DOCTYPE html>
-
-<html lang="en"><html lang="en">
-
-<head><head>
-
-    <meta charset="UTF-8">    <meta charset="UTF-8">
-
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>Impulse Guardian Dashboard</title>    <title>Impulse Purchase Analytics Dashboard</title>
-
-    <link rel="stylesheet" href="dashboard.css">    <link rel="stylesheet" href="dashboard.css">
-
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script></head>
-
-</head><body>
-
-<body>    <div class="dashboard-wrapper">
-
-    <div class="dashboard-container">        <!-- Top Header Bar (Tableau Style) -->
-
-        <!-- Sidebar -->        <header class="tableau-header">
-
-        <aside class="sidebar">            <div class="header-left">
-
-            <div class="sidebar-brand">                <span class="header-brand">datavizfairy</span>
-
-                <div class="brand-title">Impulse Guard</div>                <h1 class="header-title">Impulse Purchase Analytics Dashboard</h1>
-
-                <div class="user-avatar">            </div>
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">            <div class="header-right">
-
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>                <button class="header-icon-btn" id="refreshBtn" title="Refresh">🔄</button>
-
-                    </svg>                <button class="header-icon-btn" id="exportBtn" title="Export">💾</button>
-
-                </div>                <button class="header-icon-btn" id="closeBtn" title="Close">✕</button>
-
-                <div class="user-name">Dashboard v2.0</div>            </div>
-
-            </div>        </header>
-
-            
-
-            <nav class="sidebar-nav">        <!-- Main Dashboard Grid -->
-
-                <a href="#" class="nav-item active">        <div class="dashboard-grid">
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">            <!-- Left Sidebar: Navigation & Filters (Tableau Style) -->
-
-                        <rect x="3" y="3" width="7" height="7"/>            <aside class="tableau-sidebar">
-
-                        <rect x="14" y="3" width="7" height="7"/>                <!-- User Welcome -->
-
-                        <rect x="14" y="14" width="7" height="7"/>                <div class="sidebar-section user-welcome">
-
-                        <rect x="3" y="14" width="7" height="7"/>                    <div class="user-avatar">G</div>
-
-                    </svg>                    <div class="user-info">
-
-                    Dashboard                        <div class="welcome-text">Welcome</div>
-
-                </a>                        <div class="user-name">Guest</div>
-
-                <a href="#" class="nav-item">                    </div>
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                </div>
-
-                        <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
-
-                    </svg>                <!-- Navigation -->
-
-                    Purchases                <div class="sidebar-section">
-
-                </a>                    <div class="nav-item active" id="overviewNav">
-
-                <a href="#" class="nav-item">                        <span class="nav-icon">📊</span>
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                        <span class="nav-text">Overview</span>
-
-                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>                    </div>
-
-                    </svg>                    <div class="nav-item" id="detailedNav">
-
-                    Savings                        <span class="nav-icon">📋</span>
-
-                </a>                        <span class="nav-text">Detailed View</span>
-
-                <a href="#" class="nav-item">                    </div>
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                </div>
-
-                        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-
-                    </svg>                <!-- Filters Section -->
-
-                    Analytics                <div class="sidebar-section">
-
-                </a>                    <div class="filter-header">
-
-                <a href="#" class="nav-item">                        <span class="filter-icon">⚙</span>
-
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">                        <span class="filter-title">Filters</span>
-
-                        <circle cx="12" cy="12" r="3"/>                    </div>
-
-                        <path d="M12 1v6m0 6v6m5.66-13.66l-4.24 4.24m0 6l4.24 4.24m5.66-9.9h-6m-6 0H1m13.66 5.66l-4.24-4.24m0-6l-4.24-4.24"/>                    
-
-                    </svg>                    <div class="filter-group">
-
-                    Settings                        <label class="filter-label">Time Period</label>
-
-                </a>                        <select class="filter-select" id="timePeriodFilter">
-
-            </nav>                            <option value="all">All Time</option>
-
-        </aside>                            <option value="week">Last Week</option>
-
-                            <option value="month">Last Month</option>
-
-        <!-- Main Content -->                            <option value="year">This Year</option>
-
-        <main class="main-content">                        </select>
-
-            <header class="dashboard-header">                    </div>
-
-                <h1>Guardian Control Center</h1>
-
-                <p class="subtitle">Impulse Purchase Tracking System</p>                    <div class="filter-group">
-
-            </header>                        <label class="filter-label">Category</label>
-
-                        <select class="filter-select" id="categoryFilter">
-
-            <div class="stats-overview">                            <option value="all">All Categories</option>
-
-                <div class="stat-card">                            <option value="shopping">Shopping</option>
-
-                    <div class="stat-icon">                            <option value="electronics">Electronics</option>
-
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2">                            <option value="fashion">Fashion</option>
-
-                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>                            <option value="food">Food</option>
-
-                        </svg>                        </select>
-
-                    </div>                    </div>
-
-                    <div class="stat-content">                </div>
-
-                        <div class="stat-label">Total Purchases</div>
-
-                        <div class="stat-value" id="totalBattles">0</div>                <!-- Download Section -->
-
-                        <div class="stat-subtext" id="battlesSubtext">0 this week</div>                <div class="sidebar-section download-section">
-
-                    </div>                    <button class="download-btn" id="downloadBtn">
-
-                </div>                        <span class="download-icon">⬇</span>
-
-                        <span>Download</span>
-
-                <div class="stat-card victory">                    </button>
-
-                    <div class="stat-icon">                </div>
-
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#48bb78" stroke-width="2">            </aside>
-
-                            <path d="M6 9l6 6 6-6"/>
-
-                        </svg>            <!-- Main Content Area -->
-
-                    </div>            <main class="main-content">
-
-                    <div class="stat-content">                <!-- Overview Header -->
-
-                        <div class="stat-label">Purchases Made</div>                <div class="content-header">
-
-                        <div class="stat-value" id="victories">0</div>                    <h2 class="content-title">Spending Overview: <span id="currentYear">2024</span></h2>
-
-                        <div class="stat-subtext" id="victoriesSubtext">0% win rate</div>                    <div class="header-actions">
-
-                    </div>                        <span class="header-hint">Click on a chart to <strong>filter</strong> the dashboard</span>
-
-                </div>                    </div>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Guard Dashboard</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'peach': '#E5A88C',
+                        'cream': '#F5E6D3',
+                        'teal': '#5FBDBD',
+                        'coral': '#E16B5A',
+                    },
+                    fontFamily: {
+                        'tahoma': ['Tahoma', 'Geneva', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body class="font-tahoma bg-peach min-h-screen p-8">
+    <div class="max-w-7xl mx-auto">
+        <div class="bg-cream rounded-3xl shadow-xl overflow-hidden flex border border-gray-200/50">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-white/60 backdrop-blur-sm p-6 flex flex-col border-r border-gray-200/50">
+                <!-- Logo -->
+                <div class="mb-8 text-center">
+                    <h1 class="text-xl font-bold text-gray-800 gradient-text">Impulse Guard</h1>
                 </div>
-
-                <div class="stat-card defeat">
-
-                    <div class="stat-icon">                <!-- Top Row: Three Key Charts -->
-
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#f56565" stroke-width="2">                <div class="viz-grid top-row">
-
-                            <path d="M12 2L2 7l10 5 10-5-10-5z"/>                    <!-- Spending Trends -->
-
-                            <path d="M12 17L2 12M22 12L12 17"/>                    <div class="viz-card">
-
-                        </svg>                        <div class="viz-header">
-
-                    </div>                            <h3 class="viz-title">Spending Trends</h3>
-
-                    <div class="stat-content">                            <p class="viz-subtitle">Compare spending patterns over time</p>
-
-                        <div class="stat-label">Resisted</div>                        </div>
-
-                        <div class="stat-value" id="defeats">0</div>                        <div class="viz-body">
-
-                        <div class="stat-subtext" id="defeatsSubtext">0% save rate</div>                            <div class="viz-metrics">
-
-                    </div>                                <div class="metric-item">
-
-                </div>                                    <span class="metric-label">Total Saved</span>
-
-                                    <span class="metric-value large" id="totalSaved">$0</span>
-
-                <div class="stat-card money">                                    <span class="metric-change positive" id="savingsChange">↑ 5.2% vs. PY</span>
-
-                    <div class="stat-icon">                                </div>
-
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#ed8936" stroke-width="2">                                <div class="metric-item">
-
-                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>                                    <span class="metric-label">Win Rate</span>
-
-                        </svg>                                    <span class="metric-value" id="winRate">0%</span>
-
-                    </div>                                    <span class="metric-change negative" id="winRateChange">↓ -14.7% vs. PY</span>
-
-                    <div class="stat-content">                                </div>
-
-                        <div class="stat-label">Money Saved</div>                            </div>
-
-                        <div class="stat-value" id="moneySaved">$0.00</div>                            <canvas id="spendingTrendChart" width="600" height="250"></canvas>
-
-                        <div class="stat-subtext" id="savingsSubtext">$0.00/day avg</div>                        </div>
-
-                    </div>                    </div>
-
-                </div>
-
-                    <!-- Battles Funnel -->
-
-                <div class="stat-card special">                    <div class="viz-card">
-
-                    <div class="stat-icon">                        <div class="viz-header">
-
-                        <svg viewBox="0 0 24 24" fill="none" stroke="#9f7aea" stroke-width="2">                            <h3 class="viz-title">Battles Funnel</h3>
-
-                            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>                            <p class="viz-subtitle">How spending attempts progress through stages</p>
-
-                        </svg>                        </div>
-
-                    </div>                        <div class="viz-body">
-
-                    <div class="stat-content">                            <canvas id="battlesFunnelChart" width="400" height="350"></canvas>
-
-                        <div class="stat-label">Avg. Purchase</div>                        </div>
-
-                        <div class="stat-value" id="avgBattle">$0.00</div>                    </div>
-
-                        <div class="stat-subtext" id="avgBattleSubtext">per attempt</div>
-
-                    </div>                    <!-- Spending by Category -->
-
-                </div>                    <div class="viz-card">
-
-            </div>                        <div class="viz-header">
-
-                            <h3 class="viz-title">Spending by Category</h3>
-
-            <!-- Advanced Analytics Grid -->                            <p class="viz-subtitle">Compare spending across different categories</p>
-
-            <div class="analytics-grid">                        </div>
-
-                <div class="analytics-card">                        <div class="viz-body">
-
-                    <div class="analytics-label">Current Streak</div>                            <div class="category-list" id="categoryList">
-
-                    <div class="analytics-value" id="currentStreak">0</div>                                <!-- Populated by JS -->
-
-                    <div class="analytics-trend" id="streakTrend">consecutive saves</div>                            </div>
-
-                </div>                        </div>
-
-                <div class="analytics-card">                    </div>
-
-                    <div class="analytics-label">Biggest Save</div>                </div>
-
-                    <div class="analytics-value" id="biggestSave">$0.00</div>
-
-                    <div class="analytics-trend">single transaction</div>                <!-- Bottom Row: Three More Visualizations -->
-
-                </div>                <div class="viz-grid bottom-row">
-
-                <div class="analytics-card">                    <!-- Demographics -->
-
-                    <div class="analytics-label">Success Rate</div>                    <div class="viz-card">
-
-                    <div class="analytics-value" id="successRate">0%</div>                        <div class="viz-header">
-
-                    <div class="analytics-trend" id="successTrend">resistance metric</div>                            <h3 class="viz-title">Spending Patterns</h3>
-
-                </div>                            <p class="viz-subtitle">Analyze your spending behavior</p>
-
-                <div class="analytics-card">                        </div>
-
-                    <div class="analytics-label">Daily Average</div>                        <div class="viz-body demographics">
-
-                    <div class="analytics-value" id="dailyAvg">$0.00</div>                            <div class="demo-row">
-
-                    <div class="analytics-trend">saved per day</div>                                <div class="demo-item">
-
-                </div>                                    <h4 class="demo-title">TIME OF DAY</h4>
-
-            </div>                                    <canvas id="timeOfDayChart" width="180" height="180"></canvas>
-
-                                </div>
-
-            <div class="chart-section">                                <div class="demo-item">
-
-                <div class="chart-card">                                    <h4 class="demo-title">DAY OF WEEK</h4>
-
-                    <h2 class="chart-title">Cumulative Savings Over Time</h2>                                    <canvas id="dayOfWeekChart" width="180" height="180"></canvas>
-
-                    <div class="chart-description">                                </div>
-
-                        Track your financial discipline progress through purchase history.                            </div>
-
-                    </div>                            <div class="demo-item full-width">
-
-                    <canvas id="savingsChart"></canvas>                                <h4 class="demo-title">PURCHASE AMOUNT BANDS</h4>
-
-                </div>                                <canvas id="amountBandsChart" width="400" height="120"></canvas>
-
-            </div>                            </div>
-
-                        </div>
-
-            <div class="recent-battles">                    </div>
-
-                <h2 class="section-title">Recent Purchase Log</h2>
-
-                <div id="recentBattlesList" class="battles-list">                    <!-- Recent Activity Map/Timeline -->
-
-                    <!-- Will be populated by JavaScript -->                    <div class="viz-card">
-
-                </div>                        <div class="viz-header">
-
-            </div>                            <h3 class="viz-title">Recent Activity</h3>
-
-                            <p class="viz-subtitle">Your latest spending battles</p>
-
-            <footer class="dashboard-footer">                            <div class="viz-header-icons">
-
-                <p>System Status: Online | Data Synced</p>                                <button class="viz-icon-btn active">🗺️</button>
-
-                <button id="refreshButton" class="refresh-button">⟲ Refresh Data</button>                                <button class="viz-icon-btn">📊</button>
-
-            </footer>                            </div>
-
-        </main>                        </div>
-
-    </div>                        <div class="viz-body">
-
-                            <div class="activity-timeline" id="activityTimeline">
-
-    <script src="dashboard.js"></script>                                <!-- Populated by JS -->
-
-</body>                            </div>
-
-</html>                        </div>
-
+                
+                <!-- User Profile -->
+                <div class="mb-8 text-center">
+                    <div class="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-pink-400 mx-auto mb-3 flex items-center justify-center shadow-lg ring-2 ring-white ring-offset-2">
+                        <i class="fas fa-user text-white text-3xl"></i>
                     </div>
-
-                    <!-- Time to Decision -->
-                    <div class="viz-card">
-                        <div class="viz-header">
-                            <h3 class="viz-title">Decision Time Analysis</h3>
-                            <p class="viz-subtitle">How quickly you make purchase decisions</p>
+                    <h2 class="font-bold text-gray-800 text-sm">Guest User</h2>
+                    <p class="text-xs text-gray-500">Member</p>
+                </div>
+                
+                <!-- Navigation -->
+                <nav class="flex-1 space-y-1">
+                    <a href="#" class="nav-link active" data-tab="dashboard">
+                        <i class="fas fa-chart-line mr-3"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="#" class="nav-link" data-tab="insights">
+                        <i class="fas fa-lightbulb mr-3"></i>
+                        <span>Insights</span>
+                    </a>
+                    <a href="#" class="nav-link" data-tab="reports">
+                        <i class="fas fa-file-alt mr-3"></i>
+                        <span>Reports</span>
+                    </a>
+                </nav>
+                
+                <!-- Back to Stats -->
+                <button id="backToStats" class="flex items-center space-x-2 text-gray-600 text-sm mt-auto hover:text-gray-800 transition-colors">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Back to Stats</span>
+                </button>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1 p-8 overflow-y-auto max-h-screen relative bg-gradient-to-br from-transparent to-white/30">
+                <!-- Dashboard Tab -->
+                <div id="dashboard-tab" class="tab-content">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 class="text-3xl font-bold text-gray-800 mb-1">Dashboard</h2>
+                            <p class="text-gray-600 text-sm">Your spending insights at a glance</p>
                         </div>
-                        <div class="viz-body">
-                            <canvas id="decisionTimeChart" width="400" height="350"></canvas>
+                    </div>
+                    
+                    <!-- Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Total Purchases -->
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+                                    <i class="fas fa-shopping-cart text-white text-xl"></i>
+                                </div>
+                                <span class="text-xs text-gray-500 bg-blue-50 px-2 py-1 rounded-full">Total</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1" id="dash-total">0</h3>
+                            <p class="text-sm text-gray-600">Purchase Attempts</p>
                         </div>
+                        
+                        <!-- Blocked -->
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+                                    <i class="fas fa-shield-alt text-white text-xl"></i>
+                                </div>
+                                <span class="text-xs text-gray-500 bg-green-50 px-2 py-1 rounded-full">Saved</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1" id="dash-blocked">0</h3>
+                            <p class="text-sm text-gray-600">Purchases Blocked</p>
+                        </div>
+                        
+                        <!-- Allowed -->
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-white text-xl"></i>
+                                </div>
+                                <span class="text-xs text-gray-500 bg-red-50 px-2 py-1 rounded-full">Spent</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1" id="dash-allowed">0</h3>
+                            <p class="text-sm text-gray-600">Purchases Allowed</p>
+                        </div>
+                        
+                        <!-- Money Saved -->
+                        <div class="stat-card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
+                                    <i class="fas fa-piggy-bank text-white text-xl"></i>
+                                </div>
+                                <span class="text-xs text-gray-500 bg-yellow-50 px-2 py-1 rounded-full">💰</span>
+                            </div>
+                            <h3 class="text-2xl font-bold text-gray-800 mb-1" id="dash-saved">$0</h3>
+                            <p class="text-sm text-gray-600">Money Saved</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Row -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                        <!-- Savings Over Time -->
+                        <div class="chart-card">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Savings Over Time</h3>
+                            <canvas id="savingsChart"></canvas>
+                        </div>
+                        
+                        <!-- Category Breakdown -->
+                        <div class="chart-card">
+                            <h3 class="text-lg font-bold text-gray-800 mb-4">Category Breakdown</h3>
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="chart-card">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4">Recent Activity</h3>
+                        <div id="recentActivity" class="space-y-3">
+                            <div class="text-center text-gray-500 py-8">No recent activity</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Insights Tab -->
+                <div id="insights-tab" class="tab-content hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Insights</h2>
+                    <div id="insights-content" class="space-y-6">
+                        <!-- Insights will be generated here -->
+                    </div>
+                </div>
+                
+                <!-- Reports Tab -->
+                <div id="reports-tab" class="tab-content hidden">
+                    <h2 class="text-3xl font-bold text-gray-800 mb-6">Reports</h2>
+                    <div id="reports-content">
+                        <!-- Reports will be generated here -->
                     </div>
                 </div>
             </main>
         </div>
-
-        <!-- Footer Info (Tableau Style) -->
-        <footer class="tableau-footer">
-            <div class="footer-info">
-                <span class="footer-icon">ℹ️</span>
-                <span class="footer-text">Data updates in real-time as you battle impulse purchases</span>
-            </div>
-        </footer>
     </div>
-
-    <script src="dashboard.js"></script>
+    
+    <script src="dashboard-main.js"></script>
 </body>
 </html>
