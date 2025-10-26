@@ -6,7 +6,22 @@ const DEBOUNCE_TIME_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Check if we should block the page
 if (suspiciousPatterns.some(p => window.location.href.includes(p))) {
-  checkAndBlockPage();
+  checkExtensionStatus();
+}
+
+// Function to check if extension is active before blocking
+async function checkExtensionStatus() {
+  chrome.storage.local.get(['extensionActive'], (result) => {
+    // Default to active if not set
+    const isActive = result.extensionActive !== undefined ? result.extensionActive : true;
+    
+    if (isActive) {
+      console.log('🛡️ Extension is active, checking for page block...');
+      checkAndBlockPage();
+    } else {
+      console.log('🔓 Extension is disabled, allowing page...');
+    }
+  });
 }
 
 // Function to check debounce before blocking
@@ -442,60 +457,119 @@ function extractPriceFromJsonLd(data) {
 
 function blockPageWithProductInfo(productInfo) {
   
-  // Pass product info via URL parameters
-  const params = new URLSearchParams({
-    product: productInfo.name,
-    price: productInfo.price,
-    category: productInfo.category,
-    url: productInfo.url,
-    domain: productInfo.domain
-  });
-  
-  const iframe = document.createElement("iframe");
-  iframe.src = chrome.runtime.getURL("overlay.html") + '?' + params.toString();
-  iframe.style.position = "fixed";
-  iframe.style.top = 0;
-  iframe.style.left = 0;
-  iframe.style.width = "100vw";
-  iframe.style.height = "100vh";
-  iframe.style.border = "none";
-  iframe.style.zIndex = 999999;
-  iframe.style.backgroundColor = "rgba(0,0,0,0.8)";
-  iframe.id = "impulse-purchase-overlay";
-  document.body.appendChild(iframe);
-  
-  // Listen for messages from the iframe to remove it
-  window.addEventListener('message', (event) => {
-    if (event.data.action === 'remove-impulse-overlay') {
-      const overlayIframe = document.getElementById('impulse-purchase-overlay');
-      if (overlayIframe) {
-        overlayIframe.remove();
-        // DON'T clear debounce when proceeding - we want to prevent popup on next checkout step
-      }
-    } else if (event.data.action === 'hide-impulse-overlay') {
-      const overlayIframe = document.getElementById('impulse-purchase-overlay');
-      if (overlayIframe) {
-        overlayIframe.style.display = 'none';
-      }
-    } else if (event.data.action === 'close-tab') {
-      // Clear debounce when user cancels purchase (closes tab)
-      clearDebounceForProduct(productInfo);
-      // Send message to background script to close the current tab
-      chrome.runtime.sendMessage({ action: 'close-current-tab' });
-    } else if (event.data.action === 'update-stats') {
-      // Forward stats update to background script
-      console.log('Content script forwarding stats update:', event.data.data);
-      chrome.runtime.sendMessage({
-        type: 'updateStats',
-        data: event.data.data
-      }, (response) => {
-        if (chrome.runtime.lastError) {
-          console.error('Failed to update stats:', chrome.runtime.lastError);
-        } else {
-          console.log('Stats updated via content script:', response);
-        }
-      });
+  // Check if game mode is enabled
+  chrome.storage.local.get(['gameModeEnabled'], (result) => {
+    const isGameMode = result.gameModeEnabled !== undefined ? result.gameModeEnabled : true;
+    
+    // Choose the appropriate overlay based on game mode setting
+    const overlayFile = isGameMode ? "popup-game.html" : "overlay.html";
+    
+    console.log(`🎮 Using ${isGameMode ? 'GAME' : 'CLASSIC'} mode overlay`);
+    
+    // Pass product info via URL parameters
+    const params = new URLSearchParams({
+      product: productInfo.name,
+      price: productInfo.price,
+      category: productInfo.category,
+      url: productInfo.url,
+      domain: productInfo.domain
+    });
+    
+    const iframe = document.createElement("iframe");
+    
+    // Both game mode and classic mode should receive product info via URL params
+    iframe.src = chrome.runtime.getURL(overlayFile) + '?' + params.toString();
+    
+    if (isGameMode) {
+      iframe.style.backgroundColor = "transparent";
+    } else {
+      iframe.style.backgroundColor = "rgba(0,0,0,0.8)";
     }
+    
+    iframe.style.position = "fixed";
+    iframe.style.top = 0;
+    iframe.style.left = 0;
+    iframe.style.width = "100vw";
+    iframe.style.height = "100vh";
+    iframe.style.border = "none";
+    iframe.style.zIndex = 999999;
+    iframe.id = "impulse-purchase-overlay";
+    document.body.appendChild(iframe);
+    
+    // Listen for messages from the iframe to remove it
+    window.addEventListener('message', (event) => {
+      if (event.data.action === 'remove-impulse-overlay' || event.data.type === 'CLOSE_POPUP') {
+        const overlayIframe = document.getElementById('impulse-purchase-overlay');
+        if (overlayIframe) {
+          overlayIframe.remove();
+          // DON'T clear debounce when proceeding - we want to prevent popup on next checkout step
+        }
+      } else if (event.data.action === 'hide-impulse-overlay') {
+        const overlayIframe = document.getElementById('impulse-purchase-overlay');
+        if (overlayIframe) {
+          overlayIframe.style.display = 'none';
+        }
+      } else if (event.data.action === 'switch-to-result-screen') {
+        // Switch from game mode to result screen with alternatives
+        const overlayIframe = document.getElementById('impulse-purchase-overlay');
+        if (overlayIframe) {
+          overlayIframe.remove();
+        }
+        
+        // Use the product info from the message
+        const prodInfo = event.data.productInfo || productInfo;
+        const battleStats = event.data.battleStats || null;
+        
+        // Create new classic overlay with skipTimer flag
+        const params = new URLSearchParams({
+          product: prodInfo.name,
+          price: prodInfo.price,
+          category: prodInfo.category,
+          url: prodInfo.url,
+          domain: prodInfo.domain,
+          skipTimer: 'true',
+          fromGameMode: 'true'
+        });
+        
+        // Add battle stats if available (victory case)
+        if (battleStats) {
+          params.set('battleDuration', battleStats.duration);
+          params.set('battleMessages', battleStats.messages);
+          params.set('battleVictory', battleStats.victory);
+        }
+        
+        const classicIframe = document.createElement("iframe");
+        classicIframe.src = chrome.runtime.getURL('overlay.html') + '?' + params.toString();
+        classicIframe.style.position = "fixed";
+        classicIframe.style.top = "0";
+        classicIframe.style.left = "0";
+        classicIframe.style.width = "100%";
+        classicIframe.style.height = "100%";
+        classicIframe.style.border = "none";
+        classicIframe.style.zIndex = "999999";
+        classicIframe.style.backgroundColor = "rgba(0,0,0,0.8)";
+        classicIframe.id = "impulse-purchase-overlay";
+        document.body.appendChild(classicIframe);
+      } else if (event.data.action === 'close-tab') {
+        // Clear debounce when user cancels purchase (closes tab)
+        clearDebounceForProduct(productInfo);
+        // Send message to background script to close the current tab
+        chrome.runtime.sendMessage({ action: 'close-current-tab' });
+      } else if (event.data.action === 'update-stats') {
+        // Forward stats update to background script
+        console.log('Content script forwarding stats update:', event.data.data);
+        chrome.runtime.sendMessage({
+          type: 'updateStats',
+          data: event.data.data
+        }, (response) => {
+          if (chrome.runtime.lastError) {
+            console.error('Failed to update stats:', chrome.runtime.lastError);
+          } else {
+            console.log('Stats updated via content script:', response);
+          }
+        });
+      }
+    });
   });
 }
 

@@ -181,21 +181,80 @@ function initialize() {
   productInfo.domain = urlParams.get('domain') || '';
   urgentSoundPlayed = false;
   
-  // Add initial system message with product info
-  let productText;
-  if (productInfo.name !== 'Unknown Product' && productInfo.name !== 'this item') {
-    productText = `Purchasing: "${productInfo.name}" (${productInfo.price})`;
+  // Check if we should skip timer and go straight to results (from game mode)
+  const skipTimer = urlParams.get('skipTimer') === 'true';
+  const fromGameMode = urlParams.get('fromGameMode') === 'true';
+  const battleVictory = urlParams.get('battleVictory') === 'true';
+  const battleDuration = parseInt(urlParams.get('battleDuration')) || 0;
+  const battleMessages = parseInt(urlParams.get('battleMessages')) || 0;
+  
+  if (skipTimer && fromGameMode) {
+    // Skip the timer and chat, go straight to results
+    // Set up the result section immediately
+    inputSection.style.display = 'none';
+    chatSection.style.display = 'none';
+    statusSection.style.display = 'none';
+    
+    // Determine grade based on battle performance (victory case) or give default (defeat case)
+    let grade = 'B';
+    let gradeMessage = '';
+    
+    if (battleVictory) {
+      // Grade based on how quickly they defeated the guardian
+      // Faster = better justification
+      if (battleDuration <= 30) {
+        grade = 'A';
+        gradeMessage = `Excellent! You defeated the Guardian in just ${battleDuration}s with ${battleMessages} strong arguments. Your purchase is well-justified!`;
+      } else if (battleDuration <= 60) {
+        grade = 'B';
+        gradeMessage = `Great job! You defeated the Guardian in ${battleDuration}s with solid reasoning. You've thought this through.`;
+      } else if (battleDuration <= 120) {
+        grade = 'C';
+        gradeMessage = `Good effort. It took ${battleDuration}s to convince the Guardian. Consider if this purchase aligns with your priorities.`;
+      } else {
+        grade = 'D';
+        gradeMessage = `It took ${battleDuration}s and ${battleMessages} messages to defeat the Guardian. Think carefully about this purchase.`;
+      }
+      
+      // Show message about transitioning from game mode with battle info
+      addMessage('system', `🎮 Battle Complete!\n\n${productInfo.name !== 'Unknown Product' ? `Product: "${productInfo.name}" (${productInfo.price})` : 'Purchase item'}\n⏱️ Battle Duration: ${battleDuration}s\n💬 Arguments: ${battleMessages}\n\n✨ Here are some alternatives to consider:`);
+    } else {
+      // Defeat case - they gave up
+      grade = 'B';
+      gradeMessage = 'Good decision! You chose to reconsider this purchase. Review the alternatives below or decide to proceed.';
+      
+      // Show message about transitioning from game mode
+      addMessage('system', `🎮 Transitioning from Game Mode...\n\n${productInfo.name !== 'Unknown Product' ? `Product: "${productInfo.name}" (${productInfo.price})` : 'Reviewing your purchase'}\n\n✨ Here are some alternatives to consider:`);
+    }
+    
+    // Show result section immediately
+    setTimeout(() => {
+      resultSection.style.display = 'flex';
+      finalGrade.textContent = grade;
+      finalGrade.className = `grade-circle grade-${grade}`;
+      resultMessage.textContent = gradeMessage;
+      proceedBtn.disabled = false;
+    }, 500);
+    
+    // Start searching for alternatives immediately
+    displayAlternatives().catch(err => console.error('Error displaying alternatives:', err));
   } else {
-    productText = 'Attempting to checkout';
+    // Normal flow - add initial system message with product info
+    let productText;
+    if (productInfo.name !== 'Unknown Product' && productInfo.name !== 'this item') {
+      productText = `Purchasing: "${productInfo.name}" (${productInfo.price})`;
+    } else {
+      productText = 'Attempting to checkout';
+    }
+    
+    addMessage('system', `${productText}\n\n⏱️ Wait time: 2 minutes\n💡 Good reasoning reduces your wait time!`);
+    
+    // Start searching for alternatives immediately
+    displayAlternatives().catch(err => console.error('Error displaying alternatives:', err));
+    
+    // Start timer immediately
+    startTimer();
   }
-  
-  addMessage('system', `${productText}\n\n⏱️ Wait time: 2 minutes\n💡 Good reasoning reduces your wait time!`);
-  
-  // Start searching for alternatives immediately
-  displayAlternatives().catch(err => console.error('Error displaying alternatives:', err));
-  
-  // Start timer immediately
-  startTimer();
   
   // Set up auto-scroll observer
   setupAutoScroll();

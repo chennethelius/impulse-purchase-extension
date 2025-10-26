@@ -10,6 +10,37 @@
     <div class="stats-container">
         <h1 class="stats-title">Impulse Stats</h1>
         
+        <!-- Game Mode Toggle -->
+        <div class="settings-section">
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-icon">🎮</span>
+                    <div class="setting-text">
+                        <span class="setting-title">Game Mode</span>
+                        <span class="setting-description">Pokemon-style battle interface with health bars and sassy AI</span>
+                    </div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="gameModeToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="setting-item">
+                <div class="setting-info">
+                    <span class="setting-icon">🛡️</span>
+                    <div class="setting-text">
+                        <span class="setting-title">Extension Active</span>
+                        <span class="setting-description">Enable or disable impulse purchase blocking</span>
+                    </div>
+                </div>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="extensionActiveToggle" checked>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+        </div>
+        
         <div class="stats-grid compact">
             <div class="stat-box mini">
                 <div class="stat-label">Purchases</div>
@@ -61,7 +92,6 @@
         </div>
         
         <div class="button-row">
-            <button id="testButton" class="test-button" style="background: #3b82f6; color: white;">Add Test Data</button>
             <button id="resetButton" class="reset-button">RESET</button>
         </div>
     </div>

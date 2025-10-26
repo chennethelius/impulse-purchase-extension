@@ -1,54 +1,12 @@
 // Stats page script
 document.addEventListener('DOMContentLoaded', async () => {
-    await loadStats();
+    // Initialize game mode toggle
+    initGameModeToggle();
     
-    // Test button handler - adds sample data
-    document.getElementById('testButton').addEventListener('click', async () => {
-        const db = new StatsDB();
-        await db.init();
-        
-        const testStats = {
-            totalBattles: 5,
-            victories: 3,
-            defeats: 2,
-            moneySaved: 250.50,
-            savingsHistory: [50, 100, 150, 200, 250.50],
-            purchaseHistory: [
-                {
-                    timestamp: new Date().toISOString(),
-                    product: "Nike Running Shoes",
-                    amount: 89.99,
-                    category: "Fitness",
-                    saved: true
-                },
-                {
-                    timestamp: new Date(Date.now() - 3600000).toISOString(),
-                    product: "iPhone 15 Pro",
-                    amount: 999.00,
-                    category: "Electronics",
-                    saved: false
-                },
-                {
-                    timestamp: new Date(Date.now() - 7200000).toISOString(),
-                    product: "Leather Jacket",
-                    amount: 150.00,
-                    category: "Clothing",
-                    saved: true
-                }
-            ],
-            categoryStats: {
-                Fitness: 2,
-                Electronics: 0,
-                Clothing: 1,
-                Home: 0,
-                Health: 0
-            }
-        };
-        
-        await db.saveStats(testStats);
-        console.log('Test stats added to IndexedDB!');
-        await loadStats();
-    });
+    // Initialize extension active toggle
+    initExtensionActiveToggle();
+    
+    await loadStats();
     
     // Reset button handler
     document.getElementById('resetButton').addEventListener('click', async () => {
@@ -729,3 +687,93 @@ function formatDate(date) {
     const day = date.getDate();
     return `${month}/${day}`;
 }
+
+// Initialize game mode toggle
+function initGameModeToggle() {
+    const gameModeToggle = document.getElementById('gameModeToggle');
+    
+    if (!gameModeToggle) return;
+    
+    // Load current setting
+    chrome.storage.local.get(['gameModeEnabled'], (result) => {
+        // Default to game mode ON if not set
+        const isGameMode = result.gameModeEnabled !== undefined ? result.gameModeEnabled : true;
+        gameModeToggle.checked = isGameMode;
+    });
+    
+    // Listen for toggle changes
+    gameModeToggle.addEventListener('change', (e) => {
+        const isEnabled = e.target.checked;
+        chrome.storage.local.set({ gameModeEnabled: isEnabled }, () => {
+            console.log('🎮 Game mode:', isEnabled ? 'ENABLED' : 'DISABLED');
+            
+            // Show a brief notification
+            showNotification(isEnabled ? '🎮 Game Mode Enabled!' : '💬 Classic Mode Enabled!');
+        });
+    });
+}
+
+// Initialize extension active toggle
+function initExtensionActiveToggle() {
+    const extensionActiveToggle = document.getElementById('extensionActiveToggle');
+    
+    if (!extensionActiveToggle) return;
+    
+    // Load current setting
+    chrome.storage.local.get(['extensionActive'], (result) => {
+        // Default to extension ON if not set
+        const isActive = result.extensionActive !== undefined ? result.extensionActive : true;
+        extensionActiveToggle.checked = isActive;
+    });
+    
+    // Listen for toggle changes
+    extensionActiveToggle.addEventListener('change', (e) => {
+        const isEnabled = e.target.checked;
+        chrome.storage.local.set({ extensionActive: isEnabled }, () => {
+            console.log('🛡️ Extension:', isEnabled ? 'ACTIVE' : 'DISABLED');
+            
+            // Show a brief notification
+            showNotification(isEnabled ? '🛡️ Extension Activated!' : '🔓 Extension Disabled!');
+        });
+    });
+}
+
+// Show notification toast
+function showNotification(message) {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #5fbdbd 0%, #ffc857 100%);
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+    `;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+    }, 2000);
+}
+
+// Add animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(400px); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(400px); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);

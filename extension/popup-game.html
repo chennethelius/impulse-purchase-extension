@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impulse Purchase Blocker - Game Mode</title>
+    <link rel="stylesheet" href="popup-game.css">
+</head>
+<body>
+    <!-- Encounter transition overlay -->
+    <div class="encounter-overlay" id="encounterOverlay">
+        <div class="encounter-bar" style="top: 0%;"></div>
+        <div class="encounter-bar" style="top: 10%;"></div>
+        <div class="encounter-bar" style="top: 20%;"></div>
+        <div class="encounter-bar" style="top: 30%;"></div>
+        <div class="encounter-bar" style="top: 40%;"></div>
+        <div class="encounter-bar" style="top: 50%;"></div>
+        <div class="encounter-bar" style="top: 60%;"></div>
+        <div class="encounter-bar" style="top: 70%;"></div>
+        <div class="encounter-bar" style="top: 80%;"></div>
+        <div class="encounter-bar" style="top: 90%;"></div>
+    </div>
+    
+    <div class="battle-scene">
+        <!-- Give Up Button - Top Left Corner -->
+        <button id="giveUpButton" class="give-up-button">GIVE UP</button>
+        
+        <!-- Mute Button - Next to Give Up Button -->
+        <button id="muteButton" class="mute-button">🔊 MUTE</button>
+        
+        <!-- Health Bar - Pokemon style in top right -->
+        <div class="health-bar-container">
+            <div class="pokemon-name">IMPULSE GUARDIAN</div>
+            <div class="health-label">HP</div>
+            <div class="health-bar-bg">
+                <div class="health-bar" id="healthBar"></div>
+            </div>
+            <div class="health-text" id="healthText">100/100</div>
+        </div>
+        
+        <!-- Robot GIF under health bar -->
+        <div class="robot-container">
+            <img src="https://opengameart.org/sites/default/files/robot-idle.gif" alt="Robot Guardian" class="robot-gif">
+            <img src="https://cdn.pixabay.com/animation/2024/12/29/01/49/01-49-38-604_512.gif" alt="Damage Effect" class="damage-effect" id="damageEffect">
+        </div>
+        
+        <!-- Pokemon dialogue box at bottom -->
+        <div class="dialogue-box">
+            <div class="dialogue-content" id="chatContainer">
+                <div class="dialogue-text">
+                    🛡️ A wild IMPULSE GUARDIAN appeared!<br><br>
+                    💰 You must convince me this purchase is necessary!<br><br>
+                    Type your argument below...
+                </div>
+            </div>
+            
+            <div class="dialogue-input">
+                <textarea 
+                    id="userInput" 
+                    placeholder="▶ What will you say?"
+                    rows="3"
+                ></textarea>
+                <button id="sendButton" class="send-button">SEND</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="config.js"></script>
+    <script src="popup-game.js"></script>
+</body>
+</html>

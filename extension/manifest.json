@@ -35,6 +35,11 @@
     {
       "resources": [
         "overlay.html",
+        "popup-game.html",
+        "popup-game.css",
+        "popup-game.js",
+        "popup-toggle.html",
+        "popup-toggle.js",
         "config.js",
         "stats-db.js",
         "fonts.css",
