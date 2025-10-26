@@ -165,7 +165,7 @@ function startTimer() {
 
 function updateTimerDisplay(shouldFlash = false) {
   const minutes = Math.floor(Math.max(0, timeRemaining) / 60);
-  const seconds = Math.floor(Math.max(0, timeRemaining) % 60);
+  const seconds = Math.max(0, timeRemaining) % 60;
   
   // Check if elements exist, if not create them
   let timerMain = timerDisplay.querySelector('.timer-main');
@@ -739,14 +739,11 @@ async function applyTimeReduction(seconds) {
   for (let i = 0; i < reductionSteps; i++) {
     timeRemaining -= stepSize;
     totalTimeSaved += stepSize;
-    // Round to integers to avoid floating point display issues
-    timeRemaining = Math.round(timeRemaining);
-    totalTimeSaved = Math.round(totalTimeSaved);
     updateTimerDisplay(false); // Don't flash during animation
     await new Promise(resolve => setTimeout(resolve, stepDelay));
   }
   
-  // Ensure final values are integers
+  // Round to avoid floating point errors
   timeRemaining = Math.round(timeRemaining);
   totalTimeSaved = Math.round(totalTimeSaved);
   

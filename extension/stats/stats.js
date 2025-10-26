@@ -83,9 +83,9 @@ async function loadStats() {
     document.getElementById('defeats').textContent = stats.defeats || 0;
     document.getElementById('moneySaved').textContent = `$${Math.round(stats.moneySaved || 0)}`;
     
-    // Calculate block rate (victories = blocked purchases), cap at 100%
+    // Calculate block rate (victories = blocked purchases)
     const winRate = (stats.totalBattles || 0) > 0 
-        ? Math.min((((stats.victories || 0) / stats.totalBattles) * 100), 100).toFixed(1)
+        ? (((stats.victories || 0) / stats.totalBattles) * 100).toFixed(1)
         : 0;
     document.getElementById('winRate').textContent = `${winRate}%`;
     
@@ -183,18 +183,18 @@ function drawSavingsGraph(history) {
         
         // Apply gradient fill with transparency
         const fillGradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-        fillGradient.addColorStop(0, 'rgba(59, 130, 246, 0.28)');
-        fillGradient.addColorStop(1, 'rgba(59, 130, 246, 0.04)');
+        fillGradient.addColorStop(0, 'rgba(95, 189, 189, 0.28)');
+        fillGradient.addColorStop(1, 'rgba(95, 189, 189, 0.04)');
         ctx.fillStyle = fillGradient;
         ctx.fill();
     }
     
     // Draw smooth line with professional styling
-    ctx.strokeStyle = '#3b82f6';
+    ctx.strokeStyle = '#5FBDBD';
     ctx.lineWidth = 3;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    ctx.shadowColor = 'rgba(59, 130, 246, 0.35)';
+    ctx.shadowColor = 'rgba(95, 189, 189, 0.35)';
     ctx.shadowBlur = 6;
     
     ctx.beginPath();
@@ -219,7 +219,7 @@ function drawSavingsGraph(history) {
     // Draw modern circular points with better visibility
     points.forEach(point => {
         // Outer glow
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+        ctx.fillStyle = 'rgba(95, 189, 189, 0.2)';
         ctx.beginPath();
         ctx.arc(point.x, point.y, 6, 0, Math.PI * 2);
         ctx.fill();
@@ -231,7 +231,7 @@ function drawSavingsGraph(history) {
         ctx.fill();
         
         // Main circle
-        ctx.fillStyle = '#3b82f6';
+        ctx.fillStyle = '#5FBDBD';
         ctx.beginPath();
         ctx.arc(point.x, point.y, 3.5, 0, Math.PI * 2);
         ctx.fill();
@@ -254,7 +254,7 @@ function setupGraphTooltips() {
     tooltip.className = 'graph-tooltip';
     tooltip.style.cssText = `
         position: absolute;
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        background: linear-gradient(135deg, #5FBDBD, #4AA9A9);
         color: #ffffff;
         padding: 10px 14px;
         border-radius: 10px;
@@ -266,8 +266,8 @@ function setupGraphTooltips() {
         transition: opacity 0.2s ease;
         z-index: 1000;
         white-space: nowrap;
-        border: 2px solid #3b82f6;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        border: 2px solid #5FBDBD;
+        box-shadow: 0 4px 12px rgba(95, 189, 189, 0.4);
     `;
     document.body.appendChild(tooltip);
     
@@ -359,7 +359,7 @@ function setupRadarTooltips() {
     tooltip.className = 'radar-tooltip';
     tooltip.style.cssText = `
         position: absolute;
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        background: linear-gradient(135deg, #5FBDBD, #4AA9A9);
         color: #ffffff;
         padding: 10px 14px;
         border-radius: 10px;
@@ -371,8 +371,8 @@ function setupRadarTooltips() {
         transition: opacity 0.2s ease;
         z-index: 1000;
         white-space: nowrap;
-        border: 2px solid #3b82f6;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        border: 2px solid #5FBDBD;
+        box-shadow: 0 4px 12px rgba(95, 189, 189, 0.4);
     `;
     document.body.appendChild(tooltip);
     
@@ -561,15 +561,15 @@ function drawCategoryRadar(categoryStats) {
         
         // Gradient fill with transparency
         const dataGradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
-        dataGradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)');
-        dataGradient.addColorStop(1, 'rgba(59, 130, 246, 0.1)');
+        dataGradient.addColorStop(0, 'rgba(95, 189, 189, 0.4)');
+        dataGradient.addColorStop(1, 'rgba(95, 189, 189, 0.1)');
         ctx.fillStyle = dataGradient;
         ctx.fill();
         
         // Stroke with glow effect
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = '#5FBDBD';
         ctx.lineWidth = 2.5;
-        ctx.shadowColor = 'rgba(59, 130, 246, 0.4)';
+        ctx.shadowColor = 'rgba(95, 189, 189, 0.4)';
         ctx.shadowBlur = 6;
         ctx.stroke();
         
@@ -591,7 +591,7 @@ function drawCategoryRadar(categoryStats) {
                 radarPoints.push({ x, y, value, category: categories[i], icon: categoryIcons[i] });
                 
                 // Outer glow
-                ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+                ctx.fillStyle = 'rgba(95, 189, 189, 0.25)';
                 ctx.beginPath();
                 ctx.arc(x, y, 7, 0, Math.PI * 2);
                 ctx.fill();
@@ -603,7 +603,7 @@ function drawCategoryRadar(categoryStats) {
                 ctx.fill();
                 
                 // Main point
-                ctx.fillStyle = '#3b82f6';
+                ctx.fillStyle = '#5FBDBD';
                 ctx.beginPath();
                 ctx.arc(x, y, 4.5, 0, Math.PI * 2);
                 ctx.fill();
