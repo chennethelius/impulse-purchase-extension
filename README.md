@@ -12,20 +12,28 @@ Impulse buying is easier than ever in the age of one-click checkout.
 **AIn’t Buying It** brings people and AI together to make online shopping more mindful, responsible, and financially healthy.
 
 When you visit a checkout or product page, the extension:
-1. **Intercepts** the purchase page and opens a chatbot overlay with a two-minute timer.
+
 <p align="center">
+ 1. **Intercepts** the purchase page and opens a chatbot overlay with a two-minute timer.
+ <br>
  <img src="screenshots/exampleblock.png" alt="example blocked purchase" width="600" />
 </p>
-3. **Engages** the user in a short conversation about their motivation for buying, where successful attempts to convince the AI decrease the timer.
+
 <p align="center">
+ 2. **Engages** the user in a short conversation about their motivation for buying, where successful attempts to convince the AI decrease the timer.
+ <br>
  <img src="screenshots/examplechat.png" alt="example chat" width="600" />
 </p>
-4. **Finds alternatives** for the product using AI and web searches.
+
 <p align="center">
+ 3. **Finds alternatives** for the product using AI and web searches.
+ <br>
  <img src="screenshots/exampleproceed.png" alt="example chat conclusion" width="600" />
 </p>
-5. **Tracks savings and progress** over time, showing how much money the user has avoided spending impulsively.
+
 <p align="center">
+ 4. **Tracks savings and progress** over time, showing how much money the user has avoided spending impulsively.
+ <br>
  <img src="screenshots/examplestats.png" alt="example chat" width="600" />
 </p>
 
@@ -57,7 +65,6 @@ Before installing the extension, ensure you have:
 - **Google Chrome** (or Chromium-based browser)
 - **API Keys** (provided in the extension for development/testing)
   - Cerebras API key for chat functionality
-  - Google Gemini API key for alternative product suggestions
 
 ---
 
