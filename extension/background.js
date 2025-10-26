@@ -54,6 +54,17 @@ async function handleStatsUpdate(data) {
     
     // Use IndexedDB to update stats
     const updatedStats = await statsDB.updateStats((stats) => {
+      // Initialize categoryStats with all categories if it doesn't exist
+      if (!stats.categoryStats) {
+        stats.categoryStats = {
+          Fitness: 0,
+          Electronics: 0,
+          Clothing: 0,
+          Home: 0,
+          Health: 0
+        };
+      }
+      
       // Update totals
       stats.totalBattles = (stats.totalBattles || 0) + 1;
       
@@ -68,12 +79,13 @@ async function handleStatsUpdate(data) {
         // Initialize savingsHistory if it doesn't exist
         if (!stats.savingsHistory) stats.savingsHistory = [];
         stats.savingsHistory.push(stats.moneySaved);
-      }
-      
-      // Update category stats
-      if (!data.purchaseAllowed) {
-        if (!stats.categoryStats) stats.categoryStats = {};
-        stats.categoryStats[data.category] = (stats.categoryStats[data.category] || 0) + 1;
+        
+        // Update category stats only for blocked purchases
+        // Ensure the category is one of the valid ones
+        const validCategories = ['Fitness', 'Electronics', 'Clothing', 'Home', 'Health'];
+        const category = validCategories.includes(data.category) ? data.category : 'Home';
+        stats.categoryStats[category] = (stats.categoryStats[category] || 0) + 1;
+        console.log(`Category "${category}" incremented to:`, stats.categoryStats[category]);
       }
       
       // Add to purchase history
