@@ -5,3 +5,6 @@ const CONFIG = {
   INITIAL_HEALTH: 100,
   MIN_HEALTH_TO_PASS: 0
 };
+
+// Make API key available globally for overlay-final.js
+window.CEREBRAS_API_KEY = CONFIG.CEREBRAS_API_KEY;
