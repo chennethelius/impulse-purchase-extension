@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Tahoma:wght@400;700&display=swap');
 
 * {
     margin: 0;
@@ -9,163 +9,172 @@
 body {
     width: 450px;
     min-height: 400px;
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    padding: 15px;
-    color: #fff;
-    border: 4px solid rgba(0, 0, 0, 0.5);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    background: linear-gradient(135deg, #F5E6D3 0%, #E5A88C 100%);
+    padding: 12px;
+    color: #2C3E50;
+    border: 3px solid #E16B5A;
+    box-shadow: 0 8px 24px rgba(225, 107, 90, 0.3);
 }
 
 .stats-container {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
 }
 
 .stats-title {
-    font-size: 14px;
+    font-size: 16px;
     text-align: center;
-    margin-bottom: 5px;
-    text-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
-    letter-spacing: 1px;
+    margin-bottom: 6px;
+    text-shadow: none;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+    color: #2C3E50;
 }
 
 /* Grid layout for compact stats */
 .stats-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
 }
 
 .stat-box {
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 2px solid #5FBDBD;
+    border-radius: 10px;
     padding: 8px 10px;
     backdrop-filter: blur(10px);
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-    transition: transform 0.2s;
+    box-shadow: 0 4px 8px rgba(95, 189, 189, 0.2);
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .stat-box:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(95, 189, 189, 0.3);
 }
 
 .stat-box.highlight {
-    background: rgba(255, 215, 0, 0.2);
-    border-color: rgba(255, 215, 0, 0.5);
+    background: rgba(255, 255, 255, 0.7);
+    border-color: #5FBDBD;
     animation: glow 2s infinite;
 }
 
 @keyframes glow {
     0%, 100% {
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 8px rgba(95, 189, 189, 0.2);
     }
     50% {
-        box-shadow: 0 2px 15px rgba(255, 215, 0, 0.5);
+        box-shadow: 0 4px 16px rgba(95, 189, 189, 0.5);
     }
 }
 
 .stat-label {
-    font-size: 7px;
-    margin-bottom: 5px;
-    opacity: 0.9;
-    letter-spacing: 0.5px;
+    font-size: 9px;
+    margin-bottom: 4px;
+    opacity: 0.8;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+    color: #2C3E50;
 }
 
 .stat-value {
-    font-size: 16px;
-    font-weight: bold;
-    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
-    letter-spacing: 1px;
+    font-size: 18px;
+    font-weight: 700;
+    text-shadow: none;
+    letter-spacing: 0.5px;
+    color: #2C3E50;
 }
 
 .stat-value.victory {
-    color: #4ade80;
+    color: #5FBDBD;
 }
 
 .stat-value.defeat {
-    color: #f87171;
+    color: #E16B5A;
 }
 
 .stat-value.money {
-    color: #fbbf24;
-    font-size: 20px;
+    color: #d97706;
+    font-size: 22px;
+    font-weight: 700;
 }
 
 /* Graph container */
 .graph-container {
-    background: rgba(0, 0, 0, 0.3);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-radius: 8px;
-    padding: 10px;
-    margin-top: 5px;
+    background: transparent;
+    border: 2px solid rgba(229, 168, 140, 0.4);
+    border-radius: 10px;
+    padding: 8px;
+    margin-top: 6px;
 }
 
 .graph-title {
-    font-size: 7px;
+    font-size: 10px;
     text-align: center;
-    margin-bottom: 8px;
-    opacity: 0.9;
-    letter-spacing: 1px;
+    margin-bottom: 6px;
+    opacity: 0.7;
+    letter-spacing: 0.3px;
+    font-weight: 600;
+    color: #2C3E50;
 }
 
 #savingsGraph {
     display: block;
     width: 100%;
     height: auto;
-    image-rendering: pixelated;
-    image-rendering: -moz-crisp-edges;
-    image-rendering: crisp-edges;
+    image-rendering: auto;
 }
 
 .dashboard-button {
-    margin-top: 5px;
+    margin-top: 6px;
     padding: 10px 16px;
-    background: linear-gradient(to bottom, #3b82f6, #2563eb);
-    border: 2px solid rgba(0, 0, 0, 0.3);
-    border-radius: 6px;
+    background: linear-gradient(135deg, #5FBDBD, #4AA9A9);
+    border: 2px solid #5FBDBD;
+    border-radius: 10px;
     color: #fff;
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 7px;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(95, 189, 189, 0.3);
     transition: all 0.2s;
 }
 
 .dashboard-button:hover {
-    background: linear-gradient(to bottom, #2563eb, #1d4ed8);
+    background: linear-gradient(135deg, #6BCFCF, #5ABFBF);
     transform: translateY(-2px);
-    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 12px rgba(95, 189, 189, 0.4);
 }
 
 .dashboard-button:active {
     transform: translateY(1px);
-    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(95, 189, 189, 0.3);
 }
 
 .reset-button {
-    margin-top: 5px;
+    margin-top: 6px;
     padding: 8px 16px;
-    background: linear-gradient(to bottom, #ef4444, #dc2626);
-    border: 2px solid rgba(0, 0, 0, 0.3);
-    border-radius: 6px;
+    background: linear-gradient(135deg, #E16B5A, #D15848);
+    border: 2px solid #E16B5A;
+    border-radius: 10px;
     color: #fff;
-    font-family: 'Press Start 2P', 'Courier New', monospace;
-    font-size: 7px;
+    font-family: 'Tahoma', 'Arial', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
-    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 8px rgba(225, 107, 90, 0.3);
     transition: all 0.2s;
 }
 
 .reset-button:hover {
-    background: linear-gradient(to bottom, #dc2626, #b91c1c);
+    background: linear-gradient(135deg, #E87B6B, #E16B5A);
     transform: translateY(-2px);
-    box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 12px rgba(225, 107, 90, 0.4);
 }
 
 .reset-button:active {
     transform: translateY(1px);
-    box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 4px rgba(225, 107, 90, 0.3);
 }

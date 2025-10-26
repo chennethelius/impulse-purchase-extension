@@ -44,68 +44,50 @@ async function loadStats() {
 // Transform stats.json format to dashboard format
 function transformStatsData(data) {
     const totalBattles = data.totalBattles || 0;
+    const victories = data.victories || 0;
     const defeats = data.defeats || 0;
     const moneySaved = data.moneySaved || 0;
     const recentBattles = data.recentBattles || [];
+    const weeklyStats = data.weeklyStats || {};
+    const categoryStats = data.categoryStats || {};
     
-    // Create timeline for last 7 days
+    // Create timeline from weeklyStats for last 7 days
     const timeline = [];
-    const today = new Date();
-    const categoryStats = {};
+    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     
-    for (let i = 6; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
+    days.forEach(day => {
+        const dayData = weeklyStats[day] || { battles: 0, victories: 0, defeats: 0, saved: 0 };
+        const date = new Date();
+        const currentDay = date.getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const targetDay = days.indexOf(day);
         
-        const dateStr = date.toISOString().split('T')[0];
-        const nextDate = new Date(date);
-        nextDate.setDate(nextDate.getDate() + 1);
+        // Calculate offset from current day
+        let offset = targetDay - (currentDay === 0 ? 6 : currentDay - 1);
+        if (offset > 0) offset -= 7;
         
-        // Count battles for this day
-        const dayBattles = recentBattles.filter(battle => {
-            const battleDate = new Date(battle.timestamp);
-            return battleDate >= date && battleDate < nextDate;
-        });
-        
-        const blocked = dayBattles.filter(b => b.result === 'defeat').length;
-        const allowed = dayBattles.filter(b => b.result === 'victory').length;
-        const daySavings = dayBattles
-            .filter(b => b.result === 'defeat')
-            .reduce((sum, b) => sum + (b.amount || 0), 0);
+        date.setDate(date.getDate() + offset);
         
         timeline.push({
-            date: dateStr,
-            blocked: blocked,
-            allowed: allowed,
-            money_saved: daySavings
+            date: date.toISOString().split('T')[0],
+            blocked: dayData.victories || 0,  // victories = purchases blocked
+            allowed: dayData.defeats || 0,     // defeats = purchases allowed
+            money_saved: dayData.saved || 0
         });
-        
-        // Categorize battles (simple categorization by amount)
-        dayBattles.forEach(battle => {
-            let category = 'Other';
-            const amount = battle.amount || 0;
-            
-            if (amount > 1000) category = 'Electronics';
-            else if (amount > 100) category = 'Fashion';
-            else if (amount > 50) category = 'Home';
-            else if (amount > 20) category = 'Food';
-            else category = 'Entertainment';
-            
-            if (!categoryStats[category]) {
-                categoryStats[category] = { blocked: 0, attempts: 0, money_saved: 0 };
-            }
-            
-            categoryStats[category].attempts++;
-            if (battle.result === 'defeat') {
-                categoryStats[category].blocked++;
-                categoryStats[category].money_saved += amount;
-            }
-        });
-    }
+    });
+    
+    // Transform category stats
+    const transformedCategories = {};
+    Object.keys(categoryStats).forEach(category => {
+        const catData = categoryStats[category];
+        transformedCategories[category] = {
+            blocked: catData.blocked || 0,
+            attempts: catData.attempts || 0,
+            money_saved: catData.saved || 0
+        };
+    });
     
     // Create top categories list
-    const top_categories = Object.entries(categoryStats)
+    const top_categories = Object.entries(transformedCategories)
         .map(([category, stats]) => ({
             category: category,
             blocked: stats.blocked,
@@ -116,10 +98,10 @@ function transformStatsData(data) {
     
     return {
         total_attempts: totalBattles,
-        total_blocked: defeats,
+        total_blocked: victories,  // victories = blocked purchases
         money_saved: moneySaved,
         timeline: timeline,
-        categories: categoryStats,
+        categories: transformedCategories,
         top_categories: top_categories
     };
 }
@@ -1040,7 +1022,8 @@ function initChannelsPage() {
     const websiteInput = document.querySelector('#channels-page input[type="text"]');
     
     if (addWebsiteBtn && websiteInput) {
-        addWebsiteBtn.addEventListener('click', () => {
+        addWebsiteBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Prevent form submission
             const url = websiteInput.value.trim();
             if (url) {
                 if (isValidUrl(url)) {
@@ -1057,6 +1040,7 @@ function initChannelsPage() {
         // Enter key support
         websiteInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent form submission
                 addWebsiteBtn.click();
             }
         });

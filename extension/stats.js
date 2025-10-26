@@ -142,7 +142,7 @@ function drawSavingsGraph(history) {
     ctx.textAlign = 'center';
     
     // X-axis label
-    ctx.fillText('BATTLES', width / 2, height - 8);
+    ctx.fillText('PURCHASES', width / 2, height - 8);
     
     // Y-axis label (rotated)
     ctx.save();
@@ -164,18 +164,20 @@ function setupGraphTooltips() {
     tooltip.className = 'graph-tooltip';
     tooltip.style.cssText = `
         position: absolute;
-        background: rgba(0, 0, 0, 0.9);
-        color: #fbbf24;
-        padding: 8px 12px;
-        border-radius: 6px;
-        font-size: 7px;
-        font-family: 'Press Start 2P', monospace;
+        background: linear-gradient(135deg, #5FBDBD, #4AA9A9);
+        color: #ffffff;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-family: 'Tahoma', 'Arial', sans-serif;
+        font-weight: 600;
         pointer-events: none;
         opacity: 0;
-        transition: opacity 0.2s;
+        transition: opacity 0.2s ease;
         z-index: 1000;
         white-space: nowrap;
-        border: 2px solid #fbbf24;
+        border: 2px solid #5FBDBD;
+        box-shadow: 0 4px 12px rgba(95, 189, 189, 0.4);
     `;
     document.body.appendChild(tooltip);
     
@@ -203,9 +205,9 @@ function setupGraphTooltips() {
         });
         
         if (closestPoint) {
-            // Format: "3 battles: $150.00"
-            const battleText = closestPoint.battle === 1 ? '1 battle' : `${closestPoint.battle} battles`;
-            tooltip.textContent = `${battleText}: $${closestPoint.value.toFixed(2)}`;
+            // Format: "3 purchases: $150.00"
+            const purchaseText = closestPoint.battle === 1 ? '1 purchase' : `${closestPoint.battle} purchases`;
+            tooltip.textContent = `${purchaseText}: $${closestPoint.value.toFixed(2)}`;
             
             // Switch tooltip to left side if hovering over right half of canvas
             const canvasCenter = rect.width / 2;

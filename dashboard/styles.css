@@ -402,23 +402,27 @@ body.dark-mode .bg-gray-300 {
 
 /* Dark mode - Text colors */
 body.dark-mode .text-gray-800 {
-    color: #f1f5f9;
+    color: #f1f5f9 !important;
 }
 
 body.dark-mode .text-gray-700 {
-    color: #e2e8f0;
+    color: #e2e8f0 !important;
 }
 
 body.dark-mode .text-gray-600 {
-    color: #cbd5e1;
+    color: #cbd5e1 !important;
 }
 
 body.dark-mode .text-gray-500 {
-    color: #94a3b8;
+    color: #94a3b8 !important;
 }
 
 body.dark-mode .text-gray-400 {
-    color: #64748b;
+    color: #64748b !important;
+}
+
+body.dark-mode .text-gray-900 {
+    color: #f8fafc !important;
 }
 
 /* Dark mode - Cards and boxes */
@@ -506,6 +510,25 @@ body.dark-mode .performer-item:hover {
 body.dark-mode .fixed.inset-0 > div {
     background: #1e293b;
     color: #f1f5f9;
+}
+
+/* Dark mode - Modal labels and text */
+body.dark-mode .fixed.inset-0 label {
+    color: #e2e8f0 !important;
+}
+
+body.dark-mode .fixed.inset-0 .text-sm {
+    color: #cbd5e1 !important;
+}
+
+/* Dark mode - Button text */
+body.dark-mode button.bg-gray-300 {
+    background: #475569 !important;
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode button.bg-gray-300:hover {
+    background: #64748b !important;
 }
 
 /* Dark mode - Scrollbar */
