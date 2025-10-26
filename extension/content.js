@@ -1,8 +1,46 @@
 // content.js
 const suspiciousPatterns = ["checkout", "cart", "purchase", "buy"];
 
+// Debounce configuration
+const DEBOUNCE_TIME_MS = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+// Check if we should block the page
 if (suspiciousPatterns.some(p => window.location.href.includes(p))) {
-  blockPage();
+  checkAndBlockPage();
+}
+
+// Function to check debounce before blocking
+async function checkAndBlockPage() {
+  const currentUrl = window.location.href;
+  const currentDomain = window.location.hostname;
+  
+  const now = Date.now();
+  
+  // Use ONLY sessionStorage for per-tab tracking
+  // This ensures new tabs get fresh start, but same tab stays debounced
+  const sessionDebounceKey = `impulse_session_${currentDomain}`;
+  const sessionBlocked = sessionStorage.getItem(sessionDebounceKey);
+  
+  if (sessionBlocked) {
+    const sessionTimestamp = parseInt(sessionBlocked, 10);
+    if ((now - sessionTimestamp) < DEBOUNCE_TIME_MS) {
+      console.log(`⏰ Tab debouncing: Already blocked in this tab ${Math.floor((now - sessionTimestamp) / 1000)}s ago`);
+      console.log('💡 Open a new tab to try again, or wait', Math.ceil((DEBOUNCE_TIME_MS - (now - sessionTimestamp)) / 1000), 'more seconds');
+      return; // Don't show overlay again in same tab
+    }
+  }
+  
+  // No recent block found in this tab, proceed with blocking
+  console.log('✅ No recent block found in this tab, showing overlay...');
+  
+  // Extract product info
+  const productInfo = extractProductInfo();
+  
+  // Store the block timestamp in sessionStorage (per-tab only)
+  sessionStorage.setItem(sessionDebounceKey, now.toString());
+  
+  // Actually block the page
+  blockPageWithProductInfo(productInfo);
 }
 
 function extractProductInfo() {
@@ -402,8 +440,7 @@ function extractPriceFromJsonLd(data) {
   return null;
 }
 
-function blockPage() {
-  const productInfo = extractProductInfo();
+function blockPageWithProductInfo(productInfo) {
   
   // Pass product info via URL parameters
   const params = new URLSearchParams({
@@ -433,6 +470,7 @@ function blockPage() {
       const overlayIframe = document.getElementById('impulse-purchase-overlay');
       if (overlayIframe) {
         overlayIframe.remove();
+        // DON'T clear debounce when proceeding - we want to prevent popup on next checkout step
       }
     } else if (event.data.action === 'hide-impulse-overlay') {
       const overlayIframe = document.getElementById('impulse-purchase-overlay');
@@ -440,8 +478,29 @@ function blockPage() {
         overlayIframe.style.display = 'none';
       }
     } else if (event.data.action === 'close-tab') {
+      // Clear debounce when user cancels purchase (closes tab)
+      clearDebounceForProduct(productInfo);
       // Send message to background script to close the current tab
       chrome.runtime.sendMessage({ action: 'close-current-tab' });
     }
   });
+}
+
+// Keep original blockPage function for compatibility
+function blockPage() {
+  checkAndBlockPage();
+}
+
+// Clear debounce for this tab
+async function clearDebounceForProduct(productInfo) {
+  try {
+    const currentDomain = window.location.hostname;
+    
+    // Clear from sessionStorage (per-tab)
+    sessionStorage.removeItem(`impulse_session_${currentDomain}`);
+    
+    console.log('🔓 Tab debounce cleared for:', productInfo.name);
+  } catch (error) {
+    console.error('Error clearing debounce:', error);
+  }
 }
