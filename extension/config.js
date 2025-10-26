@@ -4,8 +4,6 @@ const CONFIG = {
   CEREBRAS_API_URL: 'https://api.cerebras.ai/v1/chat/completions',
   GEMINI_API_KEY: 'AIzaSyBKmsQZdVykukzSNegonlIH7mORUfj_DCc',
   GEMINI_API_URL: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent',
-  INITIAL_HEALTH: 100,
-  MIN_HEALTH_TO_PASS: 0
 };
 
 // Make API keys available globally for overlay-final.js
