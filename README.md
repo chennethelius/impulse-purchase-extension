@@ -33,9 +33,9 @@ When you visit a checkout or product page, the extension:
 ## Features
 
 ### AI Reflection Chatbot
-Blocks checkout until you convince the AI to let you buy — promoting mindful spending and reducing impulse purchases.
+Blocks checkout until the timer runs out — promoting collaboration with AI to encourage mindful spending and reduce impulse purchase habits.
 
-### Cheaper Alternative Finder
+### Alternative Finder
 AI Suggests possible comparable products to compare to prevent impulse purchases and encourage healthier spending habits.
 
 ### Savings Tracker
@@ -43,6 +43,7 @@ Uses stats dashboard to store:
 - **Total money saved**
 - **Savings history (item and amount)**
 - **Number of blocked purchases**
+- **Categories of purchases**
 
 The data persists across sessions and can be displayed by clicking the extension icon.
 
@@ -54,9 +55,8 @@ No personal data is uploaded or shared. All calculations and storage happen loca
 ## How It Works
 
 **Tech Stack**
-- JavaScript (Chrome Extension APIs)
+- JavaScript (AI APIs, database storage, and site interactivity)
 - HTML/CSS (Chatbot UI Overlay)
-- Chrome `content_scripts` and `storage.local`
 
 **Core Files**
 - background.js
@@ -81,10 +81,5 @@ No personal data is uploaded or shared. All calculations and storage happen loca
 6. Visit a supported site (e.g., Amazon).
 7. Watch as AIn’t Buying It intercepts the purchase flow.
 
----
-
-## Example: Tracking Savings
-
-Each time the user chooses a to deny the purchase, the extension updates totals and presents it in the dashboard.
 
 
