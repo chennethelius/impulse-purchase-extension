@@ -25,7 +25,8 @@
         "config.js",
         "fonts.css",
         "styles.css",
-        "overlay.js",
+        "styles-new.css",
+        "overlay-final.js",
         "animations/AnimationService.js",
         "animations/pokemon-animations.js",
         "animations/TextAnimation.js"
