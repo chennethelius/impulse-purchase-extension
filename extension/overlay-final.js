@@ -78,7 +78,10 @@ function initialize() {
   });
 
   // Handle cancel purchase button - close the entire tab
-  reconsiderBtn.addEventListener('click', () => {
+  reconsiderBtn.addEventListener('click', async () => {
+    // Update stats - purchase was blocked
+    await updateStats(false);
+    
     // Send message to background script to close the tab
     try {
       window.parent.postMessage({ action: 'close-tab' }, '*');
@@ -98,7 +101,10 @@ function initialize() {
   });
   
   // Handle proceed button
-  proceedBtn.addEventListener('click', () => {
+  proceedBtn.addEventListener('click', async () => {
+    // Update stats - purchase was allowed
+    await updateStats(true);
+    
     // Try to remove the iframe from parent window
     try {
       // Send message to parent window to remove iframe
@@ -1162,4 +1168,33 @@ async function displayAlternatives() {
       box.title = `Click to view on ${alt.source}`;
     }
   });
+}
+
+// Stats tracking functions
+async function updateStats(purchaseAllowed) {
+  try {
+    // Extract price as number
+    const priceNum = extractNumericPrice(productInfo.price);
+    const category = productInfo.category || 'General';
+    
+    // Prepare stats update data
+    const statsUpdate = {
+      purchaseAllowed: purchaseAllowed,
+      price: priceNum,
+      category: category,
+      productName: productInfo.name,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.log('Updating stats:', statsUpdate);
+    
+    // Send message to parent window (content script will catch it)
+    window.parent.postMessage({
+      action: 'update-stats',
+      data: statsUpdate
+    }, '*');
+    
+  } catch (error) {
+    console.error('Failed to update stats:', error);
+  }
 }
