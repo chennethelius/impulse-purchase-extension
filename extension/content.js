@@ -2,6 +2,58 @@
 let popupInjected = false;
 let defeatedItems = new Set(); // Track items where bot was defeated
 let currentPrice = 0; // Store detected price
+let currentItemInfo = {}; // Store detailed item information
+
+// Enhanced categories with more keywords
+const ITEM_CATEGORIES = {
+  'Electronics': [
+    'phone', 'iphone', 'android', 'samsung', 'laptop', 'computer', 'pc', 'mac', 'macbook',
+    'tablet', 'ipad', 'headphones', 'earbuds', 'airpods', 'speaker', 'tv', 'television',
+    'camera', 'watch', 'smartwatch', 'gaming', 'console', 'playstation', 'xbox', 'nintendo',
+    'monitor', 'keyboard', 'mouse', 'drone', 'gopro', 'alexa', 'echo', 'tech', 'gadget'
+  ],
+  'Fashion': [
+    'clothes', 'clothing', 'shirt', 'tshirt', 't-shirt', 'pants', 'jeans', 'shoes', 'sneakers',
+    'dress', 'jacket', 'coat', 'boots', 'sandals', 'heels', 'bag', 'purse', 'handbag',
+    'accessories', 'jewelry', 'necklace', 'bracelet', 'earrings', 'ring', 'watch',
+    'sunglasses', 'belt', 'hat', 'cap', 'scarf', 'gloves', 'socks', 'underwear', 'bra'
+  ],
+  'Food & Dining': [
+    'food', 'restaurant', 'pizza', 'burger', 'coffee', 'cafe', 'snacks', 'delivery',
+    'takeout', 'meal', 'drinks', 'beverage', 'alcohol', 'wine', 'beer', 'grocery',
+    'groceries', 'dining', 'lunch', 'dinner', 'breakfast', 'doordash', 'ubereats', 'grubhub'
+  ],
+  'Entertainment': [
+    'movie', 'film', 'cinema', 'game', 'video game', 'subscription', 'netflix', 'spotify',
+    'disney', 'hulu', 'concert', 'tickets', 'event', 'streaming', 'music', 'book', 'ebook',
+    'kindle', 'audiobook', 'audible', 'theater', 'show', 'entertainment'
+  ],
+  'Home & Garden': [
+    'furniture', 'decor', 'decoration', 'kitchen', 'appliance', 'bedding', 'lamp', 'light',
+    'chair', 'table', 'desk', 'couch', 'sofa', 'bed', 'mattress', 'pillow', 'blanket',
+    'curtain', 'rug', 'carpet', 'plant', 'garden', 'tools', 'home improvement'
+  ],
+  'Beauty & Personal Care': [
+    'makeup', 'skincare', 'cosmetics', 'perfume', 'cologne', 'fragrance', 'shampoo',
+    'conditioner', 'beauty', 'hair', 'nails', 'lotion', 'cream', 'serum', 'moisturizer',
+    'cleanser', 'toner', 'lipstick', 'foundation', 'mascara', 'eyeshadow'
+  ],
+  'Fitness & Sports': [
+    'gym', 'workout', 'fitness', 'exercise', 'sports', 'equipment', 'yoga', 'running',
+    'bike', 'bicycle', 'weights', 'dumbbell', 'treadmill', 'protein', 'supplement',
+    'athletic', 'activewear', 'sportswear', 'training'
+  ],
+  'Toys & Hobbies': [
+    'toy', 'toys', 'lego', 'puzzle', 'board game', 'hobby', 'craft', 'art supplies',
+    'paint', 'canvas', 'collectible', 'action figure', 'doll', 'stuffed animal'
+  ],
+  'Automotive': [
+    'car', 'auto', 'vehicle', 'parts', 'tire', 'oil', 'automotive', 'motorcycle', 'bike parts'
+  ],
+  'Pet Supplies': [
+    'pet', 'dog', 'cat', 'puppy', 'kitten', 'animal', 'pet food', 'pet toy', 'leash', 'collar'
+  ]
+};
 
 // Patterns to detect purchase-related buttons and pages
 const purchasePatterns = [
@@ -14,6 +66,21 @@ const purchasePatterns = [
 const checkoutUrlPatterns = [
   'checkout', 'cart', 'basket', 'payment', 'order', 'buy', 'purchase'
 ];
+
+// Function to categorize item based on description
+function categorizeItem(description) {
+  const lowerDesc = description.toLowerCase();
+  
+  for (const [category, keywords] of Object.entries(ITEM_CATEGORIES)) {
+    for (const keyword of keywords) {
+      if (lowerDesc.includes(keyword)) {
+        return category;
+      }
+    }
+  }
+  
+  return 'Other';
+}
 
 // Function to extract price from the page
 function extractPrice() {
@@ -190,11 +257,29 @@ function injectPopup(itemIdentifier = null) {
   const currentItemDescription = extractItemDescription();
   console.log('Detected item:', currentItemDescription);
   
-  // Store the price and item description for the popup to access
+  // Categorize the item
+  const itemCategory = categorizeItem(currentItemDescription);
+  console.log('Categorized as:', itemCategory);
+  
+  // Create detailed item info with timestamp
+  currentItemInfo = {
+    description: currentItemDescription,
+    category: itemCategory,
+    price: currentPrice,
+    url: window.location.href,
+    timestamp: Date.now(),
+    domain: window.location.hostname
+  };
+  
+  // Store the item info for the popup to access
   chrome.storage.local.set({ 
     currentPrice: currentPrice,
-    currentItemDescription: currentItemDescription
+    currentItemDescription: currentItemDescription,
+    currentItemInfo: currentItemInfo
   });
+  
+  // Log the impulse purchase attempt to backend
+  logImpulsePurchaseAttempt(currentItemInfo);
   
   // Create overlay container
   const overlay = document.createElement('div');
@@ -244,6 +329,9 @@ function injectPopup(itemIdentifier = null) {
       popupInjected = false;
       document.body.style.overflow = '';
       
+      // Log the outcome
+      logPurchaseOutcome(currentItemInfo, event.data.allowPurchase);
+      
       // If user convinced the bot, allow the action
       if (event.data.allowPurchase) {
         // Mark this item as defeated so popup won't show again
@@ -258,6 +346,150 @@ function injectPopup(itemIdentifier = null) {
       }
     }
   });
+}
+
+// Log impulse purchase attempt to backend
+async function logImpulsePurchaseAttempt(itemInfo) {
+  try {
+    // Get current stats
+    const data = await chrome.storage.local.get(['stats', 'impulsePurchaseLogs']);
+    const stats = data.stats || {
+      totalBattles: 0,
+      victories: 0,
+      defeats: 0,
+      moneySaved: 0,
+      savingsHistory: [],
+      recentBattles: []
+    };
+    
+    const logs = data.impulsePurchaseLogs || [];
+    
+    // Add new log entry
+    const logEntry = {
+      ...itemInfo,
+      attemptTimestamp: Date.now(),
+      outcome: 'pending', // Will be updated when battle ends
+      sessionId: getSessionId(),
+      synced: false // Flag to track if synced to backend
+    };
+    
+    logs.push(logEntry);
+    
+    // Keep only last 500 logs
+    if (logs.length > 500) {
+      logs.splice(0, logs.length - 500);
+    }
+    
+    // Save logs
+    await chrome.storage.local.set({ impulsePurchaseLogs: logs });
+    
+    // Sync to Flask backend
+    try {
+      const response = await fetch('http://localhost:5000/api/log-purchase', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          item_name: itemInfo.description,
+          category: itemInfo.category,
+          price: itemInfo.price,
+          url: itemInfo.url,
+          domain: itemInfo.domain,
+          outcome: 'pending'
+        })
+      });
+      
+      if (response.ok) {
+        logEntry.synced = true;
+        await chrome.storage.local.set({ impulsePurchaseLogs: logs });
+        console.log('✅ Synced to backend:', logEntry);
+      }
+    } catch (syncError) {
+      console.log('⚠️ Backend sync failed (will retry later):', syncError.message);
+    }
+    
+    console.log('✅ Logged impulse purchase attempt:', logEntry);
+  } catch (error) {
+    console.error('❌ Failed to log impulse purchase attempt:', error);
+  }
+}
+
+// Log purchase outcome (blocked or allowed)
+async function logPurchaseOutcome(itemInfo, allowPurchase) {
+  try {
+    const data = await chrome.storage.local.get(['impulsePurchaseLogs', 'stats']);
+    const logs = data.impulsePurchaseLogs || [];
+    const stats = data.stats || {
+      totalBattles: 0,
+      victories: 0,
+      defeats: 0,
+      moneySaved: 0,
+      savingsHistory: [],
+      recentBattles: []
+    };
+    
+    // Find the most recent pending log for this item
+    const logIndex = logs.findIndex(log => 
+      log.timestamp === itemInfo.timestamp && 
+      log.outcome === 'pending'
+    );
+    
+    if (logIndex !== -1) {
+      const outcome = allowPurchase ? 'allowed' : 'blocked';
+      logs[logIndex].outcome = outcome;
+      logs[logIndex].outcomeTimestamp = Date.now();
+      logs[logIndex].decisionTime = Date.now() - logs[logIndex].attemptTimestamp;
+      
+      // Update stats
+      stats.totalBattles = (stats.totalBattles || 0) + 1;
+      if (allowPurchase) {
+        stats.defeats = (stats.defeats || 0) + 1;
+      } else {
+        stats.victories = (stats.victories || 0) + 1;
+        stats.moneySaved = (stats.moneySaved || 0) + itemInfo.price;
+      }
+      
+      await chrome.storage.local.set({ 
+        impulsePurchaseLogs: logs,
+        stats: stats
+      });
+      
+      // Sync outcome to backend
+      try {
+        await fetch('http://localhost:5000/api/update-purchase', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            item_name: itemInfo.description,
+            price: itemInfo.price,
+            category: itemInfo.category,
+            outcome: outcome,
+            decision_time: logs[logIndex].decisionTime
+          })
+        });
+        console.log(`✅ Synced outcome to backend: ${outcome}`);
+      } catch (syncError) {
+        console.log('⚠️ Backend outcome sync failed:', syncError.message);
+      }
+      
+      console.log(`✅ Updated purchase outcome: ${outcome}`);
+    }
+  } catch (error) {
+    console.error('❌ Failed to log purchase outcome:', error);
+  }
+}
+
+// Get or create session ID
+function getSessionId() {
+  let sessionId = sessionStorage.getItem('impulseGuardSessionId');
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem('impulseGuardSessionId', sessionId);
+  }
+  return sessionId;
 }
 
 // Intercept clicks on purchase buttons

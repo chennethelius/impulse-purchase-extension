@@ -1,70 +1,58 @@
 {
-  "defeats": 13,
-  "moneySaved": 1474.5600000000002,
+  "defeats": 6,
+  "moneySaved": 3290.3900000000003,
   "recentBattles": [
     {
-      "amount": 36,
-      "description": "Guardian Control Center",
-      "item": "Guardian Control Center",
-      "result": "victory",
-      "timestamp": 1761440364278
-    },
-    {
-      "amount": 36,
-      "description": "Guardian Control Center",
-      "item": "Guardian Control Center",
-      "result": "victory",
-      "timestamp": 1761440364449
-    },
-    {
-      "amount": 217.16,
+      "amount": 49.34,
       "description": "Secure checkout",
       "item": "Secure checkout",
       "result": "defeat",
-      "timestamp": 1761440415611
+      "timestamp": 1761441726350
+    },
+    {
+      "amount": 3171.19,
+      "description": "Secure checkout",
+      "item": "Secure checkout",
+      "result": "defeat",
+      "timestamp": 1761441748328
+    },
+    {
+      "amount": 2,
+      "description": "Guardian Control Center",
+      "item": "Guardian Control Center",
+      "result": "defeat",
+      "timestamp": 1761441771054
+    },
+    {
+      "amount": 58.86,
+      "description": "Secure checkout",
+      "item": "Secure checkout",
+      "result": "defeat",
+      "timestamp": 1761441896808
+    },
+    {
+      "amount": 4,
+      "description": "Guardian Control Center",
+      "item": "Guardian Control Center",
+      "result": "defeat",
+      "timestamp": 1761442191811
+    },
+    {
+      "amount": 5,
+      "description": "Guardian Control Center",
+      "item": "Guardian Control Center",
+      "result": "defeat",
+      "timestamp": 1761442861660
     }
   ],
   "savingsHistory": [
-    0,
-    0,
-    0,
-    300,
-    600,
-    651.77,
-    703.54,
-    703.54,
-    703.54,
-    755.31,
-    755.31,
-    755.31,
-    755.31,
-    807.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    811.0799999999999,
-    815.0799999999999,
-    815.0799999999999,
-    815.0799999999999,
-    815.0799999999999,
-    815.0799999999999,
-    819.0799999999999,
-    823.0799999999999,
-    1040.24,
-    1257.4,
-    1257.4,
-    1257.4,
-    1257.4,
-    1257.4,
-    1257.4,
-    1257.4,
-    1257.4,
-    1474.5600000000002
+    49.34,
+    3220.53,
+    3222.53,
+    3281.3900000000003,
+    3285.3900000000003,
+    3290.3900000000003
   ],
-  "totalBattles": 39,
-  "victories": 26
+  "totalBattles": 6,
+  "victories": 0
 }

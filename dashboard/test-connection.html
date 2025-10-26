@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Connection Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .test-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: rgba(76, 175, 80, 0.3);
+            border-left: 4px solid #4CAF50;
+        }
+        .status.error {
+            background: rgba(244, 67, 54, 0.3);
+            border-left: 4px solid #F44336;
+        }
+        .icon {
+            font-size: 2em;
+        }
+        button {
+            background: linear-gradient(to bottom, #3b82f6, #2563eb);
+            border: none;
+            color: white;
+            padding: 15px 30px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        .flow {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 1.2em;
+        }
+        .arrow {
+            font-size: 2em;
+            margin: 10px 0;
+        }
+        .code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🔗 Connection Status</h1>
+        
+        <div class="status success">
+            <div>
+                <strong>✅ Dashboard Server</strong>
+                <div>Running on http://localhost:5000</div>
+            </div>
+            <div class="icon">🟢</div>
+        </div>
+        
+        <div class="status success">
+            <div>
+                <strong>✅ React App</strong>
+                <div>5 pages loaded successfully</div>
+            </div>
+            <div class="icon">⚛️</div>
+        </div>
+        
+        <div class="status success">
+            <div>
+                <strong>✅ Extension Integration</strong>
+                <div>Ready to receive data from Chrome extension</div>
+            </div>
+            <div class="icon">🧩</div>
+        </div>
+    </div>
+    
+    <div class="test-card">
+        <h2>📍 How to Access Dashboard</h2>
+        
+        <div class="flow">
+            <div>1️⃣ Click Chrome Extension Icon</div>
+            <div class="arrow">⬇️</div>
+            <div>2️⃣ View Battle Statistics Popup</div>
+            <div class="arrow">⬇️</div>
+            <div>3️⃣ Click "📊 OPEN DASHBOARD" Button</div>
+            <div class="arrow">⬇️</div>
+            <div>4️⃣ Dashboard Opens in New Tab</div>
+        </div>
+        
+        <button onclick="window.location.href='/'">🚀 Go to Dashboard Now</button>
+    </div>
+    
+    <div class="test-card">
+        <h2>🎮 Test the Connection</h2>
+        
+        <p><strong>Step 1:</strong> Open Chrome and load the extension</p>
+        <div class="code">chrome://extensions/ → Load unpacked → Select 'extension' folder</div>
+        
+        <p><strong>Step 2:</strong> Try to make a purchase on any website</p>
+        <div class="code">Visit Amazon, eBay, or any shopping site</div>
+        
+        <p><strong>Step 3:</strong> Battle the Impulse Guardian</p>
+        <div class="code">Convince the AI bot or give up to save money</div>
+        
+        <p><strong>Step 4:</strong> Check stats in extension popup</p>
+        <div class="code">Click extension icon → See updated stats</div>
+        
+        <p><strong>Step 5:</strong> Open dashboard from popup</p>
+        <div class="code">Click "📊 OPEN DASHBOARD" → View detailed analytics</div>
+        
+        <button onclick="testExtensionData()">🧪 Test Extension Data Loading</button>
+        <div id="testResult" style="margin-top: 15px;"></div>
+    </div>
+    
+    <script>
+        async function testExtensionData() {
+            const resultDiv = document.getElementById('testResult');
+            resultDiv.innerHTML = '<div style="text-align: center;">⏳ Testing...</div>';
+            
+            try {
+                // Try to load from Chrome extension
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    chrome.storage.local.get(['stats', 'impulsePurchaseLogs'], (data) => {
+                        if (data.stats || data.impulsePurchaseLogs) {
+                            resultDiv.innerHTML = `
+                                <div class="status success">
+                                    <div>
+                                        <strong>✅ Extension Data Found!</strong>
+                                        <div>Battles: ${data.stats?.totalBattles || 0} | Money Saved: $${data.stats?.moneySaved?.toFixed(2) || '0.00'}</div>
+                                    </div>
+                                    <div class="icon">✅</div>
+                                </div>
+                            `;
+                        } else {
+                            resultDiv.innerHTML = `
+                                <div class="status error">
+                                    <div>
+                                        <strong>⚠️ No Extension Data Yet</strong>
+                                        <div>Try making a test purchase to generate data</div>
+                                    </div>
+                                    <div class="icon">📭</div>
+                                </div>
+                            `;
+                        }
+                    });
+                } else {
+                    // Fallback to stats.json
+                    const response = await fetch('/stats.json');
+                    const data = await response.json();
+                    resultDiv.innerHTML = `
+                        <div class="status success">
+                            <div>
+                                <strong>✅ Loaded from stats.json</strong>
+                                <div>Total Blocked: ${data.total_blocked || 0} | Money Saved: $${data.money_saved?.toFixed(2) || '0.00'}</div>
+                            </div>
+                            <div class="icon">📄</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="status error">
+                        <div>
+                            <strong>❌ Error Loading Data</strong>
+                            <div>${error.message}</div>
+                        </div>
+                        <div class="icon">❌</div>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

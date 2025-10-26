@@ -13,7 +13,7 @@ chrome.runtime.onInstalled.addListener(() => {
 // Sync stats to Python dashboard
 async function syncStatsToDashboard() {
     try {
-        const data = await chrome.storage.local.get(['stats']);
+        const data = await chrome.storage.local.get(['stats', 'impulsePurchaseLogs']);
         const stats = data.stats || {
             totalBattles: 0,
             victories: 0,
@@ -23,24 +23,53 @@ async function syncStatsToDashboard() {
             recentBattles: []
         };
         
-        // Send to Python Flask dashboard
-        await fetch('http://localhost:5000/api/update', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(stats)
-        });
+        // Send detailed purchase logs to new backend
+        const logs = data.impulsePurchaseLogs || [];
+        if (logs.length > 0) {
+            for (const log of logs) {
+                // Only sync logs that haven't been synced yet
+                if (!log.synced && log.outcome !== 'pending') {
+                    try {
+                        const response = await fetch('http://localhost:5000/api/log-purchase', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                item_name: log.description,
+                                category: log.category,
+                                price: log.price,
+                                url: log.url,
+                                domain: log.domain,
+                                outcome: log.outcome,
+                                timestamp: log.timestamp || log.attemptTimestamp
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            // Mark as synced
+                            log.synced = true;
+                            console.log('✅ Synced log to backend:', log.description);
+                        }
+                    } catch (error) {
+                        console.log('⚠️ Failed to sync log:', error.message);
+                    }
+                }
+            }
+            
+            // Update storage with synced flags
+            await chrome.storage.local.set({ impulsePurchaseLogs: logs });
+        }
         
-        console.log('✅ Stats synced to dashboard');
+        console.log('✅ Stats and logs synced to dashboard backend');
     } catch (error) {
-        console.log('⚠️ Dashboard sync failed (is Flask running?):', error.message);
+        console.log('⚠️ Dashboard sync failed (is Flask backend running?):', error.message);
     }
 }
 
 // Listen for storage changes and sync to dashboard
 chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local' && changes.stats) {
+    if (namespace === 'local' && (changes.stats || changes.impulsePurchaseLogs)) {
         syncStatsToDashboard();
     }
 });
