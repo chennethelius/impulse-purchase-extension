@@ -2,19 +2,61 @@
 document.addEventListener('DOMContentLoaded', async () => {
     await loadStats();
     
+    // Test button handler - adds sample data
+    document.getElementById('testButton').addEventListener('click', async () => {
+        const db = new StatsDB();
+        await db.init();
+        
+        const testStats = {
+            totalBattles: 5,
+            victories: 3,
+            defeats: 2,
+            moneySaved: 250.50,
+            savingsHistory: [50, 100, 150, 200, 250.50],
+            purchaseHistory: [
+                {
+                    timestamp: new Date().toISOString(),
+                    product: "Nike Running Shoes",
+                    amount: 89.99,
+                    category: "Fitness",
+                    saved: true
+                },
+                {
+                    timestamp: new Date(Date.now() - 3600000).toISOString(),
+                    product: "iPhone 15 Pro",
+                    amount: 999.00,
+                    category: "Electronics",
+                    saved: false
+                },
+                {
+                    timestamp: new Date(Date.now() - 7200000).toISOString(),
+                    product: "Leather Jacket",
+                    amount: 150.00,
+                    category: "Clothing",
+                    saved: true
+                }
+            ],
+            categoryStats: {
+                Fitness: 2,
+                Electronics: 0,
+                Clothing: 1,
+                Home: 0,
+                Health: 0
+            }
+        };
+        
+        await db.saveStats(testStats);
+        console.log('Test stats added to IndexedDB!');
+        await loadStats();
+    });
+    
     // Reset button handler
     document.getElementById('resetButton').addEventListener('click', async () => {
         if (confirm('Reset all stats?')) {
-            await chrome.storage.local.set({
-                stats: {
-                    totalBattles: 0,
-                    victories: 0,
-                    defeats: 0,
-                    moneySaved: 0,
-                    savingsHistory: [],
-                    recentBattles: []
-                }
-            });
+            const db = new StatsDB();
+            await db.init();
+            await db.clearStats();
+            console.log('Stats reset!');
             await loadStats();
         }
     });
@@ -25,32 +67,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadStats() {
-    const result = await chrome.storage.local.get('stats');
-    const stats = result.stats || {
-        totalBattles: 0,
-        victories: 0,
-        defeats: 0,
-        moneySaved: 0,
-        savingsHistory: [],
-        purchaseHistory: [],
-        categoryStats: {
-            Fitness: 0,
-            Electronics: 0,
-            Clothing: 0,
-            Home: 0,
-            Health: 0
-        }
-    };
+    console.log('Loading stats from IndexedDB...');
+    
+    // Initialize IndexedDB
+    const db = new StatsDB();
+    await db.init();
+    
+    // Get stats
+    const stats = await db.getStats();
+    console.log('Stats loaded:', stats);
     
     // Update display
-    document.getElementById('totalBattles').textContent = stats.totalBattles;
-    document.getElementById('victories').textContent = stats.victories;
-    document.getElementById('defeats').textContent = stats.defeats;
-    document.getElementById('moneySaved').textContent = `$${Math.round(stats.moneySaved)}`;
+    document.getElementById('totalBattles').textContent = stats.totalBattles || 0;
+    document.getElementById('victories').textContent = stats.victories || 0;
+    document.getElementById('defeats').textContent = stats.defeats || 0;
+    document.getElementById('moneySaved').textContent = `$${Math.round(stats.moneySaved || 0)}`;
     
     // Calculate block rate (victories = blocked purchases)
-    const winRate = stats.totalBattles > 0 
-        ? ((stats.victories / stats.totalBattles) * 100).toFixed(1)
+    const winRate = (stats.totalBattles || 0) > 0 
+        ? (((stats.victories || 0) / stats.totalBattles) * 100).toFixed(1)
         : 0;
     document.getElementById('winRate').textContent = `${winRate}%`;
     
@@ -647,14 +682,16 @@ function createHistoryItem(item) {
     const date = new Date(item.timestamp);
     const formattedDate = formatDate(date);
     const categoryIcon = getCategoryIcon(item.category);
+    const productName = item.product || 'Unknown Product';
     
     div.innerHTML = `
         <div class="history-item-header">
             <span class="history-status ${item.saved ? 'saved' : 'not-saved'}">
-                ${item.saved ? '✓ Money Saved' : '✗ Purchased'}
+                ${item.saved ? '✓ Blocked' : '✗ Purchased'}
             </span>
             <span class="history-amount">$${item.amount.toFixed(2)}</span>
         </div>
+        <div class="history-product-name">${productName}</div>
         <div class="history-details">
             <span class="history-category">${categoryIcon} ${item.category || 'General'}</span>
             <span class="history-date">${formattedDate}</span>
