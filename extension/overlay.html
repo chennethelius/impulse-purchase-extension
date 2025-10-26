@@ -3,39 +3,90 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Impulse Check</title>
+  <title>Purchase Justification</title>
   <link rel="stylesheet" href="fonts.css">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles-new.css">
 </head>
 <body>
-  <div id="chat-container">
-    <div id="layout-wrapper">
-      <!-- Top Right: Chat Output -->
-      <div id="chat-section">
-        <div id="chat"></div>
+  <div id="modal-container">
+    <!-- Status Indicator Section (Top Third) -->
+    <div id="status-section">
+      <div id="status-icon" class="warning">
+        <svg id="icon-warning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 22h20L12 2z"/>
+          <path d="M12 9v6"/>
+          <circle cx="12" cy="18" r="0.5"/>
+        </svg>
+        <svg id="icon-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 12h8"/>
+        </svg>
+        <svg id="icon-thumbs-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/>
+        </svg>
+        <svg id="icon-star" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+        </svg>
+        <svg id="icon-checkmark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: none;">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+      </div>
+      <div id="grade-display" style="display: none;">F</div>
+      <div id="timer-display"></div>
+    </div>
+
+    <!-- Chat Section (Middle) -->
+    <div id="chat-section">
+      <div id="chat-messages"></div>
+    </div>
+
+    <!-- Input Section (Bottom) -->
+    <div id="input-section">
+      <textarea 
+        id="user-input" 
+        placeholder="Explain why you need this purchase..."
+        autofocus
+      ></textarea>
+      <button id="send-btn">Submit Reasoning</button>
+    </div>
+
+    <!-- Result Section (Hidden initially) -->
+    <div id="result-section" style="display: none;">
+      <h3 id="result-title">Purchase Assessment Complete</h3>
+      <div id="final-grade" class="grade-circle">F</div>
+      <p id="result-message"></p>
+      
+      <!-- Alternative Options -->
+      <div id="alternatives-section">
+        <h4>Consider These Alternatives:</h4>
+        <div id="alternatives-grid">
+          <div class="alternative-box">
+            <div class="alt-price">$--</div>
+            <div class="alt-title">Loading...</div>
+            <div class="alt-source">Finding alternatives</div>
+          </div>
+          <div class="alternative-box">
+            <div class="alt-price">$--</div>
+            <div class="alt-title">Loading...</div>
+            <div class="alt-source">Finding alternatives</div>
+          </div>
+          <div class="alternative-box">
+            <div class="alt-price">$--</div>
+            <div class="alt-title">Loading...</div>
+            <div class="alt-source">Finding alternatives</div>
+          </div>
+        </div>
       </div>
       
-      <!-- Bottom Left: Input -->
-      <div id="input-section">
-        <textarea 
-          id="user-input" 
-          placeholder="Why do you really need this? Be honest..."
-          autofocus
-        ></textarea>
-        
-        <div id="button-section">
-          <button id="send">Send</button>
-          <button id="unlock" disabled>Proceed</button>
-        </div>
+      <div id="result-actions">
+        <button id="proceed-btn">Proceed to Checkout</button>
+        <button id="reconsider-btn">Reconsider Purchase</button>
       </div>
     </div>
   </div>
 
-  <!-- Animation System Scripts -->
   <script src="config.js"></script>
-  <script src="animations/AnimationService.js"></script>
-  <script src="animations/pokemon-animations.js"></script>
-  <script src="animations/TextAnimation.js"></script>
-  <script src="overlay.js"></script>
+  <script src="overlay-final.js"></script>
 </body>
 </html>
