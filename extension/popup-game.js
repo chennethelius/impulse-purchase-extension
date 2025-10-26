@@ -438,7 +438,7 @@ ${isRepetitive ? '• REPETITIVE ARGUMENT = 0 damage (call them out on repeating
 
 End with: [DAMAGE: X]
 
-Keep it fun, sassy, and Pokemon-battle themed! Use emojis occasionally.
+Keep it fun, sassy, and Pokemon-battle themed! Use emojis occasionally. (don't mention the word Pokemon though)
 
 Example responses:
 
