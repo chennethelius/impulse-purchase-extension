@@ -12,9 +12,12 @@ Impulse buying is easier than ever in the age of one-click checkout.
 **AIn’t Buying It** brings people and AI together to make online shopping more mindful, responsible, and financially healthy.
 
 When you visit a checkout or product page, the extension:
-1. **Intercepts** the purchase page and opens a chatbot overlay.  
-2. **Engages** the user in a short conversation about their motivation for buying.  
-3. **Finds alternatives** for the product using free, public APIs or web searches.  
+1. **Intercepts** the purchase page and opens a chatbot overlay.
+![image](screenshots/exampleblock.png)  
+2. **Engages** the user in a short conversation about their motivation for buying.
+  
+3. **Finds alternatives** for the product using free, public APIs or web searches.
+
 4. **Tracks savings and progress** over time, showing how much money the user has avoided spending impulsively.
 
 ---
@@ -28,14 +31,14 @@ Blocks checkout until you convince the AI to let you buy — promoting mindful s
 AI Suggests possible comparable products to compare to prevent impulse purchases and encourage healthier spending habits.
 
 ### Savings Tracker
-Uses `chrome.storage.local` to store:
+Uses stats dashboard to store:
 - **Total money saved**
 - **Savings history (item and amount)**
 - **Number of blocked purchases**
 
-The data persists across sessions and can be displayed in a small “progress dashboard.”
+The data persists across sessions and can be displayed by clicking the extension icon.
 
-### 🧾 Privacy First
+### Privacy First
 No personal data is uploaded or shared. All calculations and storage happen locally in your browser.
 
 ---
@@ -55,6 +58,10 @@ No personal data is uploaded or shared. All calculations and storage happen loca
 - overlay-final.js
 - overlay.html
 - styles-new.css
+- stats-db.js
+- stats.css
+- stats.html
+- stats.js
 
 ## Setup Instructions
 
@@ -63,13 +70,13 @@ No personal data is uploaded or shared. All calculations and storage happen loca
 3. Enable **Developer mode** (top right).
 4. Click **Load unpacked**.
 5. Select the folder containing `manifest.json`.
-6. Visit a supported site (e.g., Amazon, eBay, Etsy).
+6. Visit a supported site (e.g., Amazon).
 7. Watch as AIn’t Buying It intercepts the purchase flow.
 
 ---
 
 ## Example: Tracking Savings
 
-Each time the user chooses a cheaper product, the extension updates totals using `chrome.storage.local`:
+Each time the user chooses a to deny the purchase, the extension updates totals and presents it in the dashboard.
 
 
