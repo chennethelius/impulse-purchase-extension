@@ -691,6 +691,10 @@ async function applyTimeReduction(seconds) {
     await new Promise(resolve => setTimeout(resolve, stepDelay));
   }
   
+  // Round to avoid floating point errors
+  timeRemaining = Math.round(timeRemaining);
+  totalTimeSaved = Math.round(totalTimeSaved);
+  
   // Flash success animation ONLY after time reduction
   updateTimerDisplay(true); // Flash on final update
   
