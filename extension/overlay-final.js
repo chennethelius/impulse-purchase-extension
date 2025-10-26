@@ -1184,52 +1184,27 @@ async function displayAlternatives() {
 // Stats tracking functions
 async function updateStats(purchaseAllowed) {
   try {
-    // Get current stats
-    const result = await chrome.storage.local.get('stats');
-    const stats = result.stats || {
-      totalBattles: 0,
-      victories: 0,
-      defeats: 0,
-      moneySaved: 0,
-      savingsHistory: [],
-      purchaseHistory: [],
-      categoryStats: {}
-    };
-    
     // Extract price as number
     const priceNum = extractNumericPrice(productInfo.price);
-    
-    // Update totals
-    stats.totalBattles++;
-    
-    if (purchaseAllowed) {
-      // User proceeded with purchase
-      stats.defeats++;
-    } else {
-      // User cancelled purchase (saved money)
-      stats.victories++;
-      stats.moneySaved += priceNum;
-      stats.savingsHistory.push(stats.moneySaved);
-    }
-    
-    // Update category stats
     const category = productInfo.category || 'General';
-    if (!purchaseAllowed) {
-      stats.categoryStats[category] = (stats.categoryStats[category] || 0) + 1;
-    }
     
-    // Add to purchase history
-    stats.purchaseHistory.push({
-      timestamp: new Date().toISOString(),
-      product: productInfo.name,
-      amount: priceNum,
+    // Prepare stats update data
+    const statsUpdate = {
+      purchaseAllowed: purchaseAllowed,
+      price: priceNum,
       category: category,
-      saved: !purchaseAllowed
-    });
+      productName: productInfo.name,
+      timestamp: new Date().toISOString()
+    };
     
-    // Save back to storage
-    await chrome.storage.local.set({ stats });
-    console.log('Stats updated:', stats);
+    console.log('Updating stats:', statsUpdate);
+    
+    // Send message to parent window (content script will catch it)
+    window.parent.postMessage({
+      action: 'update-stats',
+      data: statsUpdate
+    }, '*');
+    
   } catch (error) {
     console.error('Failed to update stats:', error);
   }
