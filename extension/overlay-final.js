@@ -1011,13 +1011,18 @@ async function findCheaperAlternatives() {
     : 'this product';
   const currentPrice = extractNumericPrice(productInfo.price);
   
-  const prompt = `Find 3 cheaper alternatives for: ${productName}
+  const prompt = `Product: ${productName}
 
-Return ONLY this JSON:
+Task: Find 3 cheaper alternatives. Extract the KEY product type (remove brand names, specific models, extra details).
+
+Example: "Amazon Basics Velvet Suit Hangers 50-Pack" → key terms: "velvet suit hangers"
+Example: "Apple iPhone 15 Pro Max 256GB" → key terms: "iphone 15 pro"
+
+Return ONLY this JSON with key terms in URLs:
 [
-  {"title":"Product Name","source":"Amazon","url":"https://www.amazon.com/s?k=product+name"},
-  {"title":"Product Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=product+name"},
-  {"title":"Product Name","source":"Walmart","url":"https://www.walmart.com/search?q=product+name"}
+  {"title":"Alternative 1 Name","source":"Amazon","url":"https://www.amazon.com/s?k=key+terms"},
+  {"title":"Alternative 2 Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=key+terms"},
+  {"title":"Alternative 3 Name","source":"Walmart","url":"https://www.walmart.com/search?q=key+terms"}
 ]`;
   
   try {
@@ -1075,24 +1080,42 @@ Return ONLY this JSON:
   return getFallbackAlternatives();
 }
 
+function extractKeyTerms(productName) {
+  // Remove common brand names and extra details
+  let keyTerms = productName
+    .replace(/\b(Amazon|Apple|Samsung|Sony|Microsoft|Google|Nike|Adidas|etc)\b/gi, '')
+    .replace(/\b(Basics|Essentials|Premium|Pro|Plus|Max|Ultra)\b/gi, '')
+    .replace(/\b\d+[-\s]?(pack|count|piece|set|gb|tb|oz|lb)\b/gi, '') // Remove quantities
+    .replace(/\b\d{2,4}GB\b/gi, '') // Remove storage sizes
+    .replace(/\b(black|white|blue|red|gray|silver|gold)\b/gi, '') // Remove colors
+    .replace(/[^\w\s]/g, ' ') // Remove special characters
+    .replace(/\s+/g, ' ') // Normalize spaces
+    .trim();
+  
+  // Take first 3-4 meaningful words
+  const words = keyTerms.split(' ').filter(w => w.length > 2);
+  return words.slice(0, 4).join(' ').toLowerCase();
+}
+
 function getFallbackAlternatives() {
   const productName = productInfo.name !== 'Unknown Product' ? productInfo.name : 'Similar Item';
+  const keyTerms = extractKeyTerms(productName);
   
   const alternatives = [
     {
-      title: `Refurbished ${productName}`,
+      title: `Refurbished ${keyTerms}`,
       source: "eBay",
-      url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(productName + ' refurbished')}`
+      url: `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(keyTerms + ' refurbished')}`
     },
     {
-      title: `Generic Alternative`,
+      title: `Generic ${keyTerms}`,
       source: "Amazon",
-      url: `https://www.amazon.com/s?k=${encodeURIComponent(productName + ' alternative cheaper')}`
+      url: `https://www.amazon.com/s?k=${encodeURIComponent(keyTerms)}`
     },
     {
-      title: `Used/Open Box`,
-      source: "BestBuy",
-      url: `https://www.bestbuy.com/site/searchpage.jsp?st=${encodeURIComponent(productName + ' open box')}`
+      title: `Used ${keyTerms}`,
+      source: "Walmart",
+      url: `https://www.walmart.com/search?q=${encodeURIComponent(keyTerms)}`
     }
   ];
   
