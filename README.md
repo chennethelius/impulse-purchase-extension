@@ -28,7 +28,6 @@ When you visit a checkout or product page, the extension:
 <p align="center">
  <img src="screenshots/examplestats.png" alt="example chat" width="600" />
 </p>
----
 
 ## Features
 
@@ -52,25 +51,6 @@ No personal data is uploaded or shared. All calculations and storage happen loca
 
 ---
 
-## How It Works
-
-**Tech Stack**
-- JavaScript (AI APIs, database storage, and site interactivity)
-- HTML/CSS (Chatbot UI Overlay)
-
-**Core Files**
-- background.js
-- config.js
-- content.js
-- manifest.json
-- overlay-final.js
-- overlay.html
-- styles-new.css
-- stats-db.js
-- stats.css
-- stats.html
-- stats.js
-
 ## Prerequisites
 
 Before installing the extension, ensure you have:
@@ -85,11 +65,7 @@ Before installing the extension, ensure you have:
 
 ### Installation
 
-1. Clone or download this repository:
-   ```bash
-   git clone https://github.com/chennethelius/impulse-purchase-extension.git
-   cd impulse-purchase-extension
-   ```
+1. Download the zip file of the newest release and unzip it
 
 2. Open Chrome and navigate to `chrome://extensions/`.
 
@@ -104,53 +80,17 @@ Before installing the extension, ensure you have:
 ### API Key Configuration
 
 The extension uses two AI services:
-- **Cerebras API** - Powers the conversational chatbot
-- **Google Gemini API** - Generates alternative product suggestions
+- **Cerebras API** - Powers the conversational chatbot and suggestions
 
 For development/testing purposes, API keys are included in `extension/config.js`. For production use, you should replace these with your own keys:
 
 1. Get a Cerebras API key from [Cerebras Cloud](https://cloud.cerebras.ai/)
-2. Get a Google Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
 3. Update the keys in `extension/config.js`:
    ```javascript
    const CONFIG = {
      CEREBRAS_API_KEY: 'your-cerebras-key-here',
-     GEMINI_API_KEY: 'your-gemini-key-here',
    };
    ```
-
-### Usage
-
-1. Visit a supported e-commerce site (see below).
-2. Navigate to a checkout or product page.
-3. The extension will intercept and display an overlay with a chatbot.
-4. Engage with the AI to reflect on your purchase decision.
-5. View your savings statistics by clicking the extension icon.
-
----
-
-## Supported Websites
-
-The extension activates on pages with the following URL patterns:
-- **Checkout pages**: URLs containing "checkout", "cart", "purchase", or "buy"
-- Works on major e-commerce platforms including:
-  - Amazon
-  - eBay
-  - Walmart
-  - Target
-  - Best Buy
-  - And many others with standard checkout patterns
-
----
-
-## Demo
-
-Check out the `screenshots/` folder to see the extension in action:
-- `exampleblock.png` - Blocked purchase page
-- `examplechat.png` - AI conversation interface
-- `exampleproceed.png` - Alternative suggestions
-- `examplestats.png` - Savings dashboard
-
 ---
 
 ## Contributing
@@ -209,9 +149,8 @@ We welcome contributions! This project was created for HackWashU 2025, but we're
 ### Tech Stack
 - **Frontend**: HTML5, CSS3, JavaScript (ES6+)
 - **AI Services**: 
-  - Cerebras API for conversational AI
-  - Google Gemini API for product alternatives and web searches
-- **Storage**: Chrome Storage API (local persistence)
+  - Cerebras API for conversational AI and additional links
+- **Storage**: IndexDB (local persistence)
 - **Architecture**: Chrome Extension Manifest V3
 
 ### Core Components
@@ -236,7 +175,7 @@ We welcome contributions! This project was created for HackWashU 2025, but we're
 2. **Page Blocking**: If a pattern matches, the script extracts product information and injects the overlay
 3. **AI Conversation**: `overlay-final.js` manages the chat interface and communicates with Cerebras API
 4. **Timer Management**: A 2-minute countdown runs, but can be reduced by convincing the AI
-5. **Alternative Search**: After the conversation, Gemini API finds comparable alternatives
+5. **Alternative Search**: After the conversation, Cerebras API finds comparable alternatives
 6. **Data Persistence**: Purchase decisions and savings are stored using `stats-db.js`
 7. **Statistics Dashboard**: Click the extension icon to view your savings history
 
@@ -262,7 +201,10 @@ We welcome contributions! This project was created for HackWashU 2025, but we're
 
 Created for **HackWashU 2025** by:
 - Max Chen ([@chennethelius](https://github.com/chennethelius))
-- Noah Wolk
+- Noah Wolk ([@NoahWolk1](https://github.com/NoahWolk1))
+- Bradley Thornton ([@bradleymt](https://github.com/bradleymt))
+- Jonathan Cheng ([@jonathan-cheng19](https://github.com/jonathan-cheng19))
+- Demi Babalola ([@demibabs](https://github.com/demibabs))
 
 ---
 
@@ -274,8 +216,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ## Acknowledgments
 
-- Built with ❤️ at HackWashU 2025
-- Powered by Cerebras and Google Gemini AI
+- Built at HackWashU 2025
+- Powered by Cerebras
 - Inspired by the need for mindful spending in the digital age
 
 ---
@@ -288,7 +230,7 @@ For questions, suggestions, or issues:
 
 ---
 
-**Remember: The best purchase is the one you don't make impulsively!** 🛡️💰
+**Remember: The best purchase is the one you don't make impulsively!**
 
 
 
