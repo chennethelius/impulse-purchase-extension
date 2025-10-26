@@ -23,15 +23,148 @@ let totalTimeSaved = 0;
 let messageHistory = [];
 let conversationMessages = []; // Full conversation for AI context
 let previousArguments = new Set(); // Track previous arguments to prevent repetition
+let urgentSoundPlayed = false; // Ensure urgent tone only plays once per session
 
 // Product information from URL params
-let productInfo = {
+const productInfo = {
   name: 'Unknown Product',
   price: 'Price not found',
   category: '',
   url: '',
   domain: ''
 };
+
+// Lightweight Web Audio manager for subtle interface cues
+const soundManager = (() => {
+  const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextCtor) {
+    return { play: () => undefined, prime: () => undefined, isReady: () => false };
+  }
+
+  let ctx = null;
+  let masterGain = null;
+  let enabled = false;
+  const queue = [];
+
+  const ensureContext = () => {
+    if (!ctx) {
+      ctx = new AudioContextCtor();
+      masterGain = ctx.createGain();
+      masterGain.gain.value = 0.25;
+      masterGain.connect(ctx.destination);
+    }
+    return ctx;
+  };
+
+  const flushQueue = () => {
+    while (queue.length) {
+      const job = queue.shift();
+      try {
+        job();
+      } catch (err) {
+        console.warn('Sound playback failed:', err);
+      }
+    }
+  };
+
+  const enableContext = () => {
+    const context = ensureContext();
+    if (enabled || context.state === 'running') {
+      enabled = true;
+      flushQueue();
+      return;
+    }
+
+    context.resume()
+      .then(() => {
+        enabled = true;
+        flushQueue();
+      })
+      .catch(err => {
+        console.warn('Audio context resume blocked:', err);
+      });
+  };
+
+  const schedule = (job) => {
+    if (!enabled) {
+      if (queue.length < 8) {
+        queue.push(job);
+      }
+      return;
+    }
+    job();
+  };
+
+  const playTone = (context, step, baseTime) => {
+    const { freq, offset = 0, duration = 0.18, gain = 0.08, type = 'sine' } = step;
+    const start = baseTime + offset;
+    const oscillator = context.createOscillator();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(freq, start);
+
+    const gainNode = context.createGain();
+    const attackEnd = start + Math.min(0.02, duration / 3);
+    const releaseStart = start + duration;
+
+    gainNode.gain.setValueAtTime(0.0001, start);
+    gainNode.gain.exponentialRampToValueAtTime(gain, attackEnd);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, releaseStart);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(masterGain);
+
+    oscillator.start(start);
+    oscillator.stop(releaseStart + 0.08);
+  };
+
+  const sequences = {
+    send: [
+      { freq: 720, duration: 0.1, gain: 0.06, type: 'triangle' },
+      { freq: 1080, offset: 0.05, duration: 0.08, gain: 0.05, type: 'sine' }
+    ],
+    neutral: [
+      { freq: 440, duration: 0.12, gain: 0.05, type: 'sine' }
+    ],
+    timeSave: [
+      { freq: 660, duration: 0.18, gain: 0.08, type: 'sine' },
+      { freq: 990, offset: 0.09, duration: 0.16, gain: 0.07, type: 'triangle' },
+      { freq: 1320, offset: 0.18, duration: 0.14, gain: 0.06, type: 'sine' }
+    ],
+    urgent: [
+      { freq: 320, duration: 0.24, gain: 0.09, type: 'sawtooth' },
+      { freq: 220, offset: 0.3, duration: 0.28, gain: 0.08, type: 'sawtooth' }
+    ],
+    complete: [
+      { freq: 540, duration: 0.22, gain: 0.08, type: 'triangle' },
+      { freq: 810, offset: 0.1, duration: 0.2, gain: 0.07, type: 'sine' },
+      { freq: 1080, offset: 0.2, duration: 0.18, gain: 0.06, type: 'triangle' }
+    ],
+    action: [
+      { freq: 500, duration: 0.16, gain: 0.07, type: 'triangle' },
+      { freq: 750, offset: 0.08, duration: 0.12, gain: 0.06, type: 'sine' }
+    ]
+  };
+
+  const play = (type) => {
+    const pattern = sequences[type];
+    if (!pattern) return;
+
+    schedule(() => {
+      const context = ensureContext();
+      const baseTime = context.currentTime + 0.02;
+      pattern.forEach(step => playTone(context, step, baseTime));
+    });
+  };
+
+  document.addEventListener('pointerdown', enableContext, { once: true, passive: true });
+  document.addEventListener('keydown', enableContext, { once: true });
+
+  return {
+    play,
+    prime: enableContext,
+    isReady: () => enabled
+  };
+})();
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -46,6 +179,7 @@ function initialize() {
   productInfo.category = urlParams.get('category') || '';
   productInfo.url = urlParams.get('url') || '';
   productInfo.domain = urlParams.get('domain') || '';
+  urgentSoundPlayed = false;
   
   // Add initial system message with product info
   let productText;
@@ -79,6 +213,8 @@ function initialize() {
 
   // Handle cancel purchase button - close the entire tab
   reconsiderBtn.addEventListener('click', async () => {
+    soundManager.prime();
+    soundManager.play('action');
     // Update stats - purchase was blocked
     await updateStats(false);
     
@@ -102,6 +238,8 @@ function initialize() {
   
   // Handle proceed button
   proceedBtn.addEventListener('click', async () => {
+    soundManager.prime();
+    soundManager.play('action');
     // Update stats - purchase was allowed
     await updateStats(true);
     
@@ -196,6 +334,10 @@ function updateTimerDisplay(shouldFlash = false) {
   // Update urgency styling
   if (timeRemaining <= 10 && timeRemaining > 0) {
     timerDisplay.classList.add('urgent');
+    if (!urgentSoundPlayed && soundManager.isReady()) {
+      soundManager.play('urgent');
+      urgentSoundPlayed = true;
+    }
   } else if (timeRemaining <= 0) {
     timerDisplay.classList.add('complete');
   }
@@ -210,8 +352,10 @@ function updateTimerDisplay(shouldFlash = false) {
 }
 
 async function handleSendMessage() {
+  soundManager.prime();
   const userText = userInput.value.trim();
   if (!userText) return;
+  soundManager.play('send');
   
   // Disable input while processing
   sendBtn.disabled = true;
@@ -248,6 +392,7 @@ async function handleSendMessage() {
       await applyTimeReduction(evaluation.timeReduction);
     } else {
       // Neutral response (0 time) - no penalty, just no reward
+      soundManager.play('neutral');
       await addTypingMessage('ai', evaluation.feedback, 'neutral', 0);
     }
     
@@ -740,6 +885,7 @@ async function applyTimeReduction(seconds) {
   if (totalReduction === 0 || currentRemaining === 0) {
     return;
   }
+  soundManager.play('timeSave');
   
   const targetReduction = Math.min(totalReduction, currentRemaining);
   const stepDelay = 100;
@@ -894,6 +1040,9 @@ async function endWaitingPeriod() {
   
   // Show result section
   resultSection.style.display = 'flex';
+  if (soundManager.isReady()) {
+    soundManager.play('complete');
+  }
   
   // Calculate performance
   const timeSavedPercent = Math.round((totalTimeSaved / 120) * 100);
@@ -1028,19 +1177,25 @@ async function findCheaperAlternatives() {
     : 'this product';
   const currentPrice = extractNumericPrice(productInfo.price);
   
-  const prompt = `Product: ${productName}
+  // Extract key terms from the product name
+  const keyTerms = extractKeyTerms(productName);
+  
+  const prompt = `You are a product search assistant. Given a product name, suggest 3 cheaper alternative products or places to search.
 
-Task: Find 3 cheaper alternatives. Extract the KEY product type (remove brand names, specific models, extra details).
+Product: ${productName}
 
-Example: "Amazon Basics Velvet Suit Hangers 50-Pack" → key terms: "velvet suit hangers"
-Example: "Apple iPhone 15 Pro Max 256GB" → key terms: "iphone 15 pro"
+CRITICAL: Return ONLY valid JSON array. No other text, no explanation, no markdown. Just the JSON array.
 
-Return ONLY this JSON with key terms in URLs:
+Format (use actual product key terms in URLs, not "key+terms"):
 [
-  {"title":"Alternative 1 Name","source":"Amazon","url":"https://www.amazon.com/s?k=key+terms"},
-  {"title":"Alternative 2 Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=key+terms"},
-  {"title":"Alternative 3 Name","source":"Walmart","url":"https://www.walmart.com/search?q=key+terms"}
-]`;
+  {"title":"Specific Alternative Name","source":"Amazon","url":"https://www.amazon.com/s?k=actual+search+terms"},
+  {"title":"Specific Alternative Name","source":"eBay","url":"https://www.ebay.com/sch/i.html?_nkw=actual+search+terms"},
+  {"title":"Specific Alternative Name","source":"Walmart","url":"https://www.walmart.com/search?q=actual+search+terms"}
+]
+
+Key search terms for this product: ${keyTerms}
+
+JSON array only:`;
   
   try {
     const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
@@ -1057,8 +1212,8 @@ Return ONLY this JSON with key terms in URLs:
             content: prompt
           }
         ],
-        max_tokens: 300,
-        temperature: 0.7
+        max_tokens: 500,
+        temperature: 0.3
       })
     });
     
@@ -1072,23 +1227,45 @@ Return ONLY this JSON with key terms in URLs:
     console.log('📥 Cerebras response:', data);
     
     // Extract content from Cerebras response
-    const content = data.choices[0].message.content;
+    const content = data.choices[0].message.content.trim();
     console.log('📝 Content:', content);
     
-    // Extract JSON from the response
-    const jsonMatch = content.match(/\[.*\]/s);
+    // Try to extract JSON - handle various formats
+    let jsonText = content;
+    
+    // Remove markdown code blocks if present
+    jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+    
+    // Find JSON array
+    const jsonMatch = jsonText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    
     if (jsonMatch) {
-      const alternatives = JSON.parse(jsonMatch[0]);
-      console.log('✅ Found alternatives:', alternatives);
-      
-      // Ensure all alternatives have required fields
-      return alternatives.map(alt => ({
-        title: alt.title || 'Alternative Product',
-        source: alt.source || 'Online',
-        url: alt.url || `https://www.google.com/search?q=${encodeURIComponent(alt.title || productName + ' cheaper')}`
-      })).slice(0, 3);
+      try {
+        const alternatives = JSON.parse(jsonMatch[0]);
+        console.log('✅ Parsed alternatives:', alternatives);
+        
+        // Validate that we have an array with objects
+        if (Array.isArray(alternatives) && alternatives.length > 0) {
+          // Ensure all alternatives have required fields and valid URLs
+          const validAlternatives = alternatives
+            .filter(alt => alt.title && alt.url && alt.url.startsWith('http'))
+            .map(alt => ({
+              title: alt.title || 'Alternative Product',
+              source: alt.source || 'Online',
+              url: alt.url
+            }))
+            .slice(0, 3);
+          
+          if (validAlternatives.length > 0) {
+            console.log('✅ Returning valid alternatives:', validAlternatives);
+            return validAlternatives;
+          }
+        }
+      } catch (parseError) {
+        console.error('JSON parse error:', parseError);
+      }
     } else {
-      console.error('No JSON found in response');
+      console.error('No JSON array found in response');
     }
   } catch (error) {
     console.error('Error fetching alternatives:', error);
@@ -1100,8 +1277,8 @@ Return ONLY this JSON with key terms in URLs:
 function extractKeyTerms(productName) {
   // Remove common brand names and extra details
   let keyTerms = productName
-    .replace(/\b(Amazon|Apple|Samsung|Sony|Microsoft|Google|Nike|Adidas|etc)\b/gi, '')
-    .replace(/\b(Basics|Essentials|Premium|Pro|Plus|Max|Ultra)\b/gi, '')
+    .replace(/\b(Amazon|Apple|Samsung|Sony|Microsoft|Google|Nike|Adidas|Dell|HP|Lenovo|etc)\b/gi, '')
+    .replace(/\b(Basics|Essentials|Premium|Pro|Plus|Max|Ultra|Edition|System)\b/gi, '')
     .replace(/\b\d+[-\s]?(pack|count|piece|set|gb|tb|oz|lb)\b/gi, '') // Remove quantities
     .replace(/\b\d{2,4}GB\b/gi, '') // Remove storage sizes
     .replace(/\b(black|white|blue|red|gray|silver|gold)\b/gi, '') // Remove colors
@@ -1111,7 +1288,14 @@ function extractKeyTerms(productName) {
   
   // Take first 3-4 meaningful words
   const words = keyTerms.split(' ').filter(w => w.length > 2);
-  return words.slice(0, 4).join(' ').toLowerCase();
+  const result = words.slice(0, 4).join(' ').toLowerCase();
+  
+  // If we end up with nothing, use the original name but cleaned
+  if (!result || result.length < 3) {
+    return productName.replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+  
+  return result;
 }
 
 function getFallbackAlternatives() {
@@ -1182,11 +1366,68 @@ async function displayAlternatives() {
 }
 
 // Stats tracking functions
+async function categorizeProduct(productName) {
+  // If no API key or no product name, return default
+  if (!window.CEREBRAS_API_KEY || !productName) {
+    return 'Home'; // Default category
+  }
+  
+  try {
+    console.log('🏷️ Categorizing product:', productName);
+    
+    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${window.CEREBRAS_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "llama3.1-8b",
+        messages: [
+          {
+            role: "system",
+            content: "You are a product categorizer. You must respond with ONLY ONE of these exact words: Fitness, Electronics, Clothing, Home, or Health. Nothing else."
+          },
+          {
+            role: "user",
+            content: `Categorize this product into ONE of these categories: Fitness, Electronics, Clothing, Home, or Health.\n\nProduct: ${productName}\n\nRespond with only the category name.`
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 10
+      })
+    });
+
+    if (!response.ok) {
+      console.error('Categorization API error:', response.status);
+      return 'Home'; // Default fallback
+    }
+
+    const data = await response.json();
+    const category = data.choices?.[0]?.message?.content?.trim() || 'Home';
+    
+    // Validate the category is one of our expected values
+    const validCategories = ['Fitness', 'Electronics', 'Clothing', 'Home', 'Health'];
+    const normalizedCategory = validCategories.find(cat => 
+      category.toLowerCase().includes(cat.toLowerCase())
+    ) || 'Home';
+    
+    console.log('✅ Product categorized as:', normalizedCategory);
+    return normalizedCategory;
+    
+  } catch (error) {
+    console.error('Error categorizing product:', error);
+    return 'Home'; // Default fallback
+  }
+}
+
 async function updateStats(purchaseAllowed) {
   try {
     // Extract price as number
     const priceNum = extractNumericPrice(productInfo.price);
-    const category = productInfo.category || 'General';
+    
+    // Use AI to categorize the product
+    const category = await categorizeProduct(productInfo.name);
     
     // Prepare stats update data
     const statsUpdate = {
