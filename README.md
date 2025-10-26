@@ -14,15 +14,20 @@ Impulse buying is easier than ever in the age of one-click checkout.
 When you visit a checkout or product page, the extension:
 1. **Intercepts** the purchase page and opens a chatbot overlay.
 <p align="center">
- <img src="screenshots/exampleblock.png" alt="blocked purchase" width="600" />
+ <img src="screenshots/exampleblock.png" alt="example blocked purchase" width="600" />
 </p>
-![image]()  
 3. **Engages** the user in a short conversation about their motivation for buying.
-![image](screenshots/examplechat.png) 
+<p align="center">
+ <img src="screenshots/examplechat.png" alt="example chat" width="600" />
+</p>
 4. **Finds alternatives** for the product using free, public APIs or web searches.
-![image](screenshots/exampleproceed.png) 
+<p align="center">
+ <img src="screenshots/exampleproceed.png" alt="example chat conclusion" width="600" />
+</p>
 5. **Tracks savings and progress** over time, showing how much money the user has avoided spending impulsively.
-![image](screenshots/examplestats.png) 
+<p align="center">
+ <img src="screenshots/examplestats.png" alt="example chat" width="600" />
+</p>
 ---
 
 ## Features
