@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Impulse Blocker",
+  "name": "AI'nt Buying It",
   "version": "1.0",
   "description": "Blocks purchase pages until you convince the chatbot to let you buy.",
   "permissions": ["storage", "tabs", "scripting"],
